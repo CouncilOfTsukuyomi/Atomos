@@ -51,9 +51,20 @@
                                             Text="{Binding Publisher}"
                                             Foreground="{StaticResource PrimaryBrush}"
                                             FontStyle="Italic"/>
-                                        <TextBlock
-                                            Text="{Binding Type}"
-                                            Foreground="{StaticResource AccentBrush}"/>
+                                        <TextBlock Foreground="{StaticResource AccentBrush}">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="Type: {0}">
+                                                    <Binding Path="Type"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <TextBlock Foreground="{StaticResource AccentBrush}">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="Gender: {0}">
+                                                    <Binding Path="Gender"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                     </StackPanel>
                                 </StackPanel>
 
