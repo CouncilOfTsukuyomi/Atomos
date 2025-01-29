@@ -1,10 +1,10 @@
 ﻿using System;
-using System.IO;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PenumbraModForwarder.Common.Extensions;
+using PenumbraModForwarder.Common.Factory;
 using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.Common.Models;
 using PenumbraModForwarder.Common.Services;
@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddSingleton<IFileStorage, FileStorage>();
         services.AddSingleton<IStatisticService, StatisticService>();
         services.AddSingleton<IFileSizeService, FileSizeService>();
+        services.AddSingleton<IXmaHttpClientFactory, XmaHttpClientFactory>();
         services.AddSingleton<IFileDialogService>(provider =>
         {
             var applicationLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
