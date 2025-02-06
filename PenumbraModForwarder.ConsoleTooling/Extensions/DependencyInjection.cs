@@ -55,6 +55,6 @@ public static class DependencyInjection
             return;
         }
 
-        Logging.EnableSentry(sentryDns, "ConsoleTool");
+        MergedSentryLogging.MergeSentryLogging(sentryDns, "ConsoleTool");
     }
 }

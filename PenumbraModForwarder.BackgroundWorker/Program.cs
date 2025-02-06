@@ -1,5 +1,8 @@
 using NLog;
+using NLog.Config;
 using PenumbraModForwarder.BackgroundWorker.Extensions;
+using PenumbraModForwarder.BackgroundWorker.Helpers;
+using PenumbraModForwarder.BackgroundWorker.Interfaces;
 
 public class Program
 {
@@ -50,11 +53,23 @@ public class Program
             }
 
             _logger.Info("Starting BackgroundWorker on port {Port}", port);
-
-            // Register your application services (including logging, etc.)
+            
             builder.Services.AddApplicationServices(port);
 
             var host = builder.Build();
+            
+            // Assign errors to go through webhook
+            var nlogConfig = LogManager.Configuration;
+            var webSocketServer = host.Services.GetRequiredService<IWebSocketServer>();
+            nlogConfig.AddWebHookTarget(
+                targetName: "webHookTarget",
+                webSocketServer: webSocketServer,
+                minLevel: NLog.LogLevel.Error,
+                endpoint: "/error"
+            );
+            LogManager.Configuration = nlogConfig;
+            
+            
             host.Run();
         }
     }

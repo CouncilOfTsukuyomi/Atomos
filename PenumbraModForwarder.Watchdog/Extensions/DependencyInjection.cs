@@ -52,11 +52,11 @@ public static class DependencyInjection
             return;
         }
 
-        Logging.EnableSentry(sentryDns, "Launcher");
+        MergedSentryLogging.MergeSentryLogging(sentryDns, "Launcher");
     }
     
     public static void DisableSentryLogging()
     {
-        Logging.DisableSentry("Launcher");
+        MergedSentryLogging.DisableSentryLogging();
     }
 }

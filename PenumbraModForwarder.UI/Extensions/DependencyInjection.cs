@@ -100,11 +100,11 @@ public static class DependencyInjection
             return;
         }
 
-        Logging.EnableSentry(sentryDns, "UI");
+        MergedSentryLogging.MergeSentryLogging(sentryDns, "UI");
     }
 
     public static void DisableSentryLogging()
     {
-        Logging.DisableSentry("UI");
+        MergedSentryLogging.DisableSentryLogging();
     }
 }

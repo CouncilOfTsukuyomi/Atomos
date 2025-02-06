@@ -58,20 +58,20 @@ namespace PenumbraModForwarder.BackgroundWorker.Extensions
                 .AddUserSecrets<Program>()
                 .AddEnvironmentVariables()
                 .Build();
-
+            
             var sentryDns = configuration["SENTRY_DNS"];
             if (string.IsNullOrWhiteSpace(sentryDns))
             {
                 Console.WriteLine("No SENTRY_DSN provided. Skipping Sentry enablement.");
                 return;
             }
-
-            Logging.EnableSentry(sentryDns, "BackgroundWorker");
+            
+            MergedSentryLogging.MergeSentryLogging(sentryDns, "BackgroundWorker");
         }
         
         public static void DisableSentryLogging()
         {
-            Logging.DisableSentry("BackgroundWorker");
+            MergedSentryLogging.DisableSentryLogging();
         }
 
         private static void SetupLogging(this IServiceCollection services)

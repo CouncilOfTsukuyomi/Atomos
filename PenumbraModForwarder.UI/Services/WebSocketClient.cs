@@ -25,7 +25,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
     private readonly IConfigurationService _configurationService;
 
     private readonly CancellationTokenSource _cts = new();
-    private readonly string[] _endpoints = { "/status", "/currentTask", "/config", "/install" };
+    private readonly string[] _endpoints = { "/status", "/currentTask", "/config", "/install", "/error" };
 
     private bool _isReconnecting;
     private int _retryCount;
@@ -240,6 +240,10 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                         case "/status":
                             await HandleStatusMessageAsync(message);
                             break;
+                        
+                        case "/error":
+                            await HandleErrorMessageAsync(message);
+                            break;
 
                         default:
                             await HandleGeneralMessageAsync(message, endpoint);
@@ -317,6 +321,29 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         {
             _logger.Warn(
                 "Unhandled message on /config endpoint: Type={Type}, Status={Status}",
+                message.Type,
+                message.Status
+            );
+        }
+    }
+    
+    private async Task HandleErrorMessageAsync(WebSocketMessage message)
+    {
+        if (message is {Type: CustomWebSocketMessageType.Log, Status: WebSocketMessageStatus.Error})
+        {
+            if (message.Progress > 0)
+            {
+                await _notificationService.UpdateProgress(message.TaskId, message.Message, message.Progress);
+            }
+            else
+            {
+                await _notificationService.ShowErrorNotification(message.Message, SoundType.GeneralChime);
+            }
+        }
+        else
+        {
+            _logger.Warn(
+                "Unhandled message on /error endpoint: Type={Type}, Status={Status}",
                 message.Type,
                 message.Status
             );

@@ -38,47 +38,80 @@
                             </Animation>
                         </Style.Animations>
                     </Style>
-                </ExperimentalAcrylicBorder.Styles>
-                <Border BoxShadow="0 4 8 0 #40000000">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Margin="16,12" MaxWidth="400">
-                            <!-- Only visible when ShowProgress is true -->
-                            <StackPanel IsVisible="{Binding ShowProgress}">
-                                <TextBlock Text="{Binding Text}"
-                                           Margin="0,0,0,4"
-                                           Foreground="{DynamicResource TextBrush}"
-                                           TextWrapping="Wrap"/>
-                                <TextBlock Margin="0,0,0,8"
-                                           Foreground="{DynamicResource TextBrush}">
-                                    <Run Text="{Binding Progress}"/>
-                                    <Run Text="%"/>
-                                </TextBlock>
-                                <!-- Replaced the ProgressBar with a GIF image -->
-                                <gif:GifImage
-                                    Source="avares://PenumbraModForwarder.UI/Animations/LoadingAnimation.gif"
-                                    Width="64"
-                                    Height="64"
-                                    IsVisible="{Binding ShowProgress}" />
-                            </StackPanel>
-                        </StackPanel>
-                        <Button Grid.Column="1"
-                                Command="{Binding CloseCommand}"
-                                Classes="transparent"
-                                Margin="0,8,8,0"
-                                VerticalAlignment="Top">
-                            <Path
-                                Data="{StaticResource CloseIcon}"
-                                Stroke="{DynamicResource TextBrush}"
-                                StrokeThickness="1"/>
-                        </Button>
-                    </Grid>
-                </Border>
-            </ExperimentalAcrylicBorder>
-        </DataTemplate>
+             </ExperimentalAcrylicBorder.Styles>
+
+          <Border BoxShadow="0 4 8 0 #40000000">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+
+              <StackPanel Margin="16,12" MaxWidth="400">
+                <!-- Title field (e.g. "Background Worker") -->
+                <TextBlock
+                  Text="{Binding Title}"
+                  Margin="0,0,0,4"
+                  Foreground="{DynamicResource TextBrush}"
+                  FontSize="16"
+                  FontWeight="Bold"
+                  TextWrapping="Wrap"/>
+
+                <!-- Status field (e.g. "ERROR", "INFO") -->
+                <TextBlock
+                  Text="{Binding Status}"
+                  Margin="0,0,0,4"
+                  Foreground="{DynamicResource TextBrush}"
+                  FontStyle="Italic"
+                  TextWrapping="Wrap"/>
+
+                <!-- The actual message content -->
+                <TextBlock
+                  Text="{Binding Message}"
+                  Margin="0,0,0,8"
+                  Foreground="{DynamicResource TextBrush}"
+                  TextWrapping="Wrap"/>
+
+                <!-- Optional progress/status details -->
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding ShowProgress}">
+                  <TextBlock
+                    Text="{Binding ProgressText}"
+                    Width="200"
+                    Foreground="{DynamicResource TextBrush}" />
+                  <TextBlock
+                    Margin="10,0,0,0"
+                    Foreground="{DynamicResource TextBrush}"
+                    Text="{Binding Progress}"/>
+                  <TextBlock
+                    Margin="2,0,0,0"
+                    Foreground="{DynamicResource TextBrush}"
+                    Text="%"/>
+                </StackPanel>
+
+                <!-- Animated GIF for progress, displayed only if ShowProgress is true -->
+                <gif:GifImage
+                  Source="avares://PenumbraModForwarder.UI/Animations/LoadingAnimation.gif"
+                  Width="64"
+                  Height="64"
+                  IsVisible="{Binding ShowProgress}"
+                  Margin="0,8,0,0"/>
+              </StackPanel>
+
+              <!-- Close button in the top-right -->
+              <Button
+                Grid.Column="1"
+                Command="{Binding CloseCommand}"
+                Classes="transparent"
+                Margin="0,8,8,0"
+                VerticalAlignment="Top">
+                <Path Data="{StaticResource CloseIcon}"
+                      Stroke="{DynamicResource TextBrush}"
+                      StrokeThickness="1"/>
+              </Button>
+            </Grid>
+          </Border>
+        </ExperimentalAcrylicBorder>
+      </DataTemplate>
     </Setter>
 </Style>
 </Styles>
