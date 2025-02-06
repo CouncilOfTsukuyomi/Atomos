@@ -5,6 +5,7 @@ using PenumbraModForwarder.Common.Consts;
 using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
+using PenumbraModForwarder.Common.Extensions;
 
 namespace PenumbraModForwarder.FileMonitor.Services;
 
@@ -20,7 +21,7 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
 
     private CancellationTokenSource _cancellationTokenSource;
     private Task _processingTask;
-    private System.Threading.Timer _persistenceTimer;
+    private Timer _persistenceTimer;
     private readonly string _stateFilePath;
 
     public event EventHandler<FileMovedEvent> FileMoved;
@@ -41,14 +42,41 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
         _stateFilePath = Path.Combine(ConfigurationConsts.ConfigurationPath, "fileQueueState.json");
     }
 
+    /// <summary>
+    /// Adds a file to the queue if it's not in the ignore list.
+    /// </summary>
+    /// <param name="fullPath">The full path to enqueue.</param>
     public void EnqueueFile(string fullPath)
     {
+        // Skip enqueuing if this file is in the ignore list
+        if (IgnoreList.IgnoreListStrings.Contains(fullPath, StringComparer.InvariantCultureIgnoreCase))
+        {
+            _logger.Info("Ignoring file (on ignore list): {FullPath}", fullPath);
+            return;
+        }
+
         _fileQueue[fullPath] = DateTime.UtcNow;
         _retryCounts[fullPath] = 0;
     }
 
+    /// <summary>
+    /// Handles a file rename, preserving queue status if the old path was tracked.
+    /// </summary>
+    /// <param name="oldPath">The old file path.</param>
+    /// <param name="newPath">The new file path.</param>
     public void RenameFileInQueue(string oldPath, string newPath)
     {
+        // If the new path is in the ignore list, don't rename or track it
+        if (IgnoreList.IgnoreListStrings.Contains(newPath, StringComparer.InvariantCultureIgnoreCase))
+        {
+            _logger.Info("Ignoring renamed file (on ignore list): {FullPath}", newPath);
+
+            // If old path was in the queue, remove it
+            _fileQueue.TryRemove(oldPath, out _);
+            _retryCounts.TryRemove(oldPath, out _);
+            return;
+        }
+
         if (_fileQueue.TryRemove(oldPath, out var timeAdded))
         {
             _fileQueue[newPath] = timeAdded;
@@ -69,6 +97,9 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
         }
     }
 
+    /// <summary>
+    /// Loads the persisted queue state from disk, skipping ignored files.
+    /// </summary>
     public async Task LoadStateAsync()
     {
         try
@@ -81,6 +112,13 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
                 {
                     foreach (var kvp in deserializedQueue)
                     {
+                        // Skip if the file is in the ignore list
+                        if (IgnoreList.IgnoreListStrings.Contains(kvp.Key, StringComparer.InvariantCultureIgnoreCase))
+                        {
+                            _logger.Info("Skipping ignored file from state: {FullPath}", kvp.Key);
+                            continue;
+                        }
+
                         if (_fileStorage.Exists(kvp.Key))
                         {
                             _fileQueue[kvp.Key] = kvp.Value;
@@ -103,6 +141,9 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Persists the current queue state to disk.
+    /// </summary>
     public void PersistState()
     {
         try
@@ -117,13 +158,16 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
         }
     }
 
+    /// <summary>
+    /// Starts the processing task and initializes the persistence timer.
+    /// </summary>
     public void StartProcessing()
     {
         _cancellationTokenSource = new CancellationTokenSource();
         _processingTask = ProcessQueueAsync(_cancellationTokenSource.Token);
 
         // Save state every minute
-        _persistenceTimer = new System.Threading.Timer(
+        _persistenceTimer = new Timer(
             _ => PersistState(),
             null,
             TimeSpan.Zero,
@@ -131,6 +175,9 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
         );
     }
 
+    /// <summary>
+    /// Continuously processes the file queue, skipping any files on the ignore list.
+    /// </summary>
     private async Task ProcessQueueAsync(CancellationToken cancellationToken)
     {
         try
@@ -144,6 +191,18 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
+                    // If the file is in the ignore list, remove it from the queue
+                    if (IgnoreList.IgnoreListStrings.Contains(filePath, StringComparer.InvariantCultureIgnoreCase))
+                    {
+                        if (_fileQueue.TryRemove(filePath, out _) | _retryCounts.TryRemove(filePath, out _))
+                        {
+                            _logger.Info("Removed ignored file from queue: {FullPath}", filePath);
+                            hasChanges = true;
+                        }
+                        continue;
+                    }
+
+                    // If it doesn't exist anymore, remove it
                     if (!_fileStorage.Exists(filePath))
                     {
                         if (_fileQueue.TryRemove(filePath, out _) | _retryCounts.TryRemove(filePath, out _))
@@ -154,6 +213,7 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
                         continue;
                     }
 
+                    // If file is ready, try processing it
                     if (_fileProcessor.IsFileReady(filePath))
                     {
                         _retryCounts[filePath] = 0;
@@ -176,7 +236,6 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
 
                         if (currentRetry < 5)
                         {
-                            // Log at Info for first three attempts, then Debug
                             if (currentRetry <= 3)
                             {
                                 _logger.Info("File not ready (attempt {Attempt}), requeue: {FullPath}", currentRetry, filePath);
@@ -188,7 +247,6 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
                         }
                         else
                         {
-                            // For attempts >= 5, log at Warning only every 5 attempts
                             if (currentRetry % 5 == 0)
                             {
                                 _logger.Warn("File not ready after {Attempt} attempts: {FullPath}", currentRetry, filePath);
