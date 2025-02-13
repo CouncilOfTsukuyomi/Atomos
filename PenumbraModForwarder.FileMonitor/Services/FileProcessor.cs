@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using NLog;
 using PenumbraModForwarder.Common.Consts;
 using PenumbraModForwarder.Common.Interfaces;
@@ -191,7 +193,9 @@ public sealed class FileProcessor : IFileProcessor
         CancellationToken cancellationToken,
         EventHandler<FilesExtractedEventArgs> onFilesExtracted)
     {
-        var extractedFiles = new List<string>();
+        var extractedFiles = new ConcurrentBag<string>();
+        var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+        var taskIdCounter = 0;
 
         try
         {
@@ -201,19 +205,70 @@ public sealed class FileProcessor : IFileProcessor
                 var archiveDirectory = Path.GetDirectoryName(archivePath) ?? string.Empty;
                 var modEntries = GetModEntries(archiveFile, skipPreDt);
 
-                foreach (var entry in modEntries)
+                if (!modEntries.Any())
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    var destinationPath = Path.Combine(archiveDirectory, entry.FileName);
-                    var destinationDirectory = Path.GetDirectoryName(destinationPath);
-                    if (destinationDirectory != null)
-                        _fileStorage.CreateDirectory(destinationDirectory);
-
-                    _logger.Info("Extracting: {FileName} to {DestPath}", entry.FileName, destinationPath);
-                    entry.Extract(destinationPath);
-                    extractedFiles.Add(destinationPath);
+                    _logger.Info("No mod files found in the archive: {ArchiveFileName}", Path.GetFileName(archivePath));
+                    return;
                 }
+
+                var semaphore = new SemaphoreSlim(Environment.ProcessorCount * 2);
+                var extractionStartTime = DateTime.Now;
+                
+                await Parallel.ForEachAsync(modEntries, options, async (entry, token) =>
+                {
+                    await semaphore.WaitAsync(token);
+                    try
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        var taskId = Interlocked.Increment(ref taskIdCounter);
+                        var destinationPath = Path.Combine(archiveDirectory, entry.FileName);
+                        var destinationDirectory = Path.GetDirectoryName(destinationPath);
+                        if (destinationDirectory != null)
+                            _fileStorage.CreateDirectory(destinationDirectory);
+
+                        var stopwatch = Stopwatch.StartNew();
+                        _logger.Info("Task {TaskId}: Starting extraction of {FileName}", taskId, entry.FileName);
+
+                        try
+                        {
+                            entry.Extract(destinationPath);
+                            stopwatch.Stop();
+                            _logger.Info(
+                                "Task {TaskId}: Completed extraction of {FileName} in {Elapsed:0.000} seconds to {DestPath}",
+                                taskId,
+                                entry.FileName,
+                                stopwatch.Elapsed.TotalSeconds,
+                                destinationPath
+                            );
+                            extractedFiles.Add(destinationPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            stopwatch.Stop();
+                            _logger.Error(ex, 
+                                "Task {TaskId}: Failed to extract {FileName} after {Elapsed:0.000} seconds",
+                                taskId,
+                                entry.FileName,
+                                stopwatch.Elapsed.TotalSeconds
+                            );
+                            throw;
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
+
+                var extractionEndTime = DateTime.Now;
+                var totalExtractionTime = extractionEndTime - extractionStartTime;
+
+                _logger.Info(
+                    "All files extracted from {ArchiveFileName} in {TotalTime:0.000} seconds",
+                    Path.GetFileName(archivePath),
+                    totalExtractionTime.TotalSeconds
+                );
             }
 
             await Task.Delay(100, cancellationToken);
@@ -222,7 +277,7 @@ public sealed class FileProcessor : IFileProcessor
             {
                 onFilesExtracted?.Invoke(
                     this,
-                    new FilesExtractedEventArgs(Path.GetFileName(archivePath), extractedFiles)
+                    new FilesExtractedEventArgs(Path.GetFileName(archivePath), extractedFiles.ToList())
                 );
 
                 var shouldDelete = (bool)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.AutoDelete);
@@ -234,10 +289,6 @@ public sealed class FileProcessor : IFileProcessor
                         Path.GetFileName(archivePath)
                     );
                 }
-            }
-            else
-            {
-                _logger.Info("No mod files found in the archive: {ArchiveFileName}", Path.GetFileName(archivePath));
             }
         }
         catch (Exception ex) when (ex.Message.Contains("not a known archive type"))
