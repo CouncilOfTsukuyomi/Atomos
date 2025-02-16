@@ -18,6 +18,8 @@ public sealed class FileProcessor : IFileProcessor
 
     private readonly IFileStorage _fileStorage;
     private readonly IConfigurationService _configurationService;
+    
+    private readonly object _extractionLock = new();
 
     public FileProcessor(IFileStorage fileStorage, IConfigurationService configurationService)
     {
@@ -232,7 +234,11 @@ public sealed class FileProcessor : IFileProcessor
 
                         try
                         {
-                            entry.Extract(destinationPath);
+                            lock (_extractionLock)
+                            {
+                                entry.Extract(destinationPath);
+                            }
+
                             stopwatch.Stop();
                             _logger.Info(
                                 "Task {TaskId}: Completed extraction of {FileName} in {Elapsed:0.000} seconds to {DestPath}",
