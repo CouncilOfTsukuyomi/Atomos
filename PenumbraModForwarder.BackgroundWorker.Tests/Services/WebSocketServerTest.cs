@@ -1,9 +1,9 @@
 ﻿using System.Text;
+using CommonLib.Interfaces;
+using CommonLib.Models;
 using Newtonsoft.Json;
 using PenumbraModForwarder.BackgroundWorker.Services;
 using PenumbraModForwarder.BackgroundWorker.Tests.Extensions;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 using Moq;
 
 namespace PenumbraModForwarder.BackgroundWorker.Tests.Services;

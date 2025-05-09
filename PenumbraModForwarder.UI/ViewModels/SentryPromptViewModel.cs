@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Reactive;
 using System.Threading.Tasks;
+using CommonLib.Interfaces;
+using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
-using PenumbraModForwarder.Common.Enums;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 using PenumbraModForwarder.UI.Interfaces;
 using ReactiveUI;
 

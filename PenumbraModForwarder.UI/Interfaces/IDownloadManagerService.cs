@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using PenumbraModForwarder.Common.Models;
+using CommonLib.Models;
 
 namespace PenumbraModForwarder.UI.Interfaces;
 

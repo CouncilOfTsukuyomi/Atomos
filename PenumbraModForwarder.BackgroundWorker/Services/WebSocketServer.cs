@@ -2,14 +2,14 @@
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
+using CommonLib.Events;
+using CommonLib.Interfaces;
+using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
 using PenumbraModForwarder.BackgroundWorker.Events;
 using PenumbraModForwarder.BackgroundWorker.Interfaces;
-using PenumbraModForwarder.Common.Events;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
-using CustomWebSocketMessageType = PenumbraModForwarder.Common.Models.WebSocketMessageType;
+using CustomWebSocketMessageType = CommonLib.Models.WebSocketMessageType;
 using WebSocketMessageType = System.Net.WebSockets.WebSocketMessageType;
 
 namespace PenumbraModForwarder.BackgroundWorker.Services;

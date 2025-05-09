@@ -1,6 +1,6 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:models="clr-namespace:PenumbraModForwarder.Common.Models;assembly=CommonLib">
+        xmlns:models="clr-namespace:CommonLib.Models;assembly=CommonLib">
     <Style Selector="ItemsControl.modsList">        
         <Setter Property="ItemsPanel">
             <ItemsPanelTemplate>

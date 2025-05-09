@@ -1,7 +1,7 @@
-﻿using NLog;
-using PenumbraModForwarder.Common.Consts;
-using PenumbraModForwarder.Common.Enums;
-using PenumbraModForwarder.Common.Interfaces;
+﻿using CommonLib.Consts;
+using CommonLib.Enums;
+using CommonLib.Interfaces;
+using NLog;
 using PenumbraModForwarder.ConsoleTooling.Interfaces;
 
 namespace PenumbraModForwarder.ConsoleTooling.Services

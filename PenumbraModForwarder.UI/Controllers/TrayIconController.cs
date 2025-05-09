@@ -1,13 +1,10 @@
-﻿using System;
-using System.Reactive;
+﻿using System.Reactive;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Microsoft.Extensions.DependencyInjection;
+using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.Views;
-using PenumbraModForwarder.UI.ViewModels;
 using ReactiveUI;
 
 namespace PenumbraModForwarder.UI.Controllers;

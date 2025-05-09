@@ -1,5 +1,5 @@
-﻿using NLog;
-using PenumbraModForwarder.Common.Interfaces;
+﻿using CommonLib.Interfaces;
+using NLog;
 using PenumbraModForwarder.Watchdog.Interfaces;
 
 namespace PenumbraModForwarder.Watchdog.Services

@@ -1,9 +1,9 @@
-﻿using NLog;
+﻿using CommonLib.Consts;
+using CommonLib.Enums;
+using CommonLib.Interfaces;
+using CommonLib.Models;
+using NLog;
 using PenumbraModForwarder.BackgroundWorker.Interfaces;
-using PenumbraModForwarder.Common.Consts;
-using PenumbraModForwarder.Common.Enums;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 
 namespace PenumbraModForwarder.BackgroundWorker.Services;
 

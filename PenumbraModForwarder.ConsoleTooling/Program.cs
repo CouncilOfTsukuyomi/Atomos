@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.ConsoleTooling.Extensions;
 using PenumbraModForwarder.ConsoleTooling.Interfaces;
 

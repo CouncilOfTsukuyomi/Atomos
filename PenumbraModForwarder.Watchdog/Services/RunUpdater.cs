@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
+using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.Watchdog.Interfaces;
 
 namespace PenumbraModForwarder.Watchdog.Services;

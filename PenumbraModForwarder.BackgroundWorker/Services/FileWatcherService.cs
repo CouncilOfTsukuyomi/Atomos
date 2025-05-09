@@ -1,11 +1,11 @@
 ﻿using System.Collections.Concurrent;
+using CommonLib.Events;
+using CommonLib.Interfaces;
+using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
 using PenumbraModForwarder.BackgroundWorker.Events;
 using PenumbraModForwarder.BackgroundWorker.Interfaces;
-using PenumbraModForwarder.Common.Events;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
 

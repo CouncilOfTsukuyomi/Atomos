@@ -1,7 +1,6 @@
 using Avalonia.Controls;
-using Microsoft.Extensions.Configuration;
+using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.UI.Extensions;
 
 namespace PenumbraModForwarder.UI.Views

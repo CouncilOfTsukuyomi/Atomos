@@ -1,4 +1,4 @@
-﻿using PenumbraModForwarder.Common.Interfaces;
+﻿using CommonLib.Interfaces;
 
 namespace PenumbraModForwarder.Statistics.Services;
 

@@ -5,15 +5,15 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CommonLib.Enums;
+using CommonLib.Interfaces;
+using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
-using PenumbraModForwarder.Common.Enums;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 using PenumbraModForwarder.UI.Events;
 using PenumbraModForwarder.UI.Interfaces;
 using WebSocketMessageType = System.Net.WebSockets.WebSocketMessageType;
-using CustomWebSocketMessageType = PenumbraModForwarder.Common.Models.WebSocketMessageType;
+using CustomWebSocketMessageType = CommonLib.Models.WebSocketMessageType;
 
 namespace PenumbraModForwarder.UI.Services;
 

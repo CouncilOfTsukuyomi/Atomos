@@ -7,7 +7,7 @@
     xmlns:viewModels="clr-namespace:PenumbraModForwarder.UI.ViewModels"
     xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
     xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
-    xmlns:models1="clr-namespace:PenumbraModForwarder.Common.Models;assembly=CommonLib"
+    xmlns:models1="clr-namespace:CommonLib.Models;assembly=CommonLib"
     x:DataType="viewModels:HomeViewModel"
     mc:Ignorable="d"
     d:DesignWidth="800"

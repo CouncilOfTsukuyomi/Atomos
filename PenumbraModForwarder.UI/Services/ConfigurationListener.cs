@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
+using CommonLib.Events;
+using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.Common.Events;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.UI.Extensions;
 using PenumbraModForwarder.UI.Interfaces;
 

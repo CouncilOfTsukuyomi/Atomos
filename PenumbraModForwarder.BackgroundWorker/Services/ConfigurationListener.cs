@@ -1,8 +1,8 @@
-﻿using NLog;
+﻿using CommonLib.Events;
+using CommonLib.Interfaces;
+using NLog;
 using PenumbraModForwarder.BackgroundWorker.Extensions;
 using PenumbraModForwarder.BackgroundWorker.Interfaces;
-using PenumbraModForwarder.Common.Events;
-using PenumbraModForwarder.Common.Interfaces;
 
 namespace PenumbraModForwarder.BackgroundWorker.Services
 {

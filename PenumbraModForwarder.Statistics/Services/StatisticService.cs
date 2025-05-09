@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using CommonLib.Enums;
+using CommonLib.Interfaces;
+using CommonLib.Models;
 using LiteDB;
 using NLog;
-using PenumbraModForwarder.Common.Enums;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 using PenumbraModForwarder.Statistics.Models;
 
 namespace PenumbraModForwarder.Statistics.Services;
@@ -24,7 +24,7 @@ public class StatisticService : IStatisticService
     {
         _fileStorage = fileStorage;
         _databasePath = databasePath
-                        ?? $@"{Common.Consts.ConfigurationConsts.ConfigurationPath}\userstats.db";
+                        ?? $@"{CommonLib.Consts.ConfigurationConsts.ConfigurationPath}\userstats.db";
 
         EnsureDatabaseExists();
 

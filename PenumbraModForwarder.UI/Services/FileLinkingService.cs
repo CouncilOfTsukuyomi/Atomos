@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using CommonLib.Consts;
 using NLog;
-using PenumbraModForwarder.Common.Consts;
 using PenumbraModForwarder.UI.Interfaces;
 
 namespace PenumbraModForwarder.UI.Services;

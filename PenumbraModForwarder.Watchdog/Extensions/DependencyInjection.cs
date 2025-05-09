@@ -1,13 +1,11 @@
-﻿using System;
-using System.IO;
+﻿using CommonLib.Extensions;
+using CommonLib.Interfaces;
+using CommonLib.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PenumbraModForwarder.Common.Extensions;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Services;
 using PenumbraModForwarder.Watchdog.Interfaces;
 using PenumbraModForwarder.Watchdog.Services;
-using DownloadUpdater = PenumbraModForwarder.Common.Services.DownloadUpdater;
+using DownloadUpdater = CommonLib.Services.DownloadUpdater;
 
 namespace PenumbraModForwarder.Watchdog.Extensions;
 

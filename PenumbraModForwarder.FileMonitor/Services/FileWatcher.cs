@@ -1,7 +1,7 @@
-﻿using NLog;
+﻿using CommonLib.Consts;
+using NLog;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
-using PenumbraModForwarder.Common.Consts;
 
 namespace PenumbraModForwarder.FileMonitor.Services;
 

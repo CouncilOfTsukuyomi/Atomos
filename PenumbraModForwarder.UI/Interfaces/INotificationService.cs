@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using PenumbraModForwarder.Common.Enums;
+using CommonLib.Enums;
 using PenumbraModForwarder.UI.Models;
 
 namespace PenumbraModForwarder.UI.Interfaces;

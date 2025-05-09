@@ -1,4 +1,4 @@
-﻿using PenumbraModForwarder.Common.Models;
+﻿using CommonLib.Models;
 
 namespace PenumbraModForwarder.BackgroundWorker.Events;
 

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using CommonLib.Consts;
+using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.Common.Consts;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
 using SevenZipExtractor;

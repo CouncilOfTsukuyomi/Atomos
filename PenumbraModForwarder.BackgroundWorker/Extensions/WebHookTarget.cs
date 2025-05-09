@@ -1,7 +1,7 @@
-﻿using NLog;
+﻿using CommonLib.Models;
+using NLog;
 using NLog.Targets;
 using PenumbraModForwarder.BackgroundWorker.Interfaces;
-using PenumbraModForwarder.Common.Models;
 
 namespace PenumbraModForwarder.BackgroundWorker.Extensions;
 

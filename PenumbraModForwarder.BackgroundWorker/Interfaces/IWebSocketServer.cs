@@ -1,6 +1,6 @@
 ﻿using System.Net.WebSockets;
+using CommonLib.Models;
 using PenumbraModForwarder.BackgroundWorker.Events;
-using PenumbraModForwarder.Common.Models;
 
 namespace PenumbraModForwarder.BackgroundWorker.Interfaces;
 

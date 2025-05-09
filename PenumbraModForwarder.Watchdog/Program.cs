@@ -1,12 +1,10 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading;
+using CommonLib.Interfaces;
+using CommonLib.Services;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Services;
 using PenumbraModForwarder.Watchdog.Extensions;
 using PenumbraModForwarder.Watchdog.Imports;
 using PenumbraModForwarder.Watchdog.Interfaces;

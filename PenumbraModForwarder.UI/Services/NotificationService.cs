@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using CommonLib.Enums;
+using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.Common.Enums;
-using PenumbraModForwarder.Common.Interfaces;
 using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.Models;
 using ReactiveUI;

@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CommonLib.Consts;
+using CommonLib.Extensions;
+using CommonLib.Interfaces;
+using CommonLib.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PenumbraModForwarder.Common.Consts;
-using PenumbraModForwarder.Common.Extensions;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Services;
 using PenumbraModForwarder.ConsoleTooling.Interfaces;
 using PenumbraModForwarder.ConsoleTooling.Services;
 using PenumbraModForwarder.Statistics.Services;
