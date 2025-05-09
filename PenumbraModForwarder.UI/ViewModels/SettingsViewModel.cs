@@ -165,7 +165,7 @@ public class SettingsViewModel : ViewModelBase
 
     private bool IsNestedModel(Type type)
     {
-        return type.Namespace == "PenumbraModForwarder.Common.Models"
+        return type.Namespace == "CommonLib.Models"
                && type.IsClass
                && !type.IsPrimitive
                && !type.IsEnum

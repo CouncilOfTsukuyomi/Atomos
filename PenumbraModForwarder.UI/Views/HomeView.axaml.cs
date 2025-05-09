@@ -5,8 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using CommonLib.Models;
-using PenumbraModForwarder.Common.Interfaces;
-using PenumbraModForwarder.Common.Models;
 using PenumbraModForwarder.UI.ViewModels;
 
 namespace PenumbraModForwarder.UI.Views;
