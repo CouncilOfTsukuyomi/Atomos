@@ -15,6 +15,7 @@ namespace PenumbraModForwarder.UI.Views
             InitializeComponent();
         }
         
+        
         public MainWindow(IConfigurationService configuration)
         {
             _configuration = configuration;

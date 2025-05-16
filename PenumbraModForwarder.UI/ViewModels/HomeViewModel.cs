@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -50,7 +52,9 @@ public class HomeViewModel : ViewModelBase, IDisposable
         get => _isLoading;
         set => this.RaiseAndSetIfChanged(ref _isLoading, value);
     }
-
+    
+    
+    
     public HomeViewModel(
         IStatisticService statisticService,
         IXmaModDisplay xmaModDisplay,
@@ -65,7 +69,7 @@ public class HomeViewModel : ViewModelBase, IDisposable
 
         InfoItems = new ObservableCollection<InfoItem>();
         RecentMods = new ObservableCollection<XmaMods>();
-
+        
         _webSocketClient.ModInstalled += OnModInstalled;
 
         _ = LoadStatisticsAsync();

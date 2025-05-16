@@ -11,6 +11,9 @@
         x:Class="PenumbraModForwarder.UI.Views.MainWindow"
         x:CompileBindings="True"
         x:DataType="vm:MainWindowViewModel"
+        xmlns:dd="clr-namespace:Avalonia.Input;assembly=Avalonia.Base"
+        dd:DragDrop.AllowDrop="True"
+        xmlns:helpers="clr-namespace:PenumbraModForwarder.UI.Helpers"
         Title="Penumbra Mod Forwarder"
         MinWidth="800"
         MinHeight="600"
@@ -115,7 +118,8 @@
 
             <!-- Content Area -->
             <ExperimentalAcrylicBorder Grid.Column="1" Material="{StaticResource ContentAcrylicMaterial}">
-                <ContentControl Content="{Binding CurrentPage}" Margin="20"/>
+                <ContentControl Content="{Binding CurrentPage}" Margin="20" dd:DragDrop.AllowDrop="True" helpers:DropHandler.DropCommand="{Binding DropFilesCommand}"
+                />
             </ExperimentalAcrylicBorder>
         </Grid>
 

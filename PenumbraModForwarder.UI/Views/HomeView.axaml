@@ -8,11 +8,13 @@
     xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
     xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
     xmlns:models1="clr-namespace:CommonLib.Models;assembly=CommonLib"
+    xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+    xmlns:behaviours="clr-namespace:PenumbraModForwarder.UI.Behaviours"
     x:DataType="viewModels:HomeViewModel"
     mc:Ignorable="d"
     d:DesignWidth="800"
     d:DesignHeight="450">
-<Grid ColumnDefinitions="Auto,*,Auto" Margin="5">
+<Grid ColumnDefinitions="Auto,*,Auto" Margin="5" DragDrop.AllowDrop="True">
     <!-- Left column (statistics, etc.) -->
     <ScrollViewer Grid.Column="0" Margin="5">
         <ItemsControl Classes="infoBoxes" ItemsSource="{Binding InfoItems}"/>
@@ -23,7 +25,6 @@
     <!-- Right column: Recent Mods -->
     <ScrollViewer Grid.Column="2" Margin="5">
         <StackPanel>
-            
             <gif:GifImage
                 Source="avares://PenumbraModForwarder.UI/Animations/LoadingAnimation.gif"
                 Width="64"

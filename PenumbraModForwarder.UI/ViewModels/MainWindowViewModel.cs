@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
+using Avalonia.Input;
 using Avalonia.Media;
 using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,8 @@ using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.Models;
 using PenumbraModForwarder.UI.Services;
 using ReactiveUI;
+using Notification = PenumbraModForwarder.UI.Models.Notification;
+
 
 namespace PenumbraModForwarder.UI.ViewModels;
 
@@ -57,6 +60,8 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public ICommand NavigateToSettingsCommand { get; }
+    public ICommand DropFilesCommand { get; }
+
 
     public MainWindowViewModel(
         IServiceProvider serviceProvider,
@@ -73,7 +78,7 @@ public class MainWindowViewModel : ViewModelBase
         _configurationListener = configurationListener;
         _soundManagerService = soundManagerService;
         _configurationService = configurationService;
-
+        
         // Check the configuration to see if Sentry is enabled at startup
         if ((bool)_configurationService.ReturnConfigValue(c => c.Common.EnableSentry))
         {
@@ -126,6 +131,23 @@ public class MainWindowViewModel : ViewModelBase
         InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService);
 
         _ = InitializeWebSocketConnection(port);
+        DropFilesCommand = ReactiveCommand.Create<object>(OnFilesDropped);
+
+    }
+    
+    private void OnFilesDropped(object data)
+    {
+        if (data is DataObject dataObject)
+        {
+            var fileNames = dataObject.GetFiles();
+            if (fileNames != null)
+            {
+                foreach (var file in fileNames)
+                {
+                    _logger.Info($"Dropped file: {file}");
+                }
+            }
+        }
     }
 
     private async Task InitializeWebSocketConnection(int port)

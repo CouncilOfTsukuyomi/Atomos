@@ -39,7 +39,7 @@ public sealed class FileQueueProcessor : IFileQueueProcessor
         _configurationService = configurationService;
         _fileProcessor = fileProcessor;
 
-        _stateFilePath = Path.Combine(ConfigurationConsts.ConfigurationPath, "fileQueueState.json");
+        _stateFilePath = Path.Combine(ConfigurationConsts.FileWatcherState, "fileQueueState.json");
     }
 
     /// <summary>

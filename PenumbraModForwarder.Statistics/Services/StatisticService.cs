@@ -24,7 +24,7 @@ public class StatisticService : IStatisticService
     {
         _fileStorage = fileStorage;
         _databasePath = databasePath
-                        ?? $@"{CommonLib.Consts.ConfigurationConsts.ConfigurationPath}\userstats.db";
+                        ?? $@"{CommonLib.Consts.ConfigurationConsts.DatabasePath}\userstats.db";
 
         EnsureDatabaseExists();
 
@@ -244,9 +244,19 @@ public class StatisticService : IStatisticService
 
     private void EnsureDatabaseExists()
     {
-        if (!_fileStorage.Exists(_databasePath))
+        var directoryPath = Path.GetDirectoryName(_databasePath);
+        if (!Directory.Exists(directoryPath))
         {
-            _logger.Info("Database will be created at '{DatabasePath}'.", _databasePath);
+            Directory.CreateDirectory(directoryPath);
+            _logger.Info("Created missing directory for database at '{DirectoryPath}'.", directoryPath);
+        }
+        
+        lock (_dbLock)
+        {
+            using var db = new LiteDatabase(_databasePath);
+            // Access collections to ensure they exist
+            var stats = db.GetCollection<StatRecord>("stats");
+            var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
         }
     }
 }
