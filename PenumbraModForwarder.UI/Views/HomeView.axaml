@@ -9,7 +9,6 @@
     xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
     xmlns:models1="clr-namespace:CommonLib.Models;assembly=CommonLib"
     xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
-    xmlns:behaviours="clr-namespace:PenumbraModForwarder.UI.Behaviours"
     x:DataType="viewModels:HomeViewModel"
     mc:Ignorable="d"
     d:DesignWidth="800"

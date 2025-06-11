@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -60,8 +61,6 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public ICommand NavigateToSettingsCommand { get; }
-    public ICommand DropFilesCommand { get; }
-
 
     public MainWindowViewModel(
         IServiceProvider serviceProvider,
@@ -131,23 +130,6 @@ public class MainWindowViewModel : ViewModelBase
         InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService);
 
         _ = InitializeWebSocketConnection(port);
-        DropFilesCommand = ReactiveCommand.Create<object>(OnFilesDropped);
-
-    }
-    
-    private void OnFilesDropped(object data)
-    {
-        if (data is DataObject dataObject)
-        {
-            var fileNames = dataObject.GetFiles();
-            if (fileNames != null)
-            {
-                foreach (var file in fileNames)
-                {
-                    _logger.Info($"Dropped file: {file}");
-                }
-            }
-        }
     }
 
     private async Task InitializeWebSocketConnection(int port)

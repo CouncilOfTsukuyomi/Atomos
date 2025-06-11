@@ -5,6 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using PenumbraModForwarder.UI.Helpers;
 using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.ViewModels;
 using PenumbraModForwarder.UI.Views;
@@ -79,7 +80,7 @@ public partial class App : Application
             
             trayIconManager.ShowTrayIcon();
         }
-
+        
         base.OnFrameworkInitializationCompleted();
     }
 }
