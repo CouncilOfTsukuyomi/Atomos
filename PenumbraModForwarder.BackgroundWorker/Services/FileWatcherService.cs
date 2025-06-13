@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using NLog;
 using PenumbraModForwarder.BackgroundWorker.Events;
 using PenumbraModForwarder.BackgroundWorker.Interfaces;
+using PenumbraModForwarder.FileMonitor.Events;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
 
@@ -20,7 +21,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly IModHandlerService _modHandlerService;
 
-    private IFileWatcher _fileWatcher;
+    private IFileWatcher? _fileWatcher;
     private bool _eventsSubscribed;
 
     // Dictionary to track pending user selections
@@ -58,12 +59,12 @@ public class FileWatcherService : IFileWatcherService, IDisposable
         var downloadPaths = _configurationService
             .ReturnConfigValue(config => config.BackgroundWorker.DownloadPath) as List<string>;
 
-        // We want to ensure distinct paths, ignoring duplicates if present
-        downloadPaths = downloadPaths?.Distinct().ToList();
+        // Ensure distinct, valid paths
+        downloadPaths = downloadPaths?.Where(Directory.Exists).Distinct().ToList();
 
         if (downloadPaths == null || downloadPaths.Count == 0)
         {
-            _logger.Warn("No download paths specified. FileWatcher will not be initialized.");
+            _logger.Warn("No valid download paths specified. FileWatcher will not be initialized.");
             return;
         }
 
@@ -76,6 +77,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
             {
                 _fileWatcher.FileMoved += OnFileMoved;
                 _fileWatcher.FilesExtracted += OnFilesExtracted;
+                _fileWatcher.ExtractionProgressChanged += OnExtractionProgressChanged;
                 _eventsSubscribed = true;
                 _logger.Debug("Event handlers attached.");
             }
@@ -86,7 +88,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
                 _logger.Debug(" - {DownloadPath}", downloadPath);
             }
 
-            await _fileWatcher.StartWatchingAsync(downloadPaths);
+            await _fileWatcher.StartWatchingAsync(downloadPaths!);
             _logger.Debug("FileWatcher started successfully.");
         }
         catch (Exception ex)
@@ -111,6 +113,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
             {
                 _fileWatcher.FileMoved -= OnFileMoved;
                 _fileWatcher.FilesExtracted -= OnFilesExtracted;
+                _fileWatcher.ExtractionProgressChanged -= OnExtractionProgressChanged;
                 _eventsSubscribed = false;
             }
 
@@ -137,14 +140,30 @@ public class FileWatcherService : IFileWatcherService, IDisposable
             _logger.Error(ex, "An error occurred in OnConfigurationChanged.");
         }
     }
+    
+    private async void OnExtractionProgressChanged(object? sender, ExtractionProgressChangedEventArgs e)
+    {
+        _logger.Info($"Extraction progress: {e.Progress}");
+        var progressMessage = WebSocketMessage.CreateProgress(
+            e.TaskId,
+            e.Progress,
+            e.Message
+        );
+
+        try
+        {
+            await _webSocketServer.BroadcastToEndpointAsync("/status", progressMessage);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to broadcast extraction progress");
+        }
+    }
+
 
     private void OnFileMoved(object? sender, FileMovedEvent e)
     {
         _logger.Info("File moved: {DestinationPath}", e.DestinationPath);
-
-        // Handle the file synchronously here
-        // because this code was originally .GetAwaiter().GetResult()
-        // in your Serilog-based example
         _modHandlerService.HandleFileAsync(e.DestinationPath).GetAwaiter().GetResult();
     }
 
@@ -158,12 +177,10 @@ public class FileWatcherService : IFileWatcherService, IDisposable
 
         if (!installAll)
         {
-            // If not installing all automatically, prompt user for selection
+            // Not installing all automatically; prompt user for selection
 
-            // Serialize the list of extracted file paths into JSON
             var extractedFilesJson = JsonConvert.SerializeObject(e.ExtractedFilePaths);
 
-            // Create a message to ask the user which files to install
             var message = new WebSocketMessage
             {
                 Type = WebSocketMessageType.Status,
@@ -173,9 +190,10 @@ public class FileWatcherService : IFileWatcherService, IDisposable
                 Message = extractedFilesJson
             };
 
+            // Send prompt to user
             _webSocketServer.BroadcastToEndpointAsync("/install", message).GetAwaiter().GetResult();
 
-            // Wait for user response
+            // Wait for user selection
             var selectedFiles = WaitForUserSelection(taskId);
 
             if (selectedFiles != null && selectedFiles.Any())
@@ -190,18 +208,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
                     var unselectedFiles = e.ExtractedFilePaths.Except(selectedFiles).ToList();
                     foreach (var unselectedFile in unselectedFiles)
                     {
-                        try
-                        {
-                            if (File.Exists(unselectedFile))
-                            {
-                                _logger.Info("Deleting unselected file: {Path}", unselectedFile);
-                                File.Delete(unselectedFile);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error(ex, "Error deleting unselected file: {Path}", unselectedFile);
-                        }
+                        TryDeleteFile(unselectedFile);
                     }
                 }
 
@@ -220,18 +227,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
                 {
                     foreach (var extractedFile in e.ExtractedFilePaths)
                     {
-                        try
-                        {
-                            if (File.Exists(extractedFile))
-                            {
-                                _logger.Info("Deleting unselected file: {Path}", extractedFile);
-                                File.Delete(extractedFile);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error(ex, "Error deleting file: {Path}", extractedFile);
-                        }
+                        TryDeleteFile(extractedFile);
                     }
                 }
 
@@ -245,7 +241,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
         }
         else
         {
-            // If InstallAll is true, process all extracted files
+            // Install all extracted files scenario
             var message = WebSocketMessage.CreateStatus(
                 taskId,
                 WebSocketMessageStatus.InProgress,
@@ -264,6 +260,22 @@ public class FileWatcherService : IFileWatcherService, IDisposable
                 $"All files from {e.ArchiveFileName} have been installed."
             );
             _webSocketServer.BroadcastToEndpointAsync("/status", completionMessage).GetAwaiter().GetResult();
+        }
+    }
+    
+    private void TryDeleteFile(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                _logger.Info("Deleting file: {Path}", filePath);
+                File.Delete(filePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error deleting file: {Path}", filePath);
         }
     }
 
@@ -296,9 +308,8 @@ public class FileWatcherService : IFileWatcherService, IDisposable
         {
             if (_pendingSelections.TryGetValue(e.Message.TaskId, out var tcs))
             {
-                // Deserialize the user's selection
                 var selectedFiles = JsonConvert.DeserializeObject<List<string>>(e.Message.Message);
-                tcs.SetResult(selectedFiles);
+                tcs.SetResult(selectedFiles ?? new List<string>());
             }
             else
             {
@@ -312,8 +323,6 @@ public class FileWatcherService : IFileWatcherService, IDisposable
         DisposeFileWatcher();
 
         _configurationService.ConfigurationChanged -= OnConfigurationChanged;
-
-        // Unsubscribe from WebSocket messages
         _webSocketServer.MessageReceived -= OnWebSocketMessageReceived;
     }
 }

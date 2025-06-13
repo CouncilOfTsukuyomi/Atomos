@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using CommonLib.Consts;
 using CommonLib.Interfaces;
 using NLog;
+using PenumbraModForwarder.FileMonitor.Events;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
 using SevenZipExtractor;
@@ -13,13 +14,15 @@ namespace PenumbraModForwarder.FileMonitor.Services;
 public sealed class FileProcessor : IFileProcessor
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
     private static readonly Regex PreDtRegex = new(@"(?i)pre\-?dt", RegexOptions.Compiled);
 
     private readonly IFileStorage _fileStorage;
     private readonly IConfigurationService _configurationService;
-    
     private readonly object _extractionLock = new();
+
+    public event EventHandler<FileMovedEvent>? FileMoved;
+    public event EventHandler<FilesExtractedEventArgs>? FilesExtracted;
+    public event EventHandler<ExtractionProgressChangedEventArgs>? ExtractionProgressChanged;
 
     public FileProcessor(IFileStorage fileStorage, IConfigurationService configurationService)
     {
@@ -39,28 +42,21 @@ public sealed class FileProcessor : IFileProcessor
         }
         catch (IOException)
         {
-            // File is locked by another process
             return false;
         }
     }
-
-    public async Task ProcessFileAsync(
-        string filePath,
-        CancellationToken cancellationToken,
-        EventHandler<FileMovedEvent> onFileMoved,
-        EventHandler<FilesExtractedEventArgs> onFilesExtracted)
+    
+    public async Task ProcessFileAsync(string filePath, CancellationToken cancellationToken, string taskId)
     {
         var extension = Path.GetExtension(filePath)?.ToLowerInvariant();
         var relocateFiles = (bool)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.RelocateFiles);
 
         if (FileExtensionsConsts.ModFileTypes.Contains(extension))
         {
-            // Moves the file when RelocateFiles is true; otherwise leaves it in place
             var finalFilePath = relocateFiles ? MoveFile(filePath) : filePath;
             var fileName = Path.GetFileName(finalFilePath);
 
-            onFileMoved?.Invoke(
-                this,
+            FileMoved?.Invoke(this,
                 new FileMovedEvent(
                     fileName,
                     finalFilePath,
@@ -70,12 +66,10 @@ public sealed class FileProcessor : IFileProcessor
         }
         else if (FileExtensionsConsts.ArchiveFileTypes.Contains(extension))
         {
-            // Check if the archive contains a mod file
             if (await ArchiveContainsModFileAsync(filePath, cancellationToken))
             {
-                // Moves the archive file when RelocateFiles is true; otherwise leaves it in place
                 var finalFilePath = relocateFiles ? MoveFile(filePath) : filePath;
-                await ProcessArchiveFileAsync(finalFilePath, cancellationToken, onFilesExtracted);
+                await ProcessArchiveFileAsync(finalFilePath, cancellationToken, taskId); // Use upstream taskId!
             }
             else
             {
@@ -101,36 +95,28 @@ public sealed class FileProcessor : IFileProcessor
                 var fileNameNoExtension = Path.GetFileNameWithoutExtension(filePath);
                 var searchPattern = fileNameNoExtension + ".*.part";
                 var partFiles = Directory.GetFiles(directory, searchPattern, SearchOption.TopDirectoryOnly);
-
                 if (partFiles.Length > 0)
                 {
                     _logger.Debug("Detected part files for {FilePath}. Still downloading.", filePath);
                     return false;
                 }
             }
-
             // Check file size stability
             const int maxChecks = 3;
             long lastSize = -1;
-
             for (int i = 0; i < maxChecks; i++)
             {
                 var fileInfo = new FileInfo(filePath);
                 var currentSize = fileInfo.Length;
-
-                // If size is unchanged between checks, assume download complete
                 if (lastSize == currentSize && currentSize != 0)
                     return true;
-
                 lastSize = currentSize;
                 Thread.Sleep(1000);
             }
-
             return false;
         }
         catch (IOException)
         {
-            // Either file is locked or there's an issue reading
             return false;
         }
         catch (Exception ex)
@@ -176,28 +162,22 @@ public sealed class FileProcessor : IFileProcessor
         var modPath = (string)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.ModFolderPath);
         var fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
         var destinationFolder = Path.Combine(modPath, fileNameWithoutExt);
-
-        // Prepare destination folder
         _fileStorage.CreateDirectory(destinationFolder);
-
         var destinationPath = Path.Combine(destinationFolder, Path.GetFileName(filePath));
         _fileStorage.CopyFile(filePath, destinationPath, overwrite: true);
-
-        // Clean up original file
         DeleteFileWithRetry(filePath);
-
         _logger.Info("File moved from {SourcePath} to {DestinationPath}", filePath, destinationPath);
         return destinationPath;
     }
 
+    // Receives the upstream taskId and re-uses it for all progress events
     private async Task ProcessArchiveFileAsync(
         string archivePath,
         CancellationToken cancellationToken,
-        EventHandler<FilesExtractedEventArgs> onFilesExtracted)
+        string taskId)
     {
         var extractedFiles = new ConcurrentBag<string>();
         var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-        var taskIdCounter = 0;
 
         try
         {
@@ -210,27 +190,41 @@ public sealed class FileProcessor : IFileProcessor
                 if (!modEntries.Any())
                 {
                     _logger.Info("No mod files found in the archive: {ArchiveFileName}", Path.GetFileName(archivePath));
+                    ExtractionProgressChanged?.Invoke(
+                        this,
+                        new ExtractionProgressChangedEventArgs(
+                            taskId,
+                            "No mod files found to extract.",
+                            100)
+                    );
                     return;
                 }
 
+                ExtractionProgressChanged?.Invoke(
+                    this,
+                    new ExtractionProgressChangedEventArgs(
+                        taskId,
+                        $"Starting extraction of {modEntries.Count} file(s)...", 0)
+                );
+
+                var totalFiles = modEntries.Count;
+                int extractedCount = 0;
                 var semaphore = new SemaphoreSlim(Environment.ProcessorCount * 2);
                 var extractionStartTime = DateTime.Now;
-                
+
                 await Parallel.ForEachAsync(modEntries, options, async (entry, token) =>
                 {
                     await semaphore.WaitAsync(token);
                     try
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-
-                        var taskId = Interlocked.Increment(ref taskIdCounter);
                         var destinationPath = Path.Combine(archiveDirectory, entry.FileName);
                         var destinationDirectory = Path.GetDirectoryName(destinationPath);
                         if (destinationDirectory != null)
                             _fileStorage.CreateDirectory(destinationDirectory);
 
                         var stopwatch = Stopwatch.StartNew();
-                        _logger.Info("Task {TaskId}: Starting extraction of {FileName}", taskId, entry.FileName);
+                        _logger.Info("Starting extraction of {FileName}", entry.FileName);
 
                         try
                         {
@@ -238,11 +232,9 @@ public sealed class FileProcessor : IFileProcessor
                             {
                                 entry.Extract(destinationPath);
                             }
-
                             stopwatch.Stop();
                             _logger.Info(
-                                "Task {TaskId}: Completed extraction of {FileName} in {Elapsed:0.000} seconds to {DestPath}",
-                                taskId,
+                                "Completed extraction of {FileName} in {Elapsed:0.000} seconds to {DestPath}",
                                 entry.FileName,
                                 stopwatch.Elapsed.TotalSeconds,
                                 destinationPath
@@ -253,13 +245,22 @@ public sealed class FileProcessor : IFileProcessor
                         {
                             stopwatch.Stop();
                             _logger.Error(ex, 
-                                "Task {TaskId}: Failed to extract {FileName} after {Elapsed:0.000} seconds",
-                                taskId,
+                                "Failed to extract {FileName} after {Elapsed:0.000} seconds",
                                 entry.FileName,
                                 stopwatch.Elapsed.TotalSeconds
                             );
                             throw;
                         }
+
+                        var done = Interlocked.Increment(ref extractedCount);
+                        int percent = (int)((double)done / totalFiles * 100);
+                        ExtractionProgressChanged?.Invoke(
+                            this,
+                            new ExtractionProgressChangedEventArgs(
+                                taskId, // Use same taskId for every update
+                                $"Extracted {done} of {totalFiles} file(s)...",
+                                percent)
+                        );
                     }
                     finally
                     {
@@ -275,13 +276,21 @@ public sealed class FileProcessor : IFileProcessor
                     Path.GetFileName(archivePath),
                     totalExtractionTime.TotalSeconds
                 );
+
+                ExtractionProgressChanged?.Invoke(
+                    this,
+                    new ExtractionProgressChangedEventArgs(
+                        taskId,
+                        "Extraction complete.",
+                        100)
+                );
             }
 
             await Task.Delay(100, cancellationToken);
 
             if (extractedFiles.Any())
             {
-                onFilesExtracted?.Invoke(
+                FilesExtracted?.Invoke(
                     this,
                     new FilesExtractedEventArgs(Path.GetFileName(archivePath), extractedFiles.ToList())
                 );
@@ -339,7 +348,6 @@ public sealed class FileProcessor : IFileProcessor
             }
         }
 
-        // Final attempt
         try
         {
             _fileStorage.Delete(filePath);
@@ -370,7 +378,6 @@ public sealed class FileProcessor : IFileProcessor
                         return false;
                     }
                 }
-
                 return true;
             })
             .ToList();

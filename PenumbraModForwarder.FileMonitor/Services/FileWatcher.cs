@@ -1,5 +1,6 @@
 ﻿using CommonLib.Consts;
 using NLog;
+using PenumbraModForwarder.FileMonitor.Events;
 using PenumbraModForwarder.FileMonitor.Interfaces;
 using PenumbraModForwarder.FileMonitor.Models;
 
@@ -11,8 +12,15 @@ public sealed class FileWatcher : IFileWatcher, IDisposable
 
     private readonly List<FileSystemWatcher> _watchers;
     private readonly IFileQueueProcessor _fileQueueProcessor;
+    private readonly IFileProcessor _fileProcessor;
     private bool _disposed;
 
+    public event EventHandler<ExtractionProgressChangedEventArgs> ExtractionProgressChanged
+    {
+        add => _fileProcessor.ExtractionProgressChanged += value;
+        remove => _fileProcessor.ExtractionProgressChanged -= value;
+    }
+    
     public event EventHandler<FileMovedEvent> FileMoved
     {
         add => _fileQueueProcessor.FileMoved += value;
@@ -25,15 +33,15 @@ public sealed class FileWatcher : IFileWatcher, IDisposable
         remove => _fileQueueProcessor.FilesExtracted -= value;
     }
 
-    public FileWatcher(IFileQueueProcessor fileQueueProcessor)
+    public FileWatcher(IFileQueueProcessor fileQueueProcessor, IFileProcessor fileProcessor)
     {
         _watchers = new List<FileSystemWatcher>();
         _fileQueueProcessor = fileQueueProcessor;
+        _fileProcessor = fileProcessor;
     }
 
     public async Task StartWatchingAsync(IEnumerable<string> paths)
     {
-        // Load any saved state from disk
         await _fileQueueProcessor.LoadStateAsync();
 
         var distinctPaths = paths.Distinct().ToList();
@@ -52,7 +60,6 @@ public sealed class FileWatcher : IFileWatcher, IDisposable
             _logger.Info("Started watching directory: {Path}", path);
         }
 
-        // Start processing the queue in the background
         _fileQueueProcessor.StartProcessing();
     }
 
@@ -64,13 +71,11 @@ public sealed class FileWatcher : IFileWatcher, IDisposable
             EnableRaisingEvents = true
         };
 
-        // Add filters for allowed extensions
         foreach (var extension in FileExtensionsConsts.AllowedExtensions)
         {
             watcher.Filters.Add($"*{extension}");
         }
 
-        // Add partial extension filter for incomplete downloads, etc.
         watcher.Filters.Add("*.opdownload");
 
         watcher.Created += OnCreated;
@@ -112,6 +117,10 @@ public sealed class FileWatcher : IFileWatcher, IDisposable
             }
 
             _watchers.Clear();
+
+            if (_fileQueueProcessor is IDisposable d)
+                d.Dispose();
+
             _logger.Info("All watchers disposed.");
         }
 

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 using CommonLib.Interfaces;
 using NLog;
 using PenumbraModForwarder.UI.Extensions;
@@ -15,6 +16,10 @@ namespace PenumbraModForwarder.UI.Views
             InitializeComponent();
         }
         
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
+        }
         
         public MainWindow(IConfigurationService configuration)
         {

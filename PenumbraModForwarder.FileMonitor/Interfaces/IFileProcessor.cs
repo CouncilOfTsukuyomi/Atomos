@@ -1,4 +1,5 @@
-﻿using PenumbraModForwarder.FileMonitor.Models;
+﻿using PenumbraModForwarder.FileMonitor.Events;
+using PenumbraModForwarder.FileMonitor.Models;
 
 namespace PenumbraModForwarder.FileMonitor.Interfaces;
 
@@ -9,7 +10,10 @@ public interface IFileProcessor
     Task ProcessFileAsync(
         string filePath,
         CancellationToken cancellationToken,
-        EventHandler<FileMovedEvent> onFileMoved,
-        EventHandler<FilesExtractedEventArgs> onFilesExtracted
+        string taskId
     );
+    
+    event EventHandler<FileMovedEvent>? FileMoved;
+    event EventHandler<FilesExtractedEventArgs>? FilesExtracted;
+    event EventHandler<ExtractionProgressChangedEventArgs>? ExtractionProgressChanged;
 }

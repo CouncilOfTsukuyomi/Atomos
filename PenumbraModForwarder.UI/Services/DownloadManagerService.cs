@@ -46,7 +46,8 @@ public class DownloadManagerService : IDownloadManagerService
         {
             _logger.Warn("Unsupported domain for download: {Url}", mod.ModUrl);
             await _notificationService.ShowNotification(
-                $"Unsupported domain '{modUri.Host}'. Only https://www.xivmodarchive.com/ is supported.",
+                "Unsupported domain",
+                $"'{modUri.Host}' is not supported. Only https://www.xivmodarchive.com/ is supported.",
                 SoundType.GeneralChime
             );
             return;
@@ -66,13 +67,18 @@ public class DownloadManagerService : IDownloadManagerService
         {
             _logger.Warn("Unsupported download link for download: {Url}", directLink);
             await _notificationService.ShowNotification(
-                $"Unsupported download link '{directUri.Host}'. Only https://www.xivmodarchive.com/ is supported.",
+                "Unsupported download link",
+                $"'{directUri.Host}' is not supported. Only https://www.xivmodarchive.com/ is supported.",
                 SoundType.GeneralChime
             );
             return;
         }
 
-        await _notificationService.ShowNotification($"Downloading file: {mod.Name}", SoundType.GeneralChime);
+        await _notificationService.ShowNotification(
+            "Download started",
+            $"Downloading file: {mod.Name}",
+            SoundType.GeneralChime
+        );
 
         var configuredPaths = _configurationService.ReturnConfigValue(cfg => cfg.BackgroundWorker.DownloadPath)
             as System.Collections.Generic.List<string>;

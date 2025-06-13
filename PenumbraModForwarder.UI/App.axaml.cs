@@ -1,21 +1,17 @@
 using System;
-using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using PenumbraModForwarder.UI.Helpers;
 using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.ViewModels;
 using PenumbraModForwarder.UI.Views;
 
 namespace PenumbraModForwarder.UI;
 
-public partial class App : Application
+public partial class App : Avalonia.Application
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
     private readonly IServiceProvider _serviceProvider;
 
     public App()
@@ -63,13 +59,8 @@ public partial class App : Application
                 int port = int.Parse(args[1]);
                 _logger.Info("Listening on port {Port}", port);
 
-                // Use ActivatorUtilities to create the MainWindow with injected IConfigurationService
                 var mainWindow = ActivatorUtilities.CreateInstance<MainWindow>(_serviceProvider);
-
-                // Then separately create the MainWindowViewModel, injecting the port argument
                 var mainViewModel = ActivatorUtilities.CreateInstance<MainWindowViewModel>(_serviceProvider, port);
-
-                // Finally, assign the view model
                 mainWindow.DataContext = mainViewModel;
 
                 desktop.MainWindow = mainWindow;
@@ -77,7 +68,6 @@ public partial class App : Application
             
             var trayIconManager = _serviceProvider.GetRequiredService<ITrayIconManager>();
             trayIconManager.InitializeTrayIcon();
-            
             trayIconManager.ShowTrayIcon();
         }
         

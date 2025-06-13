@@ -46,8 +46,6 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         _configurationService = configurationService;
             
         _logger.Debug("WebSocketClient instance created using NLog.");
-
-        // Assign a unique ID to help identify outgoing messages
         _clientId = Guid.NewGuid().ToString("N");
     }
 
@@ -70,8 +68,10 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                 _retryCount++;
                 _logger.Error(ex, "Connection loop error. Retry attempt: {RetryCount}", _retryCount);
 
+                // Fixed: Argument order
                 await _notificationService.ShowNotification(
-                    $"Connection failed. Retrying in 5 seconds... (Attempt {_retryCount})",
+                    "Connection Failed", 
+                    $"Retrying in 5 seconds... (Attempt {_retryCount})",
                     SoundType.GeneralChime,
                     5
                 );
@@ -107,7 +107,10 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                     if (_isReconnecting)
                     {
                         _isReconnecting = false;
-                        await _notificationService.ShowNotification("Connection restored successfully");
+                        await _notificationService.ShowNotification(
+                            "Connection Restored", 
+                            "Connection restored successfully."
+                        );
                     }
                 }
             }
@@ -118,6 +121,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                     _logger.Error(ex, "WebSocket connection failed for endpoint {Endpoint}. Attempting to reconnect...", endpoint);
 
                     await _notificationService.ShowNotification(
+                        "Connection Lost",
                         $"Connection to {endpoint} lost. Attempting to reconnect...",
                         SoundType.GeneralChime,
                         5
@@ -142,12 +146,10 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                 var json = JsonConvert.SerializeObject(message);
                 var bytes = Encoding.UTF8.GetBytes(json);
 
-                // Retrieve or create the semaphore for the specified webSocket.
                 var sem = SocketLockMap.GetOrAdd(webSocket, _ => new SemaphoreSlim(1, 1));
 
                 try
                 {
-                    // Wait on the semaphore to ensure only one SendAsync per socket at a time
                     await sem.WaitAsync(_cts.Token);
 
                     await webSocket.SendAsync(
@@ -197,7 +199,10 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         catch (Exception ex)
         {
             _logger.Error(ex, "Error during WebSocket disconnect");
-            await _notificationService.ShowNotification("Error disconnecting WebSocket connection");
+            await _notificationService.ShowNotification(
+                "Disconnect Error",
+                "Error disconnecting WebSocket connection."
+            );
         }
     }
 
@@ -231,7 +236,6 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                     var messageJson = messageBuilder.ToString();
                     var message = JsonConvert.DeserializeObject<WebSocketMessage>(messageJson);
 
-                    // Ignore messages that match our own client ID
                     if (message?.ClientId == _clientId)
                     {
                         _logger.Debug("Ignored message from this client: {MessageJson}", messageJson);
@@ -272,6 +276,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
             if (!_isReconnecting)
             {
                 await _notificationService.ShowNotification(
+                    "Connection Lost",
                     $"Lost connection to {endpoint}. Attempting to reconnect...",
                     SoundType.GeneralChime
                 );
@@ -346,11 +351,20 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         {
             if (message.Progress > 0)
             {
-                await _notificationService.UpdateProgress(message.TaskId, message.Message, message.Progress);
+                await _notificationService.UpdateProgress(
+                    message.TaskId,
+                    message.Title ?? "Error",
+                    message.Message ?? "",
+                    message.Progress
+                );
             }
             else
             {
-                await _notificationService.ShowErrorNotification(message.Message, SoundType.GeneralChime);
+                await _notificationService.ShowErrorNotification(
+                    "Error",
+                    message.Message ?? string.Empty,
+                    SoundType.GeneralChime
+                );
             }
         }
         else
@@ -365,23 +379,53 @@ public class WebSocketClient : IWebSocketClient, IDisposable
 
     private async Task HandleStatusMessageAsync(WebSocketMessage message)
     {
+        if (message.Type == CustomWebSocketMessageType.Progress)
+        {
+            _logger.Info("Progress update received: {Progress}% - {Message}", message.Progress, message.Message);
+
+            await _notificationService.UpdateProgress(
+                message.TaskId,
+                message.Title,
+                message.Message,
+                message.Progress
+            );
+            return;
+        }
+
         if (message.Type == CustomWebSocketMessageType.Status &&
             (message.Status?.Equals("installed_file", StringComparison.OrdinalIgnoreCase) == true ||
-             message.Status?.Equals("Installed File", StringComparison.OrdinalIgnoreCase) == true))
+             message.Status?.Equals("Installed File", StringComparison.OrdinalIgnoreCase) == true ||
+             message.Status?.Equals("Completed", StringComparison.OrdinalIgnoreCase) == true))
         {
-            _logger.Info("Detected 'installed_file' status on /status endpoint. Invoking ModInstalled event.");
+            _logger.Info("Detected install completion on /status endpoint. Invoking ModInstalled event.");
 
-            await _notificationService.ShowNotification(message.Message, SoundType.GeneralChime);
-            ModInstalled?.Invoke(this, EventArgs.Empty);
-        }
-        else
-        {
-            _logger.Warn(
-                "Unhandled message on /status endpoint: Type={Type}, Status={Status}",
-                message.Type,
-                message.Status
+            await _notificationService.ShowNotification(
+                "Mod Installed",
+                message.Message,
+                SoundType.GeneralChime
             );
+            ModInstalled?.Invoke(this, EventArgs.Empty);
+            return;
         }
+
+        if (message.Type == CustomWebSocketMessageType.Status &&
+            message.Status?.Equals("Failed", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            _logger.Info("Detected install failure on /status endpoint. Showing error.");
+
+            await _notificationService.ShowErrorNotification(
+                "Install Failed",
+                message.Message,
+                SoundType.GeneralChime
+            );
+            return;
+        }
+
+        _logger.Warn(
+            "Unhandled message on /status endpoint: Type={Type}, Status={Status}",
+            message.Type,
+            message.Status
+        );
     }
 
     private async Task HandleGeneralMessageAsync(WebSocketMessage message, string endpoint)
@@ -391,11 +435,20 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         {
             if (message.Progress > 0)
             {
-                await _notificationService.UpdateProgress(message.TaskId, message.Message, message.Progress);
+                await _notificationService.UpdateProgress(
+                    message.TaskId,
+                    message.Title,
+                    message.Message,
+                    message.Progress
+                );
             }
             else
             {
-                await _notificationService.ShowNotification(message.Message, SoundType.GeneralChime);
+                await _notificationService.ShowNotification(
+                    "Notification",
+                    message.Message,
+                    SoundType.GeneralChime
+                );
             }
         }
     }

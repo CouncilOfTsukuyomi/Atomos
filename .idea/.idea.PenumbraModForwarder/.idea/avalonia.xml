@@ -33,6 +33,8 @@
         <entry key="PenumbraModForwarder.UI/Views/HomeView.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/Views/InstallView.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/Views/MainWindow.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
+        <entry key="PenumbraModForwarder.UI/Views/ModDetails.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
+        <entry key="PenumbraModForwarder.UI/Views/ModDetailsView.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/Views/ModsView.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/Views/SentryPromptView.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/Views/Settings/SettingsView.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />

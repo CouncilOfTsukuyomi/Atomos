@@ -1,6 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+using System;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
@@ -8,6 +10,7 @@ using NLog;
 using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.Models;
 using ReactiveUI;
+using Avalonia.Threading;
 
 namespace PenumbraModForwarder.UI.Services;
 
@@ -15,15 +18,19 @@ public class NotificationService : ReactiveObject, INotificationService
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    private readonly object _lock = new();
-    private readonly Dictionary<string, Notification> _progressNotifications = new();
+    private readonly ConcurrentDictionary<string, (Notification notification, DateTime lastUpdated, CancellationTokenSource cancellation)> _progressNotifications = new();
+    private readonly SemaphoreSlim _notificationSemaphore = new(1, 1);
 
-    private const int FadeOutDuration = 500;
+    private const int FadeOutDuration = 3000;
     private const int UpdateInterval = 100;
+    private const int MaxNotifications = 3;
+    private const int ProgressNotificationTimeoutMs = 3000;
+    private const int StaleTimeoutMs = 15000;
+    private const int AnimationUpdateIntervalMs = 16; // ~60fps
 
     private readonly IConfigurationService _configurationService;
     private readonly ISoundManagerService _soundManagerService;
-        
+
     public ObservableCollection<Notification> Notifications { get; } = new();
 
     public NotificationService(
@@ -33,213 +40,253 @@ public class NotificationService : ReactiveObject, INotificationService
         _configurationService = configurationService;
         _soundManagerService = soundManagerService;
     }
-        
-    public async Task ShowNotification(string message, SoundType? soundType = null, int durationSeconds = 4)
+
+    public async Task ShowNotification(string title, string message, SoundType? soundType = null, int durationSeconds = 4)
     {
-        if (!(bool)_configurationService.ReturnConfigValue(config => config.UI.NotificationEnabled))
-            return;
+        if (!IsNotificationEnabled()) return;
+
+        var notification = CreateNotification(title, "Info", message, showProgress: true);
             
-        if (soundType.HasValue)
-        {
-            _ = _soundManagerService.PlaySoundAsync(soundType.Value);
-        }
+        await AddNotificationAsync(notification);
+        await PlaySoundIfRequested(soundType);
             
-        var notification = new Notification(
-            title: "General",
-            status: "Info",
-            message: message,
-            notificationService: this,
-            showProgress: true
-        );
-
-        lock (_lock)
-        {
-            // Limit to 3 visible notifications at a time.
-            if (Notifications.Count >= 3)
-            {
-                var oldestNotification = Notifications[0];
-                oldestNotification.IsVisible = false;
-
-                Task.Delay(FadeOutDuration).ContinueWith(_ =>
-                {
-                    lock (_lock)
-                    {
-                        if (Notifications.Count > 0)
-                            Notifications.RemoveAt(0);
-                    }
-                });
-            }
-
-            notification.IsVisible = true;
-            notification.Progress = 0;
-            Notifications.Add(notification);
-        }
-
-        var elapsed = 0;
-        var totalMs = durationSeconds * 1000;
-
-        // Update notification progress until time has elapsed or user closes.
-        while (elapsed < totalMs && notification.IsVisible)
-        {
-            await Task.Delay(UpdateInterval);
-            elapsed += UpdateInterval;
-            notification.Progress = (int)((elapsed / (float)totalMs) * 100);
-        }
-
-        await RemoveNotification(notification);
+        _ = AnimateProgressAndRemoveAsync(notification, durationSeconds);
     }
-        
-    public async Task ShowErrorNotification(
-        string errorMessage,
-        SoundType? soundType = null,
-        int durationSeconds = 6)
+
+    public async Task ShowErrorNotification(string title, string message, SoundType? soundType = null, int durationSeconds = 6)
     {
-        if (!(bool)_configurationService.ReturnConfigValue(config => config.UI.NotificationEnabled))
-            return;
+        if (!IsNotificationEnabled()) return;
 
-        // Parse the provided error message into logLevel, applicationName, messageBody.
-        var logLevel = "ERROR";
-        var applicationName = "PenumbraModForwarder";
-        var messageBody = errorMessage;
+        var notification = CreateNotification(title, "Error", message);
+            
+        await AddNotificationAsync(notification);
+        await PlaySoundIfRequested(soundType);
+            
+        _ = RemoveNotificationAfterDelayAsync(notification, durationSeconds);
+    }
 
+    public async Task UpdateProgress(string taskId, string title, string status, int progress)
+    {
+        if (!IsNotificationEnabled()) return;
+
+        _logger.Debug("Updating progress for {TaskId} - {Title} to {Status}: Progress: {Progress}",
+            taskId, title, status, progress);
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var isNew = !_progressNotifications.ContainsKey(taskId);
+                
+            if (isNew)
+            {
+                var notification = CreateProgressNotification(title, status, progress, taskId);
+                var cancellationToken = new CancellationTokenSource();
+                    
+                _progressNotifications[taskId] = (notification, DateTime.UtcNow, cancellationToken);
+                    
+                EnsureRoomForNotificationSync();
+                Notifications.Add(notification);
+                    
+                _ = MonitorProgressNotificationAsync(taskId, cancellationToken.Token);
+            }
+            else if (_progressNotifications.TryGetValue(taskId, out var existing))
+            {
+                existing.notification.Progress = progress;
+                existing.notification.ProgressText = status;
+                _progressNotifications[taskId] = (existing.notification, DateTime.UtcNow, existing.cancellation);
+            }
+        });
+    }
+
+    private bool IsNotificationEnabled() =>
+        (bool)_configurationService.ReturnConfigValue(config => config.UI.NotificationEnabled);
+
+    // FIXED: Pass 'this' as the notification service parameter
+    private Notification CreateNotification(string title, string status, string message, bool showProgress = false, string taskId = null) =>
+        new(title, status, message, this, showProgress, taskId) // Added 'this' parameter
+        {
+            IsVisible = true,
+            Progress = 0,
+            AnimationState = "fade-in" // Set initial animation state
+        };
+
+    // FIXED: Pass 'this' as the notification service parameter
+    private Notification CreateProgressNotification(string title, string status, int progress, string taskId) =>
+        new(title, "In Progress", "Task in progress...", this, true, taskId) // Added 'this' parameter
+        {
+            IsVisible = true,
+            Progress = progress,
+            ProgressText = status,
+            AnimationState = "fade-in" // Set initial animation state
+        };
+
+    private async Task AddNotificationAsync(Notification notification)
+    {
+        await _notificationSemaphore.WaitAsync();
         try
         {
-            var segments = errorMessage.Split('|');
-            if (segments.Length >= 3)
-            {
-                logLevel = segments[0].Trim().ToUpperInvariant();
-                applicationName = segments[1].Trim();
-                messageBody = string.Join("|", segments, 2, segments.Length - 2).Trim();
-            }
+            await EnsureRoomForNotificationAsync();
+            await Dispatcher.UIThread.InvokeAsync(() => Notifications.Add(notification));
         }
-        catch (Exception parseEx)
+        finally
         {
-            _logger.Warn(parseEx, "Failed to parse error message. Using default formatting.");
+            _notificationSemaphore.Release();
         }
-            
+    }
+
+    private async Task PlaySoundIfRequested(SoundType? soundType)
+    {
         if (soundType.HasValue)
         {
-            _ = _soundManagerService.PlaySoundAsync(soundType.Value);
-        }
-            
-        var notification = new Notification(
-            title: applicationName,
-            status: logLevel,
-            message: messageBody,
-            notificationService: this,
-            showProgress: true
-        );
-
-        lock (_lock)
-        {
-            // Limit to 3 visible notifications at a time.
-            if (Notifications.Count >= 3)
+            try
             {
-                var oldestNotification = Notifications[0];
-                oldestNotification.IsVisible = false;
-
-                Task.Delay(FadeOutDuration).ContinueWith(_ =>
-                {
-                    lock (_lock)
-                    {
-                        if (Notifications.Count > 0)
-                            Notifications.RemoveAt(0);
-                    }
-                });
+                await _soundManagerService.PlaySoundAsync(soundType.Value);
             }
-
-            notification.IsVisible = true;
-            notification.Progress = 0;
-            Notifications.Add(notification);
-        }
-
-        var elapsed = 0;
-        var totalMs = durationSeconds * 1000;
-
-        // Track how long the notification remains.
-        while (elapsed < totalMs && notification.IsVisible)
-        {
-            await Task.Delay(UpdateInterval);
-            elapsed += UpdateInterval;
-            notification.Progress = (int)((elapsed / (float)totalMs) * 100);
-        }
-
-        await RemoveNotification(notification);
-    }
-        
-    public async Task UpdateProgress(string title, string status, int progress)
-    {
-        if (!(bool)_configurationService.ReturnConfigValue(config => config.UI.NotificationEnabled))
-            return;
-
-        _logger.Debug("Updating progress for {Title} to {Status}: Progress: {Progress}",
-            title, status, progress);
-
-        lock (_lock)
-        {
-            // Check if we have a notification for this key.
-            if (!_progressNotifications.ContainsKey(title))
+            catch (Exception ex)
             {
-                // Remove the oldest if we have 3 visible
-                if (Notifications.Count >= 3)
+                _logger.Warn(ex, "Failed to play notification sound");
+            }
+        }
+    }
+
+    private async Task AnimateProgressAndRemoveAsync(Notification notification, int durationSeconds)
+    {
+        try
+        {
+            var startTime = DateTime.UtcNow;
+            var totalDurationMs = durationSeconds * 1000;
+
+            while (true)
+            {
+                var elapsed = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                if (elapsed >= totalDurationMs)
                 {
-                    var oldestNotification = Notifications[0];
-                    oldestNotification.IsVisible = false;
-                    Task.Delay(FadeOutDuration).ContinueWith(_ =>
-                    {
-                        lock (_lock)
-                        {
-                            if (Notifications.Count > 0)
-                                Notifications.RemoveAt(0);
-                        }
-                    });
+                    await Dispatcher.UIThread.InvokeAsync(() => notification.Progress = 100);
+                    break;
                 }
 
-                var notification = new Notification(
-                    title: title,
-                    status: "In Progress",
-                    message: status,
-                    notificationService: this,
-                    showProgress: true
-                )
-                {
-                    IsVisible = true
-                };
+                var progressPercent = Math.Min(100, (elapsed / totalDurationMs) * 100);
+                await Dispatcher.UIThread.InvokeAsync(() => notification.Progress = (int)Math.Round(progressPercent));
 
-                _progressNotifications[title] = notification;
-                Notifications.Add(notification);
+                await Task.Delay(AnimationUpdateIntervalMs);
             }
 
-            var currentNotification = _progressNotifications[title];
-            currentNotification.Progress = progress;
-            currentNotification.ProgressText = status;
-
-            // If we've hit 100% progress, fade out the notification
-            if (progress >= 100)
-            {
-                currentNotification.IsVisible = false;
-                Task.Delay(FadeOutDuration).ContinueWith(_ =>
-                {
-                    lock (_lock)
-                    {
-                        if (Notifications.Contains(currentNotification))
-                            Notifications.Remove(currentNotification);
-
-                        _progressNotifications.Remove(title);
-                    }
-                });
-            }
+            await RemoveNotificationAsync(notification);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error in progress animation for notification");
         }
     }
-        
-    public async Task RemoveNotification(Notification notification)
-    {
-        notification.IsVisible = false;
-        await Task.Delay(FadeOutDuration);
 
-        lock (_lock)
+    private async Task RemoveNotificationAfterDelayAsync(Notification notification, int durationSeconds)
+    {
+        await Task.Delay(durationSeconds * 1000);
+        await RemoveNotificationAsync(notification);
+    }
+
+    private async Task MonitorProgressNotificationAsync(string taskId, CancellationToken cancellationToken)
+    {
+        try
         {
-            Notifications.Remove(notification);
+            var removedAfterComplete = false;
+            DateTime? completedAt = null;
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(UpdateInterval, cancellationToken);
+
+                if (!_progressNotifications.TryGetValue(taskId, out var progressData))
+                    return;
+
+                var (notification, lastUpdated, _) = progressData;
+
+                // Check for stale timeout
+                if ((DateTime.UtcNow - lastUpdated).TotalMilliseconds >= StaleTimeoutMs)
+                {
+                    RemoveProgressNotification(taskId);
+                    return;
+                }
+
+                // Check for completion
+                if (notification.Progress >= 100)
+                {
+                    if (!removedAfterComplete)
+                    {
+                        removedAfterComplete = true;
+                        completedAt = DateTime.UtcNow;
+                    }
+                    else if ((DateTime.UtcNow - completedAt.Value).TotalMilliseconds >= ProgressNotificationTimeoutMs)
+                    {
+                        RemoveProgressNotification(taskId);
+                        return;
+                    }
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when cancellation is requested
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error monitoring progress notification for task {TaskId}", taskId);
+        }
+    }
+
+    private void RemoveProgressNotification(string taskId)
+    {
+        if (_progressNotifications.TryRemove(taskId, out var progressData))
+        {
+            progressData.cancellation.Cancel();
+            progressData.cancellation.Dispose();
+                
+            _ = RemoveNotificationAsync(progressData.notification);
+        }
+    }
+
+    public async Task RemoveNotificationAsync(Notification notification)
+    {
+        try
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => notification.AnimationState = "fade-out");
+            await Task.Delay(500);
+            await Dispatcher.UIThread.InvokeAsync(() => Notifications.Remove(notification));
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error removing notification");
+        }
+    }
+
+    private async Task EnsureRoomForNotificationAsync()
+    {
+        if (Notifications.Count >= MaxNotifications)
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                if (Notifications.Count > 0)
+                {
+                    var oldestNotification = Notifications[0];
+                    oldestNotification.AnimationState = "fade-out";
+                    await Task.Delay(500);
+                    Notifications.Remove(oldestNotification);
+                }
+            });
+        }
+    }
+
+    private void EnsureRoomForNotificationSync()
+    {
+        if (Notifications.Count >= MaxNotifications && Notifications.Count > 0)
+        {
+            var oldestNotification = Notifications[0];
+            oldestNotification.AnimationState = "fade-out";
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500);
+                await Dispatcher.UIThread.InvokeAsync(() => Notifications.Remove(oldestNotification));
+            });
         }
     }
 }

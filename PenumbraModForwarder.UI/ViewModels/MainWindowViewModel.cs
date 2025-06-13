@@ -141,7 +141,10 @@ public class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to initialize WebSocket connection");
-            await _notificationService.ShowNotification("Failed to connect to background service");
+            await _notificationService.ShowNotification(
+                "Connection error",
+                "Failed to connect to background service."
+            );
         }
     }
 }

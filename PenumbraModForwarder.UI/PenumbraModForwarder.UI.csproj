@@ -15,10 +15,10 @@
         <None Remove="Animations\Loading.gif" />
         <AvaloniaResource Include="Animations\LoadingAnimation.gif" />
         <None Include="..\SharedResources\Assets\Icons\ico\Purple_arrow_cat_icon.ico">
-          <Link>Purple_arrow_cat_icon.ico</Link>
+            <Link>Purple_arrow_cat_icon.ico</Link>
         </None>
         <None Include="..\SharedResources\Assets\Icons\png\Purple_arrow_cat_image.png">
-          <Link>Purple_arrow_cat_image.png</Link>
+            <Link>Purple_arrow_cat_image.png</Link>
         </None>
     </ItemGroup>
 
@@ -41,27 +41,28 @@
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0-preview.4.25258.110" />
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0-preview.4.25258.110" />
         <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0-preview.4.25258.110" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.5.25277.114" />
         <PackageReference Include="NLog" Version="6.0.0-preview1" />
         <PackageReference Include="Sentry" Version="5.7.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PenumbraModForwarder.Statistics\PenumbraModForwarder.Statistics.csproj" />
-      <ProjectReference Include="..\SharedResources\SharedResources.csproj" />
+        <ProjectReference Include="..\PenumbraModForwarder.Statistics\PenumbraModForwarder.Statistics.csproj" />
+        <ProjectReference Include="..\SharedResources\SharedResources.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Views\SettingsView.axaml.cs">
-        <DependentUpon>SettingsView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
+        <Compile Update="Views\SettingsView.axaml.cs">
+            <DependentUpon>SettingsView.axaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <UpToDateCheckInput Remove="Assets\avalonia-logo.ico" />
+        <UpToDateCheckInput Remove="Assets\avalonia-logo.ico" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Behaviours\" />
+        <Folder Include="Behaviours\" />
     </ItemGroup>
 </Project>
