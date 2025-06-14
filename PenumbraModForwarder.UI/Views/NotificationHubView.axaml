@@ -1,0 +1,197 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PenumbraModForwarder.UI.ViewModels"
+             xmlns:models="using:PenumbraModForwarder.UI.Models"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="450"
+             x:Class="PenumbraModForwarder.UI.Views.NotificationHubView"
+             x:DataType="vm:NotificationHubViewModel">
+    
+    <!-- Main Overlay -->
+    <Grid IsVisible="{Binding IsVisible}">
+        <!-- Background overlay when flyout is open -->
+        <Border IsVisible="{Binding IsNotificationFlyoutOpen}"
+                Background="#80000000"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+                </Transitions>
+            </Border.Transitions>
+        </Border>
+        
+        <!-- Notification Button (Bottom Right) -->
+        <Button HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom" 
+                Margin="0,0,20,20"
+                Width="50" 
+                Height="50"
+                Classes="notificationButton"
+                Command="{Binding ToggleNotificationFlyoutCommand}">
+            <Grid>
+                <!-- Bell Icon -->
+                <Path Width="24" Height="24" 
+                      Fill="White"
+                      Data="M12,2A2,2 0 0,1 14,4V5.5A4.5,4.5 0 0,1 18.5,10V18L20,19H4L5.5,18V10A4.5,4.5 0 0,1 10,5.5V4A2,2 0 0,1 12,2M7.5,10A2.5,2.5 0 0,0 10,12.5H14A2.5,2.5 0 0,0 16.5,10V10A2.5,2.5 0 0,0 14,7.5H10A2.5,2.5 0 0,0 7.5,10V10M10,20A2,2 0 0,0 12,22A2,2 0 0,0 14,20H10Z"/>
+                
+                <!-- Notification Count Badge -->
+                <Border Background="Red"
+                        CornerRadius="10"
+                        Width="20"
+                        Height="20"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,-5,-5,0"
+                        IsVisible="{Binding HasNotifications}"
+                        Classes="notificationBadge">
+                    <TextBlock Text="{Binding NotificationCount}"
+                               Foreground="White"
+                               FontSize="10"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Button>
+        
+        <!-- Notification Flyout -->
+        <Border IsVisible="{Binding IsNotificationFlyoutOpen}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,20,80"
+                Width="350"
+                MaxHeight="500"
+                Background="#2D2D30"
+                CornerRadius="8"
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                Classes="notificationFlyout">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0" 
+                        Background="#007ACC"
+                        CornerRadius="8,8,0,0"
+                        Padding="15,10"
+                        Classes="notificationHeader">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Notification History"
+                                   FontWeight="Bold"
+                                   Foreground="White"/>
+                        <Button Grid.Column="1"
+                                Classes="transparent"
+                                Command="{Binding ToggleNotificationFlyoutCommand}"
+                                Padding="5">
+                            <Path Width="12" Height="12"
+                                  Fill="White"
+                                  Data="M0,0 L12,12 M0,12 L12,0"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                
+                <!-- Notification List -->
+                <ScrollViewer Grid.Row="1" 
+                              MaxHeight="350">
+                    <ItemsControl ItemsSource="{Binding PersistentNotifications}"
+                                  Margin="5">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:Notification">
+                                <Border Margin="5"
+                                        Padding="12"
+                                        Background="#3C3C3C"
+                                        CornerRadius="4"
+                                        BorderBrush="#555555"
+                                        BorderThickness="1"
+                                        Classes="notificationItem"
+                                        Tag="{Binding AnimationState}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0">
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Title}"
+                                                           FontWeight="Bold"
+                                                           Foreground="White"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Status}"
+                                                           FontSize="11"
+                                                           Foreground="#007ACC"
+                                                           FontWeight="Medium"
+                                                           Margin="10,0,0,0"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
+                                                           FontSize="11"
+                                                           Foreground="LightGray"
+                                                           Opacity="0.7"
+                                                           Margin="10,0,0,0"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Message}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="White"
+                                                       Margin="0,5,0,0"
+                                                       FontSize="13"/>
+                                            <!-- Show progress text if it exists and is different from title -->
+                                            <TextBlock Text="{Binding ProgressText}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="LightGray"
+                                                       Opacity="0.8"
+                                                       Margin="0,3,0,0"
+                                                       FontSize="12"
+                                                       IsVisible="{Binding !IsProgressTextRedundant}"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Classes="transparent"
+                                                Command="{Binding $parent[UserControl].((vm:NotificationHubViewModel)DataContext).RemoveNotificationCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="5"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Top">
+                                            <Path Width="10" Height="10"
+                                                  Fill="White"
+                                                  Opacity="0.6"
+                                                  Data="M0,0 L10,10 M0,10 L10,0"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="15,10"
+                        BorderBrush="#555555"
+                        BorderThickness="0,1,0,0"
+                        IsVisible="{Binding HasNotifications}">
+                    <Button Content="Clear All"
+                            HorizontalAlignment="Center"
+                            Command="{Binding ClearAllNotificationsCommand}"
+                            Classes="accent"/>
+                </Border>
+                
+                <!-- Empty State -->
+                <Border Grid.Row="1"
+                        IsVisible="{Binding !HasNotifications}"
+                        Padding="20">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <Path Width="48" Height="48"
+                              Fill="Gray"
+                              Opacity="0.3"
+                              HorizontalAlignment="Center"
+                              Data="M12,2A2,2 0 0,1 14,4V5.5A4.5,4.5 0 0,1 18.5,10V18L20,19H4L5.5,18V10A4.5,4.5 0 0,1 10,5.5V4A2,2 0 0,1 12,2M7.5,10A2.5,2.5 0 0,0 10,12.5H14A2.5,2.5 0 0,0 16.5,10V10A2.5,2.5 0 0,0 14,7.5H10A2.5,2.5 0 0,0 7.5,10V10M10,20A2,2 0 0,0 12,22A2,2 0 0,0 14,20H10Z"/>
+                        <TextBlock Text="No notifications"
+                                   Foreground="Gray"
+                                   Opacity="0.5"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

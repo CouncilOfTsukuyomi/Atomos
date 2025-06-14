@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
-using Avalonia.Input;
 using Avalonia.Media;
 using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +13,6 @@ using PenumbraModForwarder.UI.Models;
 using PenumbraModForwarder.UI.Services;
 using ReactiveUI;
 using Notification = PenumbraModForwarder.UI.Models.Notification;
-
 
 namespace PenumbraModForwarder.UI.ViewModels;
 
@@ -38,8 +35,8 @@ public class MainWindowViewModel : ViewModelBase
         (_notificationService as NotificationService)?.Notifications ?? new();
 
     public InstallViewModel InstallViewModel { get; }
-    
     public SentryPromptViewModel SentryPromptViewModel { get; }
+    public NotificationHubViewModel NotificationHubViewModel { get; }
 
     public MenuItem SelectedMenuItem
     {
@@ -98,6 +95,9 @@ public class MainWindowViewModel : ViewModelBase
             // If the user has never made a choice, show the prompt overlay
             SentryPromptViewModel.IsVisible = true;
         }
+
+        // Create NotificationHubViewModel
+        NotificationHubViewModel = new NotificationHubViewModel(_notificationService);
 
         var app = Application.Current;
 

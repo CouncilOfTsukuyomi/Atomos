@@ -72,7 +72,6 @@
             </Grid>
         </ExperimentalAcrylicBorder>
 
-
         <!-- Main Content -->
         <Grid Grid.Row="1" ColumnDefinitions="250,*">
             <!-- Navigation Panel -->
@@ -133,6 +132,11 @@
         <!-- Sentry Enable Overlay -->
         <views:SentryPromptView DataContext="{Binding SentryPromptViewModel}"
                                 Grid.Row="0" Grid.RowSpan="2"
+            />
+
+        <!-- Notification Hub View -->
+        <views:NotificationHubView DataContext="{Binding NotificationHubViewModel}"
+                                   Grid.Row="0" Grid.RowSpan="2"
             />
     </Grid>
 </Window>

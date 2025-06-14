@@ -20,6 +20,7 @@
         <StyleInclude Source="/Styles/Elements/SettingsStyles.axaml"/>
         <StyleInclude Source="/Styles/ButtonStyle.axaml"/>
         <StyleInclude Source="/Styles/Elements/ModList.axaml"/>
+        <StyleInclude Source="/Styles/Elements/NotificationHub.axaml"/>
         <StyleInclude Source="avares://AsyncImageLoader.Avalonia/AdvancedImage.axaml" />
     </Application.Styles>
     

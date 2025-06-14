@@ -1,0 +1,100 @@
+﻿
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Notification Flyout Style -->
+    <Style Selector="Border.notificationFlyout">
+        <Setter Property="BoxShadow" Value="0 8 32 0 #40000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="0.25,0.1,0.25,1"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Notification Flyout Animation -->
+    <Style Selector="Border.notificationFlyout">
+        <Setter Property="RenderTransform" Value="translateY(20px)"/>
+        <Setter Property="Opacity" Value="0"/>
+    </Style>
+
+    <Style Selector="Border.notificationFlyout[IsVisible=True]">
+        <Setter Property="RenderTransform" Value="translateY(0px)"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <!-- Notification Item Base Styles -->
+    <Style Selector="Border.notificationItem">
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.5"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="0.25,0.1,0.25,1"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Notification Item Animation States using Tag -->
+    <Style Selector="Border.notificationItem[Tag=fade-in]">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="RenderTransform" Value="translateX(0px) scale(1)"/>
+    </Style>
+
+    <Style Selector="Border.notificationItem[Tag=fade-out]">
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="RenderTransform" Value="translateX(20px) scale(0.95)"/>
+    </Style>
+
+    <Style Selector="Border.notificationItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+    </Style>
+
+    <!-- Notification Header Styles -->
+    <Style Selector="Border.notificationHeader">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+
+    <!-- Notification Count Badge Styles -->
+    <Style Selector="Border.notificationBadge">
+        <Setter Property="Background" Value="#FF4444"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.notificationBadge[IsVisible=True]">
+        <Setter Property="RenderTransform" Value="scale(1)"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="Border.notificationBadge[IsVisible=False]">
+        <Setter Property="RenderTransform" Value="scale(0.8)"/>
+        <Setter Property="Opacity" Value="0"/>
+    </Style>
+
+    <!-- Notification Button Animation -->
+    <Style Selector="Button.notificationButton">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="CornerRadius" Value="25"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.notificationButton:pointerover">
+        <Setter Property="RenderTransform" Value="scale(1.05)"/>
+        <Setter Property="Background" Value="{DynamicResource AccentBrushHover}"/>
+    </Style>
+
+    <Style Selector="Button.notificationButton:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.95)"/>
+    </Style>
+
+</Styles>

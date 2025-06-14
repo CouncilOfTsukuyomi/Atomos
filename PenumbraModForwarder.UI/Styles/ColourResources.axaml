@@ -1,13 +1,20 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    
     <!-- Colors -->
     <Color x:Key="TextColor">#e4e1f5</Color>
     <Color x:Key="BackgroundColor">#262626</Color>
     <Color x:Key="PrimaryColor">#a194e0</Color>
     <Color x:Key="SecondaryColor">#352484</Color>
     <Color x:Key="AccentColor">#6c55d5</Color>
+    
+    <!-- Additional colors for notifications -->
+    <Color x:Key="AccentDarkColor">#5a46c7</Color>
+    <Color x:Key="CardBackgroundColor">#363636</Color>
+    <Color x:Key="BorderColor">#484848</Color>
+    <Color x:Key="HoverColor">#404040</Color>
+    <Color x:Key="DisabledColor">#555555</Color>
+    <Color x:Key="DisabledTextColor">#888888</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
@@ -15,4 +22,12 @@
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}"/>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    
+    <!-- Additional brushes -->
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="{StaticResource AccentDarkColor}"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
+    <SolidColorBrush x:Key="DisabledBrush" Color="{StaticResource DisabledColor}"/>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}"/>
 </ResourceDictionary>

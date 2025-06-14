@@ -1,5 +1,4 @@
-﻿
-using System.Reactive;
+﻿using System.Reactive;
 using System.Threading.Tasks;
 using PenumbraModForwarder.UI.Interfaces;
 using ReactiveUI;
@@ -23,12 +22,11 @@ public class Notification : ReactiveObject
     
     public bool IsProgressTextRedundant => !string.IsNullOrEmpty(ProgressText) && ProgressText != Title;
         
+    public string Id { get; } = Guid.NewGuid().ToString();
+    public DateTime Timestamp { get; } = DateTime.Now;
     public string Title { get; }
-
     public string Status { get; }
-        
     public string Message { get; }
-    
     public string TaskId { get; }
         
     public ReactiveCommand<Unit, Unit> CloseCommand { get; }
@@ -56,7 +54,6 @@ public class Notification : ReactiveObject
         CloseCommand.ThrownExceptions.Subscribe(ex =>
         {
             System.Diagnostics.Debug.WriteLine($"Error in CloseCommand: {ex.Message}");
-            // You could add logging here if needed
         });
     }
 
