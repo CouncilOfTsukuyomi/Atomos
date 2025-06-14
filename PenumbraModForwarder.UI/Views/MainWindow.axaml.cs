@@ -1,8 +1,11 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using CommonLib.Interfaces;
 using NLog;
 using PenumbraModForwarder.UI.Extensions;
+using PenumbraModForwarder.UI.ViewModels;
 
 namespace PenumbraModForwarder.UI.Views
 {
@@ -15,6 +18,27 @@ namespace PenumbraModForwarder.UI.Views
         {
             InitializeComponent();
         }
+        
+        protected override void OnSizeChanged(SizeChangedEventArgs e)
+        {
+            base.OnSizeChanged(e);
+    
+            if (DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.WindowSize = new Size(e.NewSize.Width, e.NewSize.Height);
+            }
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+    
+            if (DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.WindowSize = new Size(Bounds.Width, Bounds.Height);
+            }
+        }
+
         
         private void InitializeComponent()
         {

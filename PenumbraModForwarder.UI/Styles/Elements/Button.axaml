@@ -1,5 +1,4 @@
-﻿
-<Styles xmlns="https://github.com/avaloniaui"
+﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
     <!-- Window Control Buttons -->
@@ -100,13 +99,24 @@
 
     <!-- Notification Button Hover -->
     <Style Selector="Button.notificationButton:pointerover">
-        <Setter Property="Background" Value="#005A9E"/>
+        <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
         <Setter Property="RenderTransform" Value="scale(1.05)"/>
     </Style>
 
     <!-- Notification Button Pressed -->
     <Style Selector="Button.notificationButton:pressed">
-        <Setter Property="Background" Value="#004578"/>
+        <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
+        <Setter Property="RenderTransform" Value="scale(0.95)"/>
+    </Style>
+
+    <!-- Notification Button Border Styles (for when using Border instead of Button) -->
+    <Style Selector="Border.notificationButton:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
+        <Setter Property="RenderTransform" Value="scale(1.05)"/>
+    </Style>
+
+    <Style Selector="Border.notificationButton:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
         <Setter Property="RenderTransform" Value="scale(0.95)"/>
     </Style>
 

@@ -29,6 +29,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private ViewModelBase _currentPage = null!;
     private MenuItem _selectedMenuItem = null!;
+    private Size _windowSize = new Size(800, 600);
 
     public ObservableCollection<MenuItem> MenuItems { get; }
     public ObservableCollection<Notification> Notifications =>
@@ -55,6 +56,17 @@ public class MainWindowViewModel : ViewModelBase
     {
         get => _currentPage;
         set => this.RaiseAndSetIfChanged(ref _currentPage, value);
+    }
+
+    public Size WindowSize
+    {
+        get => _windowSize;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _windowSize, value);
+            NotificationHubViewModel?.SetParentBounds(value);
+            _logger.Debug("Window size updated to: {Width} x {Height}", value.Width, value.Height);
+        }
     }
 
     public ICommand NavigateToSettingsCommand { get; }
@@ -97,7 +109,7 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         // Create NotificationHubViewModel
-        NotificationHubViewModel = new NotificationHubViewModel(_notificationService);
+        NotificationHubViewModel = new NotificationHubViewModel(_notificationService, _configurationService);
 
         var app = Application.Current;
 

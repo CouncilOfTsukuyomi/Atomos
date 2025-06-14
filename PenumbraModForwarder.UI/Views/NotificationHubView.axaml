@@ -5,6 +5,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:PenumbraModForwarder.UI.ViewModels"
              xmlns:models="using:PenumbraModForwarder.UI.Models"
+             xmlns:i="using:Avalonia.Xaml.Interactivity"
+             xmlns:behaviours="using:PenumbraModForwarder.UI.Behaviours"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
@@ -25,18 +27,38 @@
             </Border.Transitions>
         </Border>
         
-        <!-- Notification Button (Top Right) -->
-        <Button HorizontalAlignment="Right" 
+        <!-- Draggable Notification Button -->
+        <Border x:Name="NotificationButton"
+                HorizontalAlignment="Left" 
                 VerticalAlignment="Top" 
-                Margin="0,60,20,0"
+                Margin="{Binding ButtonMargin}"
                 Width="50" 
                 Height="50"
-                Classes="notificationButton"
-                Command="{Binding ToggleNotificationFlyoutCommand}">
+                Background="{DynamicResource AccentBrush}"
+                CornerRadius="25"
+                Cursor="Hand"
+                Classes="notificationButton">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+                </Transitions>
+            </Border.Transitions>
+            
+            <i:Interaction.Behaviors>
+                <behaviours:DragBehaviour StartDragCommand="{Binding StartDragCommand}"
+                                          DragCommand="{Binding DragCommand}"
+                                          EndDragCommand="{Binding EndDragCommand}"
+                                          ClickCommand="{Binding ToggleNotificationFlyoutCommand}"/>
+            </i:Interaction.Behaviors>
+            
             <Grid>
                 <!-- Bell Icon -->
                 <Path Width="24" Height="24" 
                       Fill="White"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
                       Data="M12,2A2,2 0 0,1 14,4V5.5A4.5,4.5 0 0,1 18.5,10V18L20,19H4L5.5,18V10A4.5,4.5 0 0,1 10,5.5V4A2,2 0 0,1 12,2M7.5,10A2.5,2.5 0 0,0 10,12.5H14A2.5,2.5 0 0,0 16.5,10V10A2.5,2.5 0 0,0 14,7.5H10A2.5,2.5 0 0,0 7.5,10V10M10,20A2,2 0 0,0 12,22A2,2 0 0,0 14,20H10Z"/>
                 
                 <!-- Notification Count Badge -->
@@ -57,13 +79,13 @@
                                VerticalAlignment="Center"/>
                 </Border>
             </Grid>
-        </Button>
+        </Border>
         
         <!-- Notification Flyout -->
         <Border IsVisible="{Binding IsNotificationFlyoutOpen}"
-                HorizontalAlignment="Right"
+                HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="0,120,20,0"
+                Margin="{Binding FlyoutMargin}"
                 Width="350"
                 MaxHeight="500"
                 Background="#2D2D30"
@@ -74,7 +96,7 @@
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0" 
-                        Background="#007ACC"
+                        Background="{DynamicResource AccentBrush}"
                         CornerRadius="8,8,0,0"
                         Padding="15,10"
                         Classes="notificationHeader">
@@ -119,7 +141,7 @@
                                                 <TextBlock Grid.Column="1"
                                                            Text="{Binding Status}"
                                                            FontSize="11"
-                                                           Foreground="#007ACC"
+                                                           Foreground="{DynamicResource AccentBrush}"
                                                            FontWeight="Medium"
                                                            Margin="10,0,0,0"/>
                                                 <TextBlock Grid.Column="2"
