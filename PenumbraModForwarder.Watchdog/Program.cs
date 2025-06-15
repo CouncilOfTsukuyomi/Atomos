@@ -85,9 +85,9 @@ internal class Program
                 _logger.Info("Update detected; launching updater.");
 
                 var currentExePath = assembly.Location;
-                var installPath = System.IO.Path.GetDirectoryName(currentExePath) 
+                var installPath = Path.GetDirectoryName(currentExePath) 
                                   ?? AppContext.BaseDirectory;
-                var programToRunAfterInstallation = System.IO.Path.GetFileName(currentExePath);
+                var programToRunAfterInstallation = Path.GetFileName(currentExePath);
 
                 var updateResult = _runUpdater
                     .RunDownloadedUpdaterAsync(
@@ -102,7 +102,22 @@ internal class Program
                 if (updateResult)
                 {
                     _logger.Info("Updater started successfully. Exiting this instance.");
-                    return; // Exit logic in finally
+                    
+                    // Perform minimal cleanup and exit immediately for update
+                    try
+                    {
+                        CancelRunningTasks();
+                        _processManager?.Dispose();
+                        LogManager.Shutdown();
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        _logger.Error(cleanupEx, "Error during update cleanup");
+                    }
+                    
+                    _logger.Info("Exiting for update...");
+                    Environment.Exit(0);
+                    return; // This line should never be reached
                 }
                 else
                 {
@@ -129,7 +144,16 @@ internal class Program
             try
             {
                 CancelRunningTasks();
+                
+                // Properly dispose of ProcessManager to ensure child processes are cleaned up
+                _logger.Info("Disposing ProcessManager...");
+                _processManager?.Dispose();
+                
                 LogActiveThreads("Final Cleanup Before Exit");
+                
+                // Give a moment for cleanup to complete
+                Thread.Sleep(1000);
+                
                 LogManager.Shutdown();
             }
             catch (Exception ex)
@@ -137,22 +161,7 @@ internal class Program
                 _logger.Error(ex, "Cleanup phase encountered an error.");
             }
 
-            // Attempt standard exit
-            _logger.Info("Calling Environment.Exit(0) now...");
-            Environment.Exit(0);
-
-            // Code below should never run if Exit(0) succeeded.
-            // If we're still alive for some reason, forcibly kill the process.
-            Thread.Sleep(2000); // Wait a moment to confirm exit.
-
-            // Re-check if we're still alive
-            int currentPid = Process.GetCurrentProcess().Id;
-            var stillAliveProcess = Process.GetProcessById(currentPid);
-            if (stillAliveProcess != null && !stillAliveProcess.HasExited)
-            {
-                _logger.Warn("Process still alive after Environment.Exit(0). Forcing termination...");
-                Process.GetCurrentProcess().Kill();
-            }
+            _logger.Info("Exiting application normally...");
         }
     }
 

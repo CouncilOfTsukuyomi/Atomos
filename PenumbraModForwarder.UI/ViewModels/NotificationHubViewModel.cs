@@ -2,6 +2,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
 using Avalonia;
@@ -154,12 +155,14 @@ public class NotificationHubViewModel : ViewModelBase
         {
             notificationServiceImpl.Notifications.CollectionChanged += OnLiveNotificationsChanged;
             
-            // Add any existing notifications
+            // Add any existing notifications as persistent copies
             foreach (var notification in notificationServiceImpl.Notifications)
             {
-                if (!PersistentNotifications.Contains(notification))
+                var persistentNotification = CreatePersistentCopy(notification);
+                if (!PersistentNotifications.Any(n => n.Id == persistentNotification.Id))
                 {
-                    PersistentNotifications.Add(notification);
+                    _logger.Debug($"Adding existing notification to persistent collection: {notification.Title}");
+                    PersistentNotifications.Add(persistentNotification);
                 }
             }
         }
@@ -376,12 +379,42 @@ public class NotificationHubViewModel : ViewModelBase
         {
             foreach (UINotification notification in e.NewItems)
             {
-                if (!PersistentNotifications.Contains(notification))
+                // Create a copy of the notification for persistence to avoid reference issues
+                var persistentNotification = CreatePersistentCopy(notification);
+                
+                // Check if we already have a notification with the same ID
+                if (!PersistentNotifications.Any(n => n.Id == persistentNotification.Id))
                 {
                     _logger.Debug($"Adding new notification to persistent collection: {notification.Title}");
-                    PersistentNotifications.Add(notification);
+                    PersistentNotifications.Add(persistentNotification);
                 }
             }
         }
+        
+        // Handle removed items - we don't remove from persistent collection
+        // as we want to keep a history of notifications
+        if (e.OldItems != null)
+        {
+            _logger.Debug($"Live notifications removed: {e.OldItems.Count} items");
+        }
+    }
+    
+    private UINotification CreatePersistentCopy(UINotification original)
+    {
+        var copy = new UINotification(
+            original.Title,
+            original.Status,
+            original.Message,
+            _notificationService,
+            original.ShowProgress,
+            original.TaskId
+        );
+        
+        copy.IsVisible = original.IsVisible;
+        copy.Progress = original.Progress;
+        copy.ProgressText = original.ProgressText;
+        copy.AnimationState = original.AnimationState;
+        
+        return copy;
     }
 }

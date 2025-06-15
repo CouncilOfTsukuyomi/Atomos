@@ -301,8 +301,8 @@ public class ProcessManager : IProcessManager, IDisposable
         {
             _uiProcess?.Dispose();
             _backgroundServiceProcess?.Dispose();
-            _logger.Info("Shutting down Penumbra Mod Forwarder");
-            Environment.Exit(0);
+            _logger.Info("Child processes shutdown complete");
+            // Don't call Environment.Exit(0) here - let the main thread handle the exit
         }
     }
 
