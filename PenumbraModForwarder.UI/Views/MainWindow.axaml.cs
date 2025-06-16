@@ -1,10 +1,14 @@
+using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using CommonLib.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using PenumbraModForwarder.UI.Extensions;
+using PenumbraModForwarder.UI.Interfaces;
 using PenumbraModForwarder.UI.ViewModels;
 
 namespace PenumbraModForwarder.UI.Views
@@ -13,6 +17,7 @@ namespace PenumbraModForwarder.UI.Views
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly IConfigurationService _configuration;
+        private readonly ITaskbarFlashService? _taskbarFlashService;
 
         public MainWindow()
         {
@@ -39,7 +44,15 @@ namespace PenumbraModForwarder.UI.Views
             }
         }
 
-        
+        protected override void OnGotFocus(GotFocusEventArgs e)
+        {
+            base.OnGotFocus(e);
+            
+            // Stop flashing when window gets focus
+            _taskbarFlashService?.StopFlashing();
+            _logger.Debug("Window got focus, stopped taskbar flashing");
+        }
+
         private void InitializeComponent()
         {
             AvaloniaXamlLoader.Load(this);
@@ -48,7 +61,30 @@ namespace PenumbraModForwarder.UI.Views
         public MainWindow(IConfigurationService configuration)
         {
             _configuration = configuration;
+            
+            // Try to get the taskbar flash service from the service provider
+            try
+            {
+                _taskbarFlashService = Program.ServiceProvider?.GetService<ITaskbarFlashService>();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Could not get ITaskbarFlashService from service provider");
+            }
+            
             InitializeComponent();
+
+            // Subscribe to window events to stop flashing
+            this.Activated += (s, e) =>
+            {
+                _taskbarFlashService?.StopFlashing();
+                _logger.Debug("Window activated, stopped taskbar flashing");
+            };
+
+            this.PointerPressed += (s, e) =>
+            {
+                _taskbarFlashService?.StopFlashing();
+            };
 
             var titleBar = this.FindControl<Grid>("TitleBar");
             titleBar.PointerPressed += (s, e) =>
@@ -84,6 +120,9 @@ namespace PenumbraModForwarder.UI.Views
         {
             base.OnClosing(e);
             _logger.Info("Window closing");
+            
+            // Stop flashing when window is closing
+            _taskbarFlashService?.StopFlashing();
         }
     }
 }

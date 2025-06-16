@@ -26,6 +26,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly ISoundManagerService _soundManagerService;
     private readonly IConfigurationListener _configurationListener;
     private readonly IConfigurationService _configurationService;
+    private readonly ITaskbarFlashService _taskbarFlashService;
 
     private ViewModelBase _currentPage = null!;
     private MenuItem _selectedMenuItem = null!;
@@ -78,7 +79,8 @@ public class MainWindowViewModel : ViewModelBase
         int port,
         IConfigurationListener configurationListener,
         ISoundManagerService soundManagerService,
-        IConfigurationService configurationService)
+        IConfigurationService configurationService,
+        ITaskbarFlashService taskbarFlashService)
     {
         _serviceProvider = serviceProvider;
         _notificationService = notificationService;
@@ -86,6 +88,7 @@ public class MainWindowViewModel : ViewModelBase
         _configurationListener = configurationListener;
         _soundManagerService = soundManagerService;
         _configurationService = configurationService;
+        _taskbarFlashService = taskbarFlashService;
         
         // Check the configuration to see if Sentry is enabled at startup
         if ((bool)_configurationService.ReturnConfigValue(c => c.Common.EnableSentry))
@@ -139,7 +142,7 @@ public class MainWindowViewModel : ViewModelBase
         _selectedMenuItem = MenuItems[0];
         _currentPage = _selectedMenuItem.ViewModel;
 
-        InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService);
+        InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService, _taskbarFlashService);
 
         _ = InitializeWebSocketConnection(port);
     }

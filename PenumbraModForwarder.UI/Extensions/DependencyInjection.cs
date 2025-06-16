@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddSingleton<IXmaModDisplay, XmaModDisplay>();
         services.AddSingleton<ITrayIconController, TrayIconController>();
         services.AddSingleton<ITrayIconManager, TrayIconManager>();
+        services.AddSingleton<ITaskbarFlashService, TaskbarFlashService>();
 
         // ViewModels
         services.AddSingleton<MainWindowViewModel>();

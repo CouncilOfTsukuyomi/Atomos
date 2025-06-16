@@ -26,6 +26,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
     private readonly IWebSocketClient _webSocketClient;
     private readonly ISoundManagerService _soundManagerService;
+    private readonly ITaskbarFlashService _taskbarFlashService;
 
     private string _currentTaskId;
     private bool _isSelectionVisible;
@@ -58,10 +59,12 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
     public InstallViewModel(
         IWebSocketClient webSocketClient,
-        ISoundManagerService soundManagerService)
+        ISoundManagerService soundManagerService,
+        ITaskbarFlashService taskbarFlashService)
     {
         _webSocketClient = webSocketClient;
         _soundManagerService = soundManagerService;
+        _taskbarFlashService = taskbarFlashService;
 
         InstallCommand = ReactiveCommand.CreateFromTask(ExecuteInstallCommand);
         CancelCommand = ReactiveCommand.CreateFromTask(ExecuteCancelCommand);
@@ -91,6 +94,9 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
             _logger.Info("Selected {FileCount} files", Files.Count);
             IsSelectionVisible = true;
+
+            // Flash the taskbar to get user attention
+            _taskbarFlashService.FlashTaskbar();
 
             await _soundManagerService.PlaySoundAsync(
                 SoundType.GeneralChime,
@@ -127,6 +133,9 @@ public class InstallViewModel : ViewModelBase, IDisposable
         await _webSocketClient.SendMessageAsync(responseMessage, "/install");
         IsSelectionVisible = false;
 
+        // Stop flashing when user makes a selection
+        _taskbarFlashService.StopFlashing();
+
         _logger.Info("User selected files sent: {SelectedFiles}", selectedFiles);
     }
 
@@ -134,6 +143,9 @@ public class InstallViewModel : ViewModelBase, IDisposable
     {
         IsSelectionVisible = false;
         _logger.Info("User canceled the file selection.");
+
+        // Stop flashing when user cancels
+        _taskbarFlashService.StopFlashing();
 
         var responseMessage = new WebSocketMessage
         {
