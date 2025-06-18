@@ -1,9 +1,9 @@
-<Project>
+﻿<Project>
     <PropertyGroup>
         <!-- Version components -->
         <MajorVersion>0</MajorVersion>
         <MinorVersion>1</MinorVersion>
-        <PatchVersion>1</PatchVersion>
+        <PatchVersion>0</PatchVersion>
 
         <!-- Controls whether we're doing a beta build -->
         <IsBeta>false</IsBeta>
@@ -36,4 +36,3 @@
         <AssemblyInformationalVersion>v$(VersionPrefix)</AssemblyInformationalVersion>
     </PropertyGroup>
 </Project>
-
