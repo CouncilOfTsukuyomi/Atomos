@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Atomos.UI.Extensions;
 using Avalonia;
 using Avalonia.ReactiveUI;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using PluginManager.Core.Extensions;
 
 namespace Atomos.UI;
 
@@ -41,6 +43,8 @@ public class Program
 
                 ServiceProvider = services.BuildServiceProvider();
 
+                InitializeServicesAsync().GetAwaiter().GetResult();
+
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
             }
             catch (Exception ex)
@@ -48,6 +52,22 @@ public class Program
                 _logger.Fatal(ex, "Application failed to start");
                 Environment.Exit(1);
             }
+        }
+    }
+
+    private static async Task InitializeServicesAsync()
+    {
+        try
+        {
+            _logger.Info("Initializing application services...");
+            
+            await ServiceProvider.InitializePluginServicesAsync();
+            
+            _logger.Info("Application services initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to initialize application services");
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -118,6 +119,7 @@ public class MainWindowViewModel : ViewModelBase
 
         var homeViewModel = _serviceProvider.GetRequiredService<HomeViewModel>();
         var modsViewModel = _serviceProvider.GetRequiredService<ModsViewModel>();
+        var pluginsViewModel = _serviceProvider.GetRequiredService<PluginsViewModel>();
 
         MenuItems = new ObservableCollection<MenuItem>
         {
@@ -130,6 +132,11 @@ public class MainWindowViewModel : ViewModelBase
                 "Mods",
                 app?.Resources["MenuIcon"] as StreamGeometry ?? StreamGeometry.Parse(""),
                 modsViewModel
+            ),
+            new MenuItem(
+                "Plugins",
+                app?.Resources["PluginsIcon"] as StreamGeometry ?? StreamGeometry.Parse("M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z"),
+                pluginsViewModel
             )
         };
 

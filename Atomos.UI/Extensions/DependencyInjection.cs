@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using Atomos.Statistics.Services;
 using Atomos.UI.Controllers;
 using Atomos.UI.Interfaces;
@@ -14,6 +16,7 @@ using CommonLib.Models;
 using CommonLib.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PluginManager.Core.Extensions;
 using IRegistryHelper = Atomos.UI.Interfaces.IRegistryHelper;
 using RegistryHelper = Atomos.UI.Services.RegistryHelper;
 
@@ -69,6 +72,7 @@ public static class DependencyInjection
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
+        services.AddSingleton<PluginsViewModel>();
 
         // Views
         services.AddSingleton<MainWindow>();
@@ -76,6 +80,9 @@ public static class DependencyInjection
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
+        services.AddSingleton<PluginsView>();
+        
+        services.AddPluginServices();
         
         services.SetupLogging();
 

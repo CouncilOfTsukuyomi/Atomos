@@ -49,6 +49,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Atomos.Statistics\Atomos.Statistics.csproj" />
+        <ProjectReference Include="..\PluginManager\PluginManager.Core\PluginManager.Core.csproj" />
         <ProjectReference Include="..\SharedResources\SharedResources.csproj" />
     </ItemGroup>
 

@@ -6,4 +6,5 @@
     <StreamGeometry x:Key="HomeIcon">M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z</StreamGeometry>
     <StreamGeometry x:Key="MinimizeIcon">M 0,0 H 10</StreamGeometry>
     <StreamGeometry x:Key="CloseIcon">M 0,0 L 10,10 M 0,10 L 10,0</StreamGeometry>
+    <StreamGeometry x:Key="PluginsIcon">M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z</StreamGeometry>
 </ResourceDictionary>

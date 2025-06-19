@@ -19,9 +19,10 @@
         <StyleInclude Source="/Styles/Elements/Navigation.axaml"/>
         <StyleInclude Source="/Styles/Elements/InfoBox.axaml"/>
         <StyleInclude Source="/Styles/Elements/SettingsStyles.axaml"/>
-        <StyleInclude Source="/Styles/ButtonStyle.axaml"/>
+        <StyleInclude Source="/Styles/Elements/ButtonStyle.axaml"/>
         <StyleInclude Source="/Styles/Elements/ModList.axaml"/>
         <StyleInclude Source="/Styles/Elements/NotificationHub.axaml"/>
+        <StyleInclude Source="/Styles/Elements/PluginStyle.axaml"/>
         <StyleInclude Source="avares://AsyncImageLoader.Avalonia/AdvancedImage.axaml" />
     </Application.Styles>
     

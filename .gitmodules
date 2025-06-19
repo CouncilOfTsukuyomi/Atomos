@@ -1,3 +1,6 @@
 [submodule "CommonLib"]
 	path = CommonLib
 	url = https://github.com/CouncilOfTsukuyomi/PMF.CommonLib.git
+[submodule "PluginManager"]
+	path = PluginManager
+	url = https://github.com/CouncilOfTsukuyomi/PluginManager.git

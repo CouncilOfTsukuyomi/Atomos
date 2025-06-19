@@ -1,0 +1,202 @@
+﻿
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Atomos.UI.ViewModels"
+             xmlns:models="using:PluginManager.Core.Models"
+             xmlns:conv="using:Atomos.UI.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Atomos.UI.Views.PluginsView"
+             x:DataType="vm:PluginsViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+    
+    <!-- Header Section -->
+    <Border Grid.Row="0" 
+            Background="{DynamicResource CardBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="20"
+            Margin="20,20,20,10">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+        
+        <!-- Search Box -->
+        <TextBox Grid.Column="0"
+                 Text="{Binding SearchTerm}"
+                 Watermark="Search plugins by name, author, or description..."
+                 Margin="0,0,15,0"/>
+        
+        <!-- Open Directory Button -->
+        <Button Grid.Column="1"
+                Command="{Binding OpenPluginDirectoryCommand}"
+                Content="📁 Open Directory"
+                Margin="0,0,10,0"/>
+        
+        <!-- Refresh Button -->
+        <Button Grid.Column="2"
+                Command="{Binding RefreshCommand}"
+                Content="🔄 Refresh"
+                Margin="0,0,10,0"/>
+        
+        <!-- Loading Indicator -->
+        <ProgressBar Grid.Column="3"
+                     IsIndeterminate="True"
+                     IsVisible="{Binding IsLoading}"
+                     Width="120"
+                     Height="6"
+                     VerticalAlignment="Center"/>
+      </Grid>
+    </Border>
+
+    <!-- Plugin List -->
+    <ScrollViewer Grid.Row="1" Margin="20,0,20,20">
+      <ItemsControl ItemsSource="{Binding FilteredPlugins}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="models:PluginInfo">
+            
+            <!-- Plugin Card -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    Margin="0,0,0,15">
+              
+              <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                
+                <!-- Header Row: Title and Status -->
+                <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                      ColumnDefinitions="*,Auto"
+                      Margin="0,0,0,10">
+                  
+                  <!-- Plugin Title -->
+                  <TextBlock Grid.Column="0"
+                             Text="{Binding DisplayName}"
+                             Foreground="{DynamicResource TextBrush}"
+                             FontSize="16"
+                             FontWeight="SemiBold"/>
+                  
+                  <!-- Status Badge -->
+                  <Border Grid.Column="1" 
+                          Classes="StatusBadge"
+                          CornerRadius="12"
+                          Padding="8,4">
+                    <Border.Background>
+                      <SolidColorBrush Color="{Binding IsEnabled, Converter={x:Static conv:BoolToColorConverter.Instance}, ConverterParameter='#4CAF50|#FF9800'}"/>
+                    </Border.Background>
+                    <TextBlock Foreground="White"
+                               FontSize="11"
+                               FontWeight="Bold">
+                      <Run Text="● "/>
+                      <Run Text="{Binding IsEnabled, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='Enabled|Disabled'}"/>
+                    </TextBlock>
+                  </Border>
+                </Grid>
+
+                <!-- Plugin Details -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                            Margin="0,0,0,10">
+                  
+                  <!-- Plugin ID -->
+                  <TextBlock Text="{Binding PluginId}"
+                             Foreground="{DynamicResource DisabledTextBrush}"
+                             FontSize="12"
+                             Margin="0,0,0,5"/>
+                  
+                  <!-- Description -->
+                  <TextBlock Text="{Binding Description}"
+                             Foreground="{DynamicResource TextBrush}"
+                             TextWrapping="Wrap"
+                             Margin="0,0,0,8"/>
+                  
+                  <!-- Metadata -->
+                  <StackPanel Orientation="Horizontal" Spacing="20">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Author:" 
+                                 Foreground="{DynamicResource TextBrush}"
+                                 FontWeight="Medium"
+                                 Margin="0,0,5,0"/>
+                      <TextBlock Text="{Binding Author}"
+                                 Foreground="{DynamicResource DisabledTextBrush}"/>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Version:" 
+                                 Foreground="{DynamicResource TextBrush}"
+                                 FontWeight="Medium"
+                                 Margin="0,0,5,0"/>
+                      <TextBlock Text="{Binding Version}"
+                                 Foreground="{DynamicResource DisabledTextBrush}"/>
+                    </StackPanel>
+                  </StackPanel>
+                </StackPanel>
+
+                <!-- Error Message -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                        Background="#4D1F2A"
+                        BorderBrush="#8B2635"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10"
+                        Margin="0,0,0,10"
+                        IsVisible="{Binding LoadError, Converter={x:Static conv:StringToBoolConverter.Instance}}">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⚠️" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding LoadError}"
+                               Foreground="#FF6B7A"
+                               TextWrapping="Wrap"/>
+                  </StackPanel>
+                </Border>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                            Orientation="Horizontal" 
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+                  
+                  <!-- Settings Button -->
+                  <Button Command="{Binding $parent[UserControl].((vm:PluginsViewModel)DataContext).OpenSettingsCommand}"
+                          CommandParameter="{Binding}"
+                          Content="⚙️ Settings"
+                          IsEnabled="{Binding !!Configuration.Count}"/>
+                  
+                  <!-- Enable/Disable Toggle -->
+                  <ToggleButton Classes="ToggleSwitch"
+                                IsChecked="{Binding IsEnabled}"
+                                Command="{Binding $parent[UserControl].((vm:PluginsViewModel)DataContext).TogglePluginCommand}"
+                                CommandParameter="{Binding}">
+                    <TextBlock Text="{Binding IsEnabled, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='Disable|Enable'}"/>
+                  </ToggleButton>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Empty State -->
+    <StackPanel Grid.Row="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding !FilteredPlugins.Count}">
+      <TextBlock Text="📦" 
+                 FontSize="48"
+                 HorizontalAlignment="Center"
+                 Margin="0,0,0,15"/>
+      <TextBlock Text="No plugins found"
+                 Foreground="{DynamicResource TextBrush}"
+                 FontSize="18"
+                 FontWeight="SemiBold"
+                 HorizontalAlignment="Center"
+                 Margin="0,0,0,10"/>
+      <TextBlock Text="Try adjusting your search terms or check the plugins directory"
+                 Foreground="{DynamicResource DisabledTextBrush}"
+                 HorizontalAlignment="Center"
+                 TextAlignment="Center"/>
+    </StackPanel>
+
+  </Grid>
+</UserControl>

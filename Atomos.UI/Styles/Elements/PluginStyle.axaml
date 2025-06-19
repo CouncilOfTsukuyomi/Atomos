@@ -1,0 +1,131 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Status Badge Style -->
+  <Style Selector="Border.StatusBadge">
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+
+  <!-- Error Message Style -->
+  <Style Selector="Border.ErrorMessage">
+    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="#FF5722"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="5"/>
+    <Setter Property="Padding" Value="12,8"/>
+  </Style>
+
+  <Style Selector="Border.ErrorMessage TextBlock">
+    <Setter Property="Foreground" Value="#FF8A80"/>
+    <Setter Property="FontSize" Value="12"/>
+  </Style>
+
+  <!-- Toggle Switch Style - Updated for better Enable/Disable colors -->
+  <Style Selector="ToggleButton.ToggleSwitch">
+    <Setter Property="MinWidth" Value="80"/>
+    <Setter Property="MinHeight" Value="32"/>
+    <Setter Property="CornerRadius" Value="5"/>
+    <Setter Property="Padding" Value="16,6"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Foreground" Value="White"/>
+  </Style>
+
+  <!-- Checked = Plugin is Loaded/Enabled - Red for "Disable" action -->
+  <Style Selector="ToggleButton.ToggleSwitch:checked">
+    <Setter Property="Background" Value="{DynamicResource DisableBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+  </Style>
+
+  <!-- Unchecked = Plugin is Not Loaded/Disabled - Green for "Enable" action -->
+  <Style Selector="ToggleButton.ToggleSwitch:not(:checked)">
+    <Setter Property="Background" Value="{DynamicResource EnableBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+  </Style>
+
+  <!-- Hover states -->
+  <Style Selector="ToggleButton.ToggleSwitch:checked:pointerover">
+    <Setter Property="Background" Value="#c82333"/>
+    <Setter Property="BorderBrush" Value="#bd2130"/>
+  </Style>
+
+  <Style Selector="ToggleButton.ToggleSwitch:not(:checked):pointerover">
+    <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+  </Style>
+
+  <!-- Pressed states -->
+  <Style Selector="ToggleButton.ToggleSwitch:checked:pressed">
+    <Setter Property="Background" Value="#bd2130"/>
+  </Style>
+
+  <Style Selector="ToggleButton.ToggleSwitch:not(:checked):pressed">
+    <Setter Property="Background" Value="{DynamicResource SecondaryBrush}"/>
+  </Style>
+
+  <!-- Secondary Button Style -->
+  <Style Selector="Button.SecondaryButton">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+    <Setter Property="CornerRadius" Value="5"/>
+    <Setter Property="Padding" Value="10,5"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.SecondaryButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+  </Style>
+
+  <Style Selector="Button.SecondaryButton:disabled">
+    <Setter Property="Opacity" Value="0.5"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource DisabledBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
+  </Style>
+
+  <!-- Accent Button Style -->
+  <Style Selector="Button.AccentButton">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="CornerRadius" Value="5"/>
+    <Setter Property="Padding" Value="10,5"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+  </Style>
+
+  <Style Selector="Button.AccentButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
+  </Style>
+
+  <!-- Success/Loaded Badge -->
+  <Style Selector="Border.StatusBadge.Loaded">
+    <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+  </Style>
+
+  <!-- Warning/Not Loaded Badge -->
+  <Style Selector="Border.StatusBadge.NotLoaded">
+    <Setter Property="Background" Value="#FF9800"/>
+  </Style>
+
+  <!-- Empty State Styles -->
+  <Style Selector="StackPanel.EmptyState">
+    <Setter Property="Opacity" Value="0.7"/>
+  </Style>
+
+  <Style Selector="TextBlock.EmptyStateTitle">
+    <Setter Property="FontSize" Value="18"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.EmptyStateDescription">
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
+    <Setter Property="MaxWidth" Value="300"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+  </Style>
+
+</Styles>
