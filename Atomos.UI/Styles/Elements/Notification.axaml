@@ -1,0 +1,153 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:PenumbraModForwarder.UI.Models"
+        xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif">
+
+    <!-- Notification List Style -->
+    <Style Selector="ItemsControl.notifications">
+        <Setter Property="VerticalAlignment" Value="Bottom"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Margin" Value="0,0,32,32"/>
+        <Setter Property="ZIndex" Value="1000"/>
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel Spacing="14"/>
+            </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="ItemTemplate">
+            <DataTemplate x:DataType="models:Notification">
+                <ExperimentalAcrylicBorder
+                    Name="NotificationBorder"
+                    CornerRadius="12"
+                    MinWidth="260"
+                    MaxWidth="420"
+                    Margin="0,0,6,0"
+                    Opacity="0">
+                    <ExperimentalAcrylicBorder.Material>
+                        <ExperimentalAcrylicMaterial
+                            BackgroundSource="Digger"
+                            TintColor="#222222"
+                            TintOpacity="0.72"
+                            MaterialOpacity="0.66"/>
+                    </ExperimentalAcrylicBorder.Material>
+                    
+                    <!-- Use data triggers based on AnimationState property -->
+                    <ExperimentalAcrylicBorder.Styles>
+                        <!-- Fade In Animation - triggered when AnimationState is "fade-in" -->
+                        <Style Selector="ExperimentalAcrylicBorder[Tag=fade-in]">
+                            <Style.Animations>
+                                <Animation Duration="0:0:0.8" FillMode="Forward" Easing="CubicEaseOut">
+                                    <KeyFrame Cue="0%">
+                                        <Setter Property="Opacity" Value="0"/>
+                                    </KeyFrame>
+                                    <KeyFrame Cue="100%">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </KeyFrame>
+                                </Animation>
+                            </Style.Animations>
+                        </Style>
+                        
+                        <!-- Fade Out Animation - triggered when AnimationState is "fade-out" -->
+                        <Style Selector="ExperimentalAcrylicBorder[Tag=fade-out]">
+                            <Style.Animations>
+                                <Animation Duration="0:0:0.5" FillMode="Forward" Easing="CubicEaseIn">
+                                    <KeyFrame Cue="0%">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </KeyFrame>
+                                    <KeyFrame Cue="100%">
+                                        <Setter Property="Opacity" Value="0"/>
+                                    </KeyFrame>
+                                </Animation>
+                            </Style.Animations>
+                        </Style>
+                    </ExperimentalAcrylicBorder.Styles>
+                    
+                    <!-- Bind the AnimationState to the Tag property for selector matching -->
+                    <ExperimentalAcrylicBorder.Tag>
+                        <Binding Path="AnimationState"/>
+                    </ExperimentalAcrylicBorder.Tag>
+
+                    <Border BoxShadow="0 8 24 0 #30000000" CornerRadius="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="24,18,12,18" Spacing="4" MaxWidth="350">
+                                <TextBlock
+                                    Text="{Binding Title}"
+                                    Foreground="{DynamicResource TextBrush}"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    TextWrapping="Wrap"/>
+                                <TextBlock
+                                    Text="{Binding Status}"
+                                    Margin="0,2,0,2"
+                                    Foreground="{DynamicResource AccentBrush}"
+                                    FontSize="14"
+                                    FontWeight="Medium"
+                                    TextWrapping="Wrap"/>
+                                <TextBlock
+                                    Text="{Binding Message}"
+                                    Margin="0,0,0,8"
+                                    Foreground="{DynamicResource TextBrush}"
+                                    FontSize="15"
+                                    TextWrapping="Wrap"/>
+                                <!-- Progress Area -->
+                                <StackPanel IsVisible="{Binding ShowProgress}" Spacing="4">
+                                    <TextBlock
+                                        Text="{Binding ProgressText}"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        Opacity="0.7">
+                                        <TextBlock.Styles>
+                                            <Style Selector="TextBlock">
+                                                <Setter Property="IsVisible" Value="{Binding IsProgressTextRedundant}"/>
+                                            </Style>
+                                        </TextBlock.Styles>
+                                    </TextBlock>
+                                    <ProgressBar
+                                        Minimum="0"
+                                        Maximum="100"
+                                        Value="{Binding Progress}"
+                                        Height="8"
+                                        CornerRadius="4"
+                                        Background="{DynamicResource BackgroundBrush}"
+                                        Foreground="{DynamicResource AccentBrush}" />
+                                </StackPanel>
+                                <!-- Loading GIF -->
+                                <gif:GifImage
+                                    Source="avares://Atomos.UI/Animations/LoadingAnimation.gif"
+                                    Width="40"
+                                    Height="40"
+                                    Margin="0,8,0,0"
+                                    IsVisible="{Binding ShowProgress}"/>
+                            </StackPanel>
+                            <!-- Close Button -->
+                            <Button Grid.Column="1"
+                                    Command="{Binding CloseCommand}"
+                                    Width="32"
+                                    Height="32"
+                                    Padding="0"
+                                    Margin="0,10,12,0"
+                                    VerticalAlignment="Top"
+                                    ToolTip.Tip="Close"
+                                    Classes="flat, notification-close">
+                                <Path Data="{StaticResource CloseIcon}"
+                                      Stretch="Uniform"
+                                      Width="14"
+                                      Height="14"
+                                      Stroke="{DynamicResource TextBrush}"
+                                      StrokeThickness="1.5"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </ExperimentalAcrylicBorder>
+            </DataTemplate>
+        </Setter>
+    </Style>
+
+    <!-- Close Button Hover Animation -->
+    <Style Selector="Button.notification-close:pointerover /template/ Path">
+        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+</Styles>
