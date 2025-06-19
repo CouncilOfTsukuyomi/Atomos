@@ -2,14 +2,13 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform;
 using Avalonia.Threading;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class TaskbarFlashService : ITaskbarFlashService
 {

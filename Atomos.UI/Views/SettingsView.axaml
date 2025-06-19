@@ -1,11 +1,11 @@
 ﻿<UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="clr-namespace:PenumbraModForwarder.UI.ViewModels"
-    xmlns:converters="clr-namespace:PenumbraModForwarder.UI.Converters"
-    xmlns:helpers="clr-namespace:PenumbraModForwarder.UI.Helpers"
     xmlns:system="clr-namespace:System;assembly=netstandard"
-    x:Class="PenumbraModForwarder.UI.Views.SettingsView"
+    xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
+    xmlns:helpers="clr-namespace:Atomos.UI.Helpers"
+    xmlns:converters="clr-namespace:Atomos.UI.Converters"
+    x:Class="Atomos.UI.Views.SettingsView"
     x:DataType="vm:SettingsViewModel">
 
     <UserControl.Resources>

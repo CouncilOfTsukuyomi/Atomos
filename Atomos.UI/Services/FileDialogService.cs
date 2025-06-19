@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using PenumbraModForwarder.UI.Interfaces;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class FileDialogService : IFileDialogService
 {

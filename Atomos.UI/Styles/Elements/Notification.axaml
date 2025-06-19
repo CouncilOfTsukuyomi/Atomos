@@ -1,7 +1,7 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:models="using:PenumbraModForwarder.UI.Models"
-        xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif">
+        xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
+        xmlns:models="clr-namespace:Atomos.UI.Models">
 
     <!-- Notification List Style -->
     <Style Selector="ItemsControl.notifications">

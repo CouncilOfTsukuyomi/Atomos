@@ -8,7 +8,7 @@ using Avalonia.LogicalTree;
 using Avalonia.Xaml.Interactivity;
 using NLog;
 
-namespace PenumbraModForwarder.UI.Behaviours;
+namespace Atomos.UI.Behaviours;
 
 public class DragBehaviour : Behavior<Control>
 {

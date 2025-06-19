@@ -1,10 +1,10 @@
-﻿using System.Reactive;
+﻿using System;
+using System.Reactive;
 using System.Threading.Tasks;
-using PenumbraModForwarder.UI.Interfaces;
+using Atomos.UI.Interfaces;
 using ReactiveUI;
-using System;
 
-namespace PenumbraModForwarder.UI.Models;
+namespace Atomos.UI.Models;
 
 /// <summary>
 /// Represents a UI notification item with distinct fields for the application's name (Title),

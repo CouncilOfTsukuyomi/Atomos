@@ -5,9 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <ApplicationIcon>..\SharedResources\Assets\Icons\ico\Exclamation_mark_cat_icon.ico</ApplicationIcon>
-        <Company>PenumbraModForwarder.Launcher</Company>
-        <Product>PenumbraModForwarder.Launcher</Product>
-        <AssemblyName>PenumbraModForwarder.Launcher</AssemblyName>
+        <Company>Atomos.Launcher</Company>
+        <Product>Atomos.Launcher</Product>
+        <AssemblyName>Atomos.Launcher</AssemblyName>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
 

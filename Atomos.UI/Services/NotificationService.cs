@@ -1,18 +1,17 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Models;
+using Avalonia.Threading;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.Models;
 using ReactiveUI;
-using Avalonia.Threading;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class NotificationService : ReactiveObject, INotificationService
 {

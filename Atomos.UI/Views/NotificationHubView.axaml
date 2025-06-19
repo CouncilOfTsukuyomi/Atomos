@@ -3,14 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:PenumbraModForwarder.UI.ViewModels"
-             xmlns:models="using:PenumbraModForwarder.UI.Models"
              xmlns:i="using:Avalonia.Xaml.Interactivity"
-             xmlns:behaviours="using:PenumbraModForwarder.UI.Behaviours"
+             xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
+             xmlns:behaviours="clr-namespace:Atomos.UI.Behaviours"
+             xmlns:models="clr-namespace:Atomos.UI.Models"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
-             x:Class="PenumbraModForwarder.UI.Views.NotificationHubView"
+             x:Class="Atomos.UI.Views.NotificationHubView"
              x:DataType="vm:NotificationHubViewModel">
     
     <!-- Main Overlay -->

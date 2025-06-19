@@ -1,6 +1,6 @@
 ﻿using LiteDB;
 
-namespace PenumbraModForwarder.Statistics.Models;
+namespace Atomos.Statistics.Models;
 
 public class UniqueModRecord
 {

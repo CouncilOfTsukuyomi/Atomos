@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Threading;
+using Atomos.UI.Extensions;
 using Avalonia;
 using Avalonia.ReactiveUI;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using PenumbraModForwarder.UI.Extensions;
 
-namespace PenumbraModForwarder.UI;
+namespace Atomos.UI;
 
 public class Program
 {

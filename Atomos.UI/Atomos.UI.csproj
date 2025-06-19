@@ -7,7 +7,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>..\SharedResources\Assets\Icons\ico\Purple_arrow_cat_icon.ico</ApplicationIcon>
-        <RootNamespace>PenumbraModForwarder.UI</RootNamespace>
+        <RootNamespace>Atomos.UI</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,11 +1,11 @@
 ﻿using System.Runtime.InteropServices;
+using Atomos.UI.Extensions;
+using Atomos.UI.Interfaces;
 using CommonLib.Events;
 using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.UI.Extensions;
-using PenumbraModForwarder.UI.Interfaces;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class ConfigurationListener : IConfigurationListener
 {

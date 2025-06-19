@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace PenumbraModForwarder.UI.Interfaces;
+namespace Atomos.UI.Interfaces;
 
 public interface IRegistryHelper
 {

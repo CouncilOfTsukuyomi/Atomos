@@ -1,12 +1,12 @@
 ﻿using Atomos.ConsoleTooling.Interfaces;
 using Atomos.ConsoleTooling.Services;
+using Atomos.Statistics.Services;
 using CommonLib.Consts;
 using CommonLib.Extensions;
 using CommonLib.Interfaces;
 using CommonLib.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PenumbraModForwarder.Statistics.Services;
 
 namespace Atomos.ConsoleTooling.Extensions;
 

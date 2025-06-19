@@ -1,10 +1,10 @@
-using Avalonia.Controls;
-using Avalonia.Controls.Templates;
 using System;
 using System.Collections.Generic;
-using PenumbraModForwarder.UI.ViewModels;
+using Atomos.UI.ViewModels;
+using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 
-namespace PenumbraModForwarder.UI;
+namespace Atomos.UI;
 
 public class ViewLocator : IDataTemplate
 {

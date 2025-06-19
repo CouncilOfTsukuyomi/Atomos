@@ -7,7 +7,7 @@ using System.Windows.Input;
 using NLog;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.Helpers;
+namespace Atomos.UI.Helpers;
 
 public class ConfigurationPropertyDescriptor : ReactiveObject
 {

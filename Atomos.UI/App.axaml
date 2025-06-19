@@ -1,12 +1,13 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="PenumbraModForwarder.UI.App"
-             xmlns:local="using:PenumbraModForwarder.UI"
-             xmlns:converters="clr-namespace:PenumbraModForwarder.UI.Converters"
-             xmlns:labs="using:Avalonia.Labs.Controls">
+             x:Class="Atomos.UI.App"
+             xmlns:local="using:Atomos.UI"
+             xmlns:labs="using:Avalonia.Labs.Controls"
+             xmlns:ui="clr-namespace:Atomos.UI"
+             xmlns:converters="clr-namespace:Atomos.UI.Converters">
     
     <Application.DataTemplates>
-        <local:ViewLocator/>
+        <ui:ViewLocator/>
     </Application.DataTemplates>
     
     <Application.Styles>

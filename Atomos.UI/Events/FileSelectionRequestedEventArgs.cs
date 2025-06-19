@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PenumbraModForwarder.UI.Events;
+namespace Atomos.UI.Events;
 
 public class FileSelectionRequestedEventArgs : EventArgs
 {

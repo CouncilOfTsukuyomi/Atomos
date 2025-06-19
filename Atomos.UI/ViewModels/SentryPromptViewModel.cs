@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Reactive;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.ViewModels
+namespace Atomos.UI.ViewModels
 {
     public class SentryPromptViewModel : ViewModelBase, IDisposable
     {

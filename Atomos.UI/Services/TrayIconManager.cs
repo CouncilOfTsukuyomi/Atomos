@@ -1,11 +1,10 @@
 ﻿using System;
 using System.IO;
+using Atomos.UI.Interfaces;
 using Avalonia.Controls;
-using PenumbraModForwarder.UI.Interfaces;
 using SharedResources;
-using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class TrayIconManager : ITrayIconManager
 {

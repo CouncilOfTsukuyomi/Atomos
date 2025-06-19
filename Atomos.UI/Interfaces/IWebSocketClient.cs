@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Atomos.UI.Events;
 using CommonLib.Models;
-using PenumbraModForwarder.UI.Events;
 
-namespace PenumbraModForwarder.UI.Interfaces;
+namespace Atomos.UI.Interfaces;
 
 public interface IWebSocketClient
 {

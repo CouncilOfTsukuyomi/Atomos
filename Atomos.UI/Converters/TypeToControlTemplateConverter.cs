@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using Atomos.UI.Helpers;
 using Avalonia.Data.Converters;
 using Avalonia.Markup.Xaml.Templates;
-using PenumbraModForwarder.UI.Helpers;
 
-namespace PenumbraModForwarder.UI.Converters;
+namespace Atomos.UI.Converters;
 
 public class TypeToControlTemplateConverter : IValueConverter
 {

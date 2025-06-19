@@ -1,14 +1,13 @@
-﻿
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Threading.Channels;
+using Atomos.Statistics.Models;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using LiteDB;
 using NLog;
-using PenumbraModForwarder.Statistics.Models;
 
-namespace PenumbraModForwarder.Statistics.Services;
+namespace Atomos.Statistics.Services;
 
 public class StatisticService : IStatisticService, IDisposable
 {

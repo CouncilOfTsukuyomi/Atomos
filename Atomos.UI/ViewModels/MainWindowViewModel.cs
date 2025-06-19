@@ -2,19 +2,19 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Atomos.UI.Extensions;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Models;
+using Atomos.UI.Services;
 using Avalonia;
 using Avalonia.Media;
 using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using PenumbraModForwarder.UI.Extensions;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.Models;
-using PenumbraModForwarder.UI.Services;
 using ReactiveUI;
-using Notification = PenumbraModForwarder.UI.Models.Notification;
+using Notification = Atomos.UI.Models.Notification;
 
-namespace PenumbraModForwarder.UI.ViewModels;
+namespace Atomos.UI.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {

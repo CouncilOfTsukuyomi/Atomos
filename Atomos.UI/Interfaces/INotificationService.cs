@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
+using Atomos.UI.Models;
 using CommonLib.Enums;
-using PenumbraModForwarder.UI.Models;
 
-namespace PenumbraModForwarder.UI.Interfaces;
+namespace Atomos.UI.Interfaces;
 
 public interface INotificationService
 {

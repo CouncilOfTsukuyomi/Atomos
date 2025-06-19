@@ -1,23 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Models;
 using CommonLib.Consts;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.Models;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.ViewModels;
+namespace Atomos.UI.ViewModels;
 
 public class HomeViewModel : ViewModelBase, IDisposable
 {

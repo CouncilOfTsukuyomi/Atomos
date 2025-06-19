@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using Atomos.UI.Interfaces;
 using Microsoft.Win32;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
 
-namespace PenumbraModForwarder.UI.Services
+namespace Atomos.UI.Services
 {
     public class RegistryHelper : IRegistryHelper
     {

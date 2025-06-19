@@ -3,13 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class DownloadManagerService : IDownloadManagerService
 {

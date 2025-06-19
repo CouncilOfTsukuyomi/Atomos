@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using NLog;
 
-namespace PenumbraModForwarder.UI.Views;
+namespace Atomos.UI.Views;
 
 public partial class ErrorWindow : Window
 {

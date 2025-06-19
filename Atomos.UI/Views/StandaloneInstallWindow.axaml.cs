@@ -1,10 +1,10 @@
 ﻿using System;
+using Atomos.UI.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using NLog;
-using PenumbraModForwarder.UI.ViewModels;
 
-namespace PenumbraModForwarder.UI.Views;
+namespace Atomos.UI.Views;
 
 public partial class StandaloneInstallWindow : Window
 {

@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
-using Avalonia;
+using Atomos.UI.ViewModels;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using CommonLib.Models;
-using PenumbraModForwarder.UI.ViewModels;
 
-namespace PenumbraModForwarder.UI.Views;
+namespace Atomos.UI.Views;
 
 public partial class HomeView : UserControl
 {

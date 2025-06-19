@@ -1,12 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using Atomos.UI.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class XivLauncherService : IXivLauncherService
 {

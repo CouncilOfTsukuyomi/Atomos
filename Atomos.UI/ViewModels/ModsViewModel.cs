@@ -5,13 +5,13 @@ using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.ViewModels;
+namespace Atomos.UI.ViewModels;
 
 public class ModsViewModel : ViewModelBase, IDisposable
 {

@@ -1,7 +1,7 @@
-﻿using Avalonia.Media;
-using PenumbraModForwarder.UI.ViewModels;
+﻿using Atomos.UI.ViewModels;
+using Avalonia.Media;
 
-namespace PenumbraModForwarder.UI.Models;
+namespace Atomos.UI.Models;
 
 public class MenuItem
 {

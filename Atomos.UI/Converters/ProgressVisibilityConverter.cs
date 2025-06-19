@@ -2,7 +2,7 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
 
-namespace PenumbraModForwarder.UI.Converters;
+namespace Atomos.UI.Converters;
 
 public class ProgressVisibilityConverter : IValueConverter
 {

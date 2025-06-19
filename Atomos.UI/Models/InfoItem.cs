@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PenumbraModForwarder.UI.Models;
+namespace Atomos.UI.Models;
 
 public class InfoItem
 {

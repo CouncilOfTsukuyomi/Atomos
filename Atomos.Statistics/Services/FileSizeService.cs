@@ -1,6 +1,6 @@
 ﻿using CommonLib.Interfaces;
 
-namespace PenumbraModForwarder.Statistics.Services;
+namespace Atomos.Statistics.Services;
 
 public class FileSizeService : IFileSizeService
 {

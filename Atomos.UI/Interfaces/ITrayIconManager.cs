@@ -1,4 +1,4 @@
-﻿namespace PenumbraModForwarder.UI.Interfaces;
+﻿namespace Atomos.UI.Interfaces;
 
 public interface ITrayIconManager
 {

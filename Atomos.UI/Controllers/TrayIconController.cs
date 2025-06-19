@@ -1,13 +1,13 @@
 ﻿using System.Reactive;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Views;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.Views;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.Controllers;
+namespace Atomos.UI.Controllers;
 
 public class TrayIconController : ITrayIconController
 {

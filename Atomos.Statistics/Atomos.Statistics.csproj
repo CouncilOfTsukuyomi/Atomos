@@ -4,7 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>PenumbraModForwarder.Statistics</RootNamespace>
+        <RootNamespace>Atomos.Statistics</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

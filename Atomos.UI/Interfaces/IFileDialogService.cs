@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PenumbraModForwarder.UI.Interfaces;
+namespace Atomos.UI.Interfaces;
 
 public interface IFileDialogService
 {

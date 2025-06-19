@@ -1,7 +1,7 @@
 ﻿using System.Windows.Input;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.Helpers;
+namespace Atomos.UI.Helpers;
 
 public class PathItemViewModel : ReactiveObject
 {

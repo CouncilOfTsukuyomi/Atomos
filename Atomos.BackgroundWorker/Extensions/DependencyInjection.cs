@@ -6,7 +6,7 @@ using CommonLib.Interfaces;
 using CommonLib.Services;
 using Atomos.FileMonitor.Interfaces;
 using Atomos.FileMonitor.Services;
-using PenumbraModForwarder.Statistics.Services;
+using Atomos.Statistics.Services;
 
 namespace Atomos.BackgroundWorker.Extensions
 {

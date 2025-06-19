@@ -1,13 +1,13 @@
 using System;
+using Atomos.UI.Interfaces;
+using Atomos.UI.ViewModels;
+using Atomos.UI.Views;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.ViewModels;
-using PenumbraModForwarder.UI.Views;
 
-namespace PenumbraModForwarder.UI;
+namespace Atomos.UI;
 
 public partial class App : Avalonia.Application
 {

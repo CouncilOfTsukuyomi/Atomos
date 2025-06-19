@@ -1,19 +1,18 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Services;
 using Avalonia;
 using CommonLib.Interfaces;
 using NLog;
-using PenumbraModForwarder.UI.Services;
-using PenumbraModForwarder.UI.Interfaces;
 using ReactiveUI;
-using UINotification = PenumbraModForwarder.UI.Models.Notification;
+using UINotification = Atomos.UI.Models.Notification;
 
-namespace PenumbraModForwarder.UI.ViewModels;
+namespace Atomos.UI.ViewModels;
 
 public class NotificationHubViewModel : ViewModelBase
 {

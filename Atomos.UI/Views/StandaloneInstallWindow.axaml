@@ -3,9 +3,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:views="clr-namespace:PenumbraModForwarder.UI.Views"
-    xmlns:vm="clr-namespace:PenumbraModForwarder.UI.ViewModels"
-    x:Class="PenumbraModForwarder.UI.Views.StandaloneInstallWindow"
+    xmlns:views="clr-namespace:Atomos.UI.Views"
+    xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
+    xmlns:views1="clr-namespace:Atomos.UI.Views"
+    x:Class="Atomos.UI.Views.StandaloneInstallWindow"
     x:DataType="vm:InstallViewModel"
     mc:Ignorable="d"
     Width="500"
@@ -63,7 +64,7 @@
         <ExperimentalAcrylicBorder
             Grid.Row="1"
             Material="{StaticResource ContentAcrylicMaterial}">
-            <views:InstallView
+            <views1:InstallView
                 DataContext="{Binding}"
                 Margin="20" />
         </ExperimentalAcrylicBorder>

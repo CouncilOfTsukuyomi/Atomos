@@ -5,6 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using Atomos.UI.Events;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
@@ -13,12 +16,9 @@ using CommonLib.Interfaces;
 using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
-using PenumbraModForwarder.UI.Events;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.Views;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.ViewModels;
+namespace Atomos.UI.ViewModels;
 
 public class InstallViewModel : ViewModelBase, IDisposable
 {

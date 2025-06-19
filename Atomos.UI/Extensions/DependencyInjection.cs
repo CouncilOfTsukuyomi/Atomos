@@ -1,4 +1,10 @@
 ﻿using System;
+using Atomos.Statistics.Services;
+using Atomos.UI.Controllers;
+using Atomos.UI.Interfaces;
+using Atomos.UI.Services;
+using Atomos.UI.ViewModels;
+using Atomos.UI.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommonLib.Extensions;
@@ -8,16 +14,10 @@ using CommonLib.Models;
 using CommonLib.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PenumbraModForwarder.Statistics.Services;
-using PenumbraModForwarder.UI.Controllers;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.Services;
-using PenumbraModForwarder.UI.ViewModels;
-using PenumbraModForwarder.UI.Views;
-using IRegistryHelper = PenumbraModForwarder.UI.Interfaces.IRegistryHelper;
-using RegistryHelper = PenumbraModForwarder.UI.Services.RegistryHelper;
+using IRegistryHelper = Atomos.UI.Interfaces.IRegistryHelper;
+using RegistryHelper = Atomos.UI.Services.RegistryHelper;
 
-namespace PenumbraModForwarder.UI.Extensions;
+namespace Atomos.UI.Extensions;
 
 public static class DependencyInjection
 {

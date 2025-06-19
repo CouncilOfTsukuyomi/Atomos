@@ -1,7 +1,7 @@
-﻿using CommonLib.Enums;
+﻿using Atomos.Statistics.Services;
+using CommonLib.Enums;
 using CommonLib.Interfaces;
 using Moq;
-using PenumbraModForwarder.Statistics.Services;
 
 namespace Atomos.Statistics.Tests.Services;
 

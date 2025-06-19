@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 
-namespace PenumbraModForwarder.UI.Extensions;
+namespace Atomos.UI.Extensions;
 
 public static class HiddenWindows
 {

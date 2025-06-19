@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace PenumbraModForwarder.UI.Helpers;
+namespace Atomos.UI.Helpers;
 
 public class ConfigurationGroup
 {

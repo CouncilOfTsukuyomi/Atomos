@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Reflection;
 using System.Reactive.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using Atomos.UI.Helpers;
+using Atomos.UI.Interfaces;
 using CommonLib.Attributes;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
-using PenumbraModForwarder.UI.Helpers;
-using PenumbraModForwarder.UI.Interfaces;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.ViewModels;
+namespace Atomos.UI.ViewModels;
 
 public class SettingsViewModel : ViewModelBase
 {

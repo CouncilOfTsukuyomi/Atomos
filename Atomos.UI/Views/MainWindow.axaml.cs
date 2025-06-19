@@ -1,4 +1,7 @@
 using System;
+using Atomos.UI.Extensions;
+using Atomos.UI.Interfaces;
+using Atomos.UI.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,11 +10,8 @@ using Avalonia.Markup.Xaml;
 using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using PenumbraModForwarder.UI.Extensions;
-using PenumbraModForwarder.UI.Interfaces;
-using PenumbraModForwarder.UI.ViewModels;
 
-namespace PenumbraModForwarder.UI.Views
+namespace Atomos.UI.Views
 {
     public partial class MainWindow : Window
     {

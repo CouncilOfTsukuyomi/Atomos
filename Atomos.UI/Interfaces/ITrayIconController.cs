@@ -1,7 +1,7 @@
 ﻿using System.Reactive;
 using ReactiveUI;
 
-namespace PenumbraModForwarder.UI.Interfaces;
+namespace Atomos.UI.Interfaces;
 
 public interface ITrayIconController
 {

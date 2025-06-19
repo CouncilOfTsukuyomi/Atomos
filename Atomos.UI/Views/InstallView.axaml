@@ -1,7 +1,7 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:PenumbraModForwarder.UI.ViewModels"
-             x:Class="PenumbraModForwarder.UI.Views.InstallView"
+             xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
+             x:Class="Atomos.UI.Views.InstallView"
              x:DataType="vm:InstallViewModel">
     <Grid IsVisible="{Binding IsSelectionVisible}" Background="#80000000">
         <ExperimentalAcrylicBorder Material="{StaticResource ContentAcrylicMaterial}"

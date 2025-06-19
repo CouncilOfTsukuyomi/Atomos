@@ -5,17 +5,17 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Atomos.UI.Events;
+using Atomos.UI.Interfaces;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
-using PenumbraModForwarder.UI.Events;
-using PenumbraModForwarder.UI.Interfaces;
 using WebSocketMessageType = System.Net.WebSockets.WebSocketMessageType;
 using CustomWebSocketMessageType = CommonLib.Models.WebSocketMessageType;
 
-namespace PenumbraModForwarder.UI.Services;
+namespace Atomos.UI.Services;
 
 public class WebSocketClient : IWebSocketClient, IDisposable
 {
