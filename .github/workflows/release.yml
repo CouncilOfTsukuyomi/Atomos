@@ -1,4 +1,5 @@
-﻿name: Manual Build and Release
+﻿
+name: Manual Build and Release
 
 on:
     workflow_dispatch:
@@ -217,10 +218,10 @@ jobs:
               shell: pwsh
               run: |
                   # Create main publish directory
-                  New-Item -ItemType Directory -Path "./publish/ModForwarder-win-x64" -Force
+                  New-Item -ItemType Directory -Path "./publish/Atomos-win-x64" -Force
                   
                   # Publish Console Tooling with optimizations
-                  dotnet publish PenumbraModForwarder.ConsoleTooling `
+                  dotnet publish Atomos.ConsoleTooling `
                     -c Release `
                     -p:PublishSingleFile=true `
                     -p:PublishReadyToRun=true `
@@ -231,7 +232,7 @@ jobs:
                     -f net9.0
                   
                   # Publish UI Application with optimizations
-                  dotnet publish PenumbraModForwarder.UI `
+                  dotnet publish Atomos.UI `
                     -c Release `
                     -p:PublishSingleFile=true `
                     -p:PublishReadyToRun=true `
@@ -242,7 +243,7 @@ jobs:
                     -f net9.0
                   
                   # Publish Background Worker with optimizations
-                  dotnet publish PenumbraModForwarder.BackgroundWorker `
+                  dotnet publish Atomos.BackgroundWorker `
                     -c Release `
                     -p:PublishSingleFile=true `
                     -p:PublishReadyToRun=true `
@@ -252,21 +253,34 @@ jobs:
                     -o "./publish/temp-worker-win-x64" `
                     -f net9.0
                   
-                  # Move all files to the root ModForwarder directory
-                  Copy-Item -Path "./publish/temp-console-win-x64/*" -Destination "./publish/ModForwarder-win-x64/" -Recurse -Force
-                  Copy-Item -Path "./publish/temp-ui-win-x64/*" -Destination "./publish/ModForwarder-win-x64/" -Recurse -Force
-                  Copy-Item -Path "./publish/temp-worker-win-x64/*" -Destination "./publish/ModForwarder-win-x64/" -Recurse -Force
+                  # Publish Watchdog/Launcher with optimizations
+                  dotnet publish Atomos.Watchdog `
+                    -c Release `
+                    -p:PublishSingleFile=true `
+                    -p:PublishReadyToRun=true `
+                    --self-contained=true `
+                    -p:DebugType=None -p:DebugSymbols=false `
+                    -r win-x64 `
+                    -o "./publish/temp-watchdog-win-x64" `
+                    -f net9.0
+                  
+                  # Move all files to the root Atomos directory
+                  Copy-Item -Path "./publish/temp-console-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
+                  Copy-Item -Path "./publish/temp-ui-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
+                  Copy-Item -Path "./publish/temp-worker-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
+                  Copy-Item -Path "./publish/temp-watchdog-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
                   
                   # Clean up temporary directories
                   Remove-Item -Path "./publish/temp-console-win-x64" -Recurse -Force
                   Remove-Item -Path "./publish/temp-ui-win-x64" -Recurse -Force
                   Remove-Item -Path "./publish/temp-worker-win-x64" -Recurse -Force
+                  Remove-Item -Path "./publish/temp-watchdog-win-x64" -Recurse -Force
 
             - name: Validate Executables
               shell: pwsh
               run: |
                   # Verify executables were created and are not zero-byte
-                  $exeFiles = Get-ChildItem -Path "./publish/ModForwarder-win-x64/" -Filter "*.exe"
+                  $exeFiles = Get-ChildItem -Path "./publish/Atomos-win-x64/" -Filter "*.exe"
                   foreach ($exe in $exeFiles) {
                     if ($exe.Length -eq 0) {
                       Write-Error "Error: $($exe.Name) is empty"
@@ -281,14 +295,14 @@ jobs:
               run: |
                   Set-Location "./publish"
                   # Use "Windows" in the filename so the updater can find it
-                  Compress-Archive -Path "ModForwarder-win-x64" -DestinationPath "ModForwarder-Windows-x64.v${{ needs.version-update.outputs.version }}.zip"
+                  Compress-Archive -Path "Atomos-win-x64" -DestinationPath "Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip"
                   Set-Location ".."
 
             - name: Upload Build Artifacts
               uses: actions/upload-artifact@v4
               with:
-                  name: ModForwarder-win-x64-v${{ needs.version-update.outputs.version }}
-                  path: ./publish/ModForwarder-Windows-x64.v${{ needs.version-update.outputs.version }}.zip
+                  name: Atomos-win-x64-v${{ needs.version-update.outputs.version }}
+                  path: ./publish/Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip
                   retention-days: 6
     
     create-release:
@@ -385,11 +399,11 @@ jobs:
                       ${{ env.COMMITS }}
                       
                       ## Available Downloads:
-                      - `ModForwarder-Windows-x64.v${{ needs.version-update.outputs.version }}.zip` - Windows 64-bit (Universal)
+                      - `Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip` - Windows 64-bit (Universal)
                       
                       **Note:** This release contains a universal x64 build that works on all Windows systems.
                   files: |
-                      ./publish/ModForwarder-Windows-x64.v${{ needs.version-update.outputs.version }}.zip
+                      ./publish/Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip
                   draft: false
                   prerelease: ${{ github.event.inputs.isBeta == 'true' }}
               env:

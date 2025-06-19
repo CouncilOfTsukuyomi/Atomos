@@ -35,7 +35,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Penumbra Mod Forwarder" 
+                <TextBlock Text="Atomos Mod Forwarder" 
                            VerticalAlignment="Center" 
                            Margin="10,0" 
                            Foreground="{DynamicResource TextBrush}" 
@@ -81,7 +81,7 @@
                     <!-- App Logo/Title -->
                     <StackPanel Grid.Row="0" Classes="appLogo">
                         <PathIcon Data="{StaticResource HomeIcon}" Classes="logoIcon"/>
-                        <TextBlock Text="Penumbra Mod&#x0a;Forwarder" Classes="logoText"/>
+                        <TextBlock Text="Atomos" Classes="logoText"/>
                     </StackPanel>
 
                     <!-- Navigation Items -->
