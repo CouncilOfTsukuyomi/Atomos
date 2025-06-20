@@ -3,9 +3,9 @@ using Avalonia.Markup.Xaml;
 
 namespace Atomos.UI.Views;
 
-public partial class PluginsView : UserControl
+public partial class PluginView : UserControl
 {
-    public PluginsView()
+    public PluginView()
     {
         InitializeComponent();
     }

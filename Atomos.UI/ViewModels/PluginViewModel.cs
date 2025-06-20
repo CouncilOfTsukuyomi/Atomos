@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +9,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Atomos.UI.Views;
 using DynamicData;
 using DynamicData.Binding;
 using NLog;
@@ -18,7 +18,7 @@ using ReactiveUI;
 
 namespace Atomos.UI.ViewModels;
 
-public class PluginsViewModel : ViewModelBase, IDisposable
+public class PluginViewModel : ViewModelBase, IDisposable
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -50,12 +50,14 @@ public class PluginsViewModel : ViewModelBase, IDisposable
     
     public ReactiveCommand<PluginInfo, Unit> TogglePluginCommand { get; }
     public ReactiveCommand<PluginInfo, Unit> OpenSettingsCommand { get; }
+    public ReactiveCommand<PluginInfo, Unit> ValidateSettingsCommand { get; }
+    public ReactiveCommand<PluginInfo, Unit> RollbackSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> RefreshCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenPluginDirectoryCommand { get; }
-
+    
     public event Action<PluginSettingsViewModel>? PluginSettingsRequested;
 
-    public PluginsViewModel(
+    public PluginViewModel(
         IPluginManagementService pluginManagementService,
         IPluginDiscoveryService pluginDiscoveryService)
     {
@@ -79,41 +81,19 @@ public class PluginsViewModel : ViewModelBase, IDisposable
         // Commands
         TogglePluginCommand = ReactiveCommand.CreateFromTask<PluginInfo>(TogglePluginAsync);
         OpenSettingsCommand = ReactiveCommand.CreateFromTask<PluginInfo>(OpenPluginSettingsAsync);
+        ValidateSettingsCommand = ReactiveCommand.CreateFromTask<PluginInfo>(ValidatePluginSettingsAsync);
+        RollbackSettingsCommand = ReactiveCommand.CreateFromTask<PluginInfo>(RollbackPluginSettingsAsync);
         RefreshCommand = ReactiveCommand.CreateFromTask(RefreshAsync);
         OpenPluginDirectoryCommand = ReactiveCommand.Create(OpenPluginDirectory);
 
-        // Periodically refresh available plugins
-        Observable.Timer(TimeSpan.Zero, TimeSpan.FromSeconds(30))
+        // Load plugins immediately, then refresh periodically
+        _ = LoadAvailablePluginsAsync();
+        
+        Observable.Timer(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30))
             .SelectMany(_ => Observable.FromAsync(LoadAvailablePluginsAsync))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe()
             .DisposeWith(_disposables);
-        
-        DebugPluginPaths();
-    }
-    
-    private void DebugPluginPaths()
-    {
-        var baseDir = AppContext.BaseDirectory;
-        var pluginsDir = Path.Combine(baseDir, "plugins");
-        _logger.Debug("Base directory: {BaseDir}", baseDir);
-        _logger.Debug("Looking for plugins in: {PluginsDir}", pluginsDir);
-
-        if (Directory.Exists(pluginsDir))
-        {
-            var subdirs = Directory.GetDirectories(pluginsDir);
-            _logger.Debug("Found {Count} subdirectories: {Dirs}", subdirs.Length, string.Join(", ", subdirs.Select(Path.GetFileName)));
-        
-            foreach (var dir in subdirs)
-            {
-                var files = Directory.GetFiles(dir);
-                _logger.Debug("Directory {Dir} contains: {Files}", Path.GetFileName(dir), string.Join(", ", files.Select(Path.GetFileName)));
-            }
-        }
-        else
-        {
-            _logger.Debug("Plugins directory does not exist: {PluginsDir}", pluginsDir);
-        }
     }
 
     private Func<PluginInfo, bool> CreateSearchPredicate(string searchTerm)
@@ -139,36 +119,20 @@ public class PluginsViewModel : ViewModelBase, IDisposable
             IsLoading = true;
             var fetchedPlugins = await _pluginManagementService.GetAvailablePluginsAsync();
 
-            foreach (var plugin in fetchedPlugins)
-            {
-                _logger.Debug("Fetched plugin {PluginId} - {DisplayName} with IsEnabled={IsEnabled}", 
-                    plugin.PluginId, plugin.DisplayName, plugin.IsEnabled);
-            }
+            _logger.Debug("Fetched {Count} plugins from management service", fetchedPlugins.Count);
 
             // Use DynamicData to efficiently update the collection
             _availablePluginsSource.Edit(updater =>
             {
                 updater.Clear();
-                
-                // Add each plugin individually and verify the state
-                foreach (var plugin in fetchedPlugins)
-                {
-                    _logger.Debug("Adding plugin {PluginId} to source with IsEnabled={IsEnabled}", 
-                        plugin.PluginId, plugin.IsEnabled);
-                    updater.Add(plugin);
-                }
+                updater.AddRange(fetchedPlugins);
             });
 
-            // Verify what's actually in the source after adding
-            foreach (var plugin in _availablePluginsSource.Items)
-            {
-                _logger.Debug("Plugin in source: {PluginId} - IsEnabled={IsEnabled}", 
-                    plugin.PluginId, plugin.IsEnabled);
-            }
+            _logger.Debug("Updated plugin source with {Count} plugins", _availablePluginsSource.Count);
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to load available plugins in PluginsViewModel.");
+            _logger.Error(ex, "Failed to load available plugins in PluginsViewModel");
         }
         finally
         {
@@ -183,18 +147,10 @@ public class PluginsViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            // Debug the current state
-            _logger.Debug("Current plugin state - PluginId: {PluginId}, IsLoaded: {IsLoaded}, IsEnabled: {IsEnabled}", 
-                plugin.PluginId, plugin.IsLoaded, plugin.IsEnabled);
-
-            // Toggle based on IsEnabled (registry state), not IsLoaded (runtime state)
             var desiredEnabledState = !plugin.IsEnabled;
 
-            _logger.Info("User clicked to {Action} plugin {PluginId} (IsEnabled: {IsEnabled} -> {DesiredEnabled})", 
-                desiredEnabledState ? "ENABLE" : "DISABLE", 
-                plugin.PluginId,
-                plugin.IsEnabled,
-                desiredEnabledState);
+            _logger.Info("User toggling plugin {PluginId} from {CurrentState} to {DesiredState}", 
+                plugin.PluginId, plugin.IsEnabled, desiredEnabledState);
 
             await _pluginManagementService.SetPluginEnabledAsync(plugin.PluginId, desiredEnabledState);
 
@@ -207,7 +163,6 @@ public class PluginsViewModel : ViewModelBase, IDisposable
         }
     }
 
-
     /// <summary>
     /// Opens plugin settings dialog
     /// </summary>
@@ -217,23 +172,145 @@ public class PluginsViewModel : ViewModelBase, IDisposable
         {
             _logger.Info("Opening settings for plugin {PluginId}", plugin.PluginId);
 
-            // Check if plugin has configurable settings using the schema
+            // Check if plugin has configurable settings
             var hasConfigurableSettings = await _pluginDiscoveryService.HasConfigurableSettingsAsync(plugin.PluginDirectory);
             
             if (!hasConfigurableSettings)
             {
-                _logger.Info("Plugin {PluginId} has no configurable settings schema", plugin.PluginId);
+                _logger.Info("Plugin {PluginId} has no configurable settings", plugin.PluginId);
                 return;
             }
 
-            // Create the settings view model and request it to be shown
+            // Create and show the settings view model
             var settingsViewModel = new PluginSettingsViewModel(plugin, _pluginDiscoveryService);
             PluginSettingsRequested?.Invoke(settingsViewModel);
-            settingsViewModel.Show();
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to open settings for plugin {PluginId}", plugin.PluginId);
+        }
+    }
+
+    /// <summary>
+    /// Validates plugin settings schema
+    /// </summary>
+    private async Task ValidatePluginSettingsAsync(PluginInfo plugin)
+    {
+        try
+        {
+            _logger.Info("Validating settings for plugin {PluginId}", plugin.PluginId);
+
+            // Check if plugin has configurable settings first
+            var hasConfigurableSettings = await _pluginDiscoveryService.HasConfigurableSettingsAsync(plugin.PluginDirectory);
+            
+            if (!hasConfigurableSettings)
+            {
+                return;
+            }
+
+            var isValid = await _pluginDiscoveryService.ValidateSettingsSchemaAsync(plugin.PluginDirectory);
+            
+            if (isValid)
+            {
+                _logger.Info("Settings validation passed for plugin {PluginId}", plugin.PluginId);
+            }
+            else
+            {
+                _logger.Warn("Settings validation failed for plugin {PluginId}", plugin.PluginId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to validate settings for plugin {PluginId}", plugin.PluginId);
+        }
+    }
+
+    /// <summary>
+    /// Rolls back plugin settings to previous version
+    /// </summary>
+    private async Task RollbackPluginSettingsAsync(PluginInfo plugin)
+    {
+        try
+        {
+            _logger.Info("Rolling back settings for plugin {PluginId}", plugin.PluginId);
+
+            // Check if plugin has configurable settings first
+            var hasConfigurableSettings = await _pluginDiscoveryService.HasConfigurableSettingsAsync(plugin.PluginDirectory);
+            
+            if (!hasConfigurableSettings)
+            {
+                return;
+            }
+
+            var success = await _pluginDiscoveryService.RollbackSettingsAsync(plugin.PluginDirectory);
+            
+            if (success)
+            {
+                _logger.Info("Settings rollback successful for plugin {PluginId}", plugin.PluginId);
+                    
+                // Refresh plugin list to reflect any changes
+                await LoadAvailablePluginsAsync();
+            }
+            else
+            {
+                _logger.Warn("Settings rollback failed for plugin {PluginId} - no previous configuration available", plugin.PluginId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to rollback settings for plugin {PluginId}", plugin.PluginId);
+        }
+    }
+
+    /// <summary>
+    /// Gets migration status information for a plugin
+    /// </summary>
+    public async Task<string> GetPluginMigrationStatusAsync(PluginInfo plugin)
+    {
+        try
+        {
+            var settings = await _pluginDiscoveryService.GetPluginSettingsAsync(plugin.PluginDirectory);
+            
+            if (settings.PreviousConfiguration != null)
+            {
+                var migrationDate = settings.Metadata.TryGetValue("MigratedAt", out var dateStr) 
+                    ? dateStr.ToString() 
+                    : "Unknown";
+                var migrationFrom = settings.Metadata.TryGetValue("MigratedFrom", out var fromStr) 
+                    ? fromStr.ToString() 
+                    : "Unknown";
+                    
+                return $"Migrated from version {migrationFrom} on {migrationDate}";
+            }
+            
+            if (settings.Metadata.TryGetValue("RolledBackAt", out var rollbackDate))
+            {
+                return $"Rolled back on {rollbackDate}";
+            }
+            
+            return $"Current version: {settings.Version}";
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to get migration status for plugin {PluginId}", plugin.PluginId);
+            return "Status unavailable";
+        }
+    }
+
+    /// <summary>
+    /// Checks if a plugin has previous configuration available for rollback
+    /// </summary>
+    public async Task<bool> CanRollbackPluginAsync(PluginInfo plugin)
+    {
+        try
+        {
+            var settings = await _pluginDiscoveryService.GetPluginSettingsAsync(plugin.PluginDirectory);
+            return settings.PreviousConfiguration != null;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to check rollback availability for plugin {PluginId}", plugin.PluginId);
+            return false;
         }
     }
 
@@ -244,48 +321,51 @@ public class PluginsViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            // Get the actual plugin directory path
             var pluginDirectory = GetPluginDirectoryPath();
             
             if (!Directory.Exists(pluginDirectory))
             {
-                _logger.Warn("Plugin directory does not exist: {Directory}", pluginDirectory);
+                _logger.Warn("Plugin directory does not exist, creating: {Directory}", pluginDirectory);
                 Directory.CreateDirectory(pluginDirectory);
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "explorer.exe",
-                    Arguments = $"\"{pluginDirectory}\"",
-                    UseShellExecute = true
-                });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "xdg-open",
-                    Arguments = $"\"{pluginDirectory}\"",
-                    UseShellExecute = true
-                });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "open",
-                    Arguments = $"\"{pluginDirectory}\"",
-                    UseShellExecute = true
-                });
-            }
-
+            OpenDirectoryInExplorer(pluginDirectory);
             _logger.Info("Opened plugin directory: {Directory}", pluginDirectory);
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to open plugin directory");
+        }
+    }
+
+    private void OpenDirectoryInExplorer(string directory)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{directory}\"",
+                UseShellExecute = true
+            });
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "xdg-open",
+                Arguments = $"\"{directory}\"",
+                UseShellExecute = true
+            });
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "open",
+                Arguments = $"\"{directory}\"",
+                UseShellExecute = true
+            });
         }
     }
 
@@ -301,7 +381,7 @@ public class PluginsViewModel : ViewModelBase, IDisposable
                 return pluginsDirectory;
             }
 
-            // Fallback: try to get from a plugin info if available
+            // Fallback: try to get from existing plugin info
             var plugins = _availablePluginsSource.Items.ToList();
             if (plugins.Any())
             {
@@ -313,14 +393,13 @@ public class PluginsViewModel : ViewModelBase, IDisposable
                 }
             }
 
-            // Final fallback: create the expected plugins directory
+            // Create the expected plugins directory
             Directory.CreateDirectory(pluginsDirectory);
             return pluginsDirectory;
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to determine plugin directory path");
-            // Ultimate fallback - changed from "addons" to "plugins"
             var fallbackPath = Path.Combine(AppContext.BaseDirectory, "plugins");
             Directory.CreateDirectory(fallbackPath);
             return fallbackPath;

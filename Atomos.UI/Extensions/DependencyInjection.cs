@@ -72,7 +72,7 @@ public static class DependencyInjection
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
-        services.AddSingleton<PluginsViewModel>();
+        services.AddSingleton<PluginViewModel>();
         services.AddTransient<PluginDataViewModel>();
 
         // Views
@@ -81,7 +81,7 @@ public static class DependencyInjection
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
-        services.AddSingleton<PluginsView>();
+        services.AddSingleton<PluginView>();
         
         services.AddPluginServices();
         

@@ -126,7 +126,7 @@ public class MainWindowViewModel : ViewModelBase
 
         var homeViewModel = _serviceProvider.GetRequiredService<HomeViewModel>();
         var modsViewModel = _serviceProvider.GetRequiredService<ModsViewModel>();
-        var pluginsViewModel = _serviceProvider.GetRequiredService<PluginsViewModel>();
+        var pluginsViewModel = _serviceProvider.GetRequiredService<PluginViewModel>();
         var pluginDataViewModel = _serviceProvider.GetRequiredService<PluginDataViewModel>(); // Add this line
 
         // Subscribe to plugin settings requests

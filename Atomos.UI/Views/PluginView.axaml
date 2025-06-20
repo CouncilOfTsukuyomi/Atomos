@@ -6,8 +6,8 @@
              xmlns:models="using:PluginManager.Core.Models"
              xmlns:conv="using:Atomos.UI.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Atomos.UI.Views.PluginsView"
-             x:DataType="vm:PluginsViewModel">
+             x:Class="Atomos.UI.Views.PluginView"
+             x:DataType="vm:PluginViewModel">
 
   <Grid RowDefinitions="Auto,*">
     
@@ -156,7 +156,7 @@
                             Spacing="10">
                   
                   <!-- Settings Button -->
-                  <Button Command="{Binding $parent[UserControl].((vm:PluginsViewModel)DataContext).OpenSettingsCommand}"
+                  <Button Command="{Binding $parent[UserControl].((vm:PluginViewModel)DataContext).OpenSettingsCommand}"
                           CommandParameter="{Binding}"
                           Content="⚙️ Settings"
                           IsEnabled="{Binding HasConfigurableSettings}"/>
@@ -164,7 +164,7 @@
                   <!-- Enable/Disable Toggle -->
                   <ToggleButton Classes="ToggleSwitch"
                                 IsChecked="{Binding IsEnabled, Mode=OneWay}"
-                                Command="{Binding $parent[UserControl].((vm:PluginsViewModel)DataContext).TogglePluginCommand}"
+                                Command="{Binding $parent[UserControl].((vm:PluginViewModel)DataContext).TogglePluginCommand}"
                                 CommandParameter="{Binding}">
                     <TextBlock Text="{Binding IsEnabled, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='Disable|Enable'}"/>
                   </ToggleButton>
