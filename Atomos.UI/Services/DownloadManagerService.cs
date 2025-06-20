@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Atomos.UI.Interfaces;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
@@ -59,28 +60,21 @@ public class DownloadManagerService : IDownloadManagerService
                 return;
             }
             
-            string directDownloadUrl = pluginMod.DownloadUrl;
-            _logger.Debug("Using provided download URL: {DownloadUrl}", directDownloadUrl);
-            // TODO: This stuff should be forced anyways
-            // else
-            // {
-            //     // Use plugin to get download URL from mod page URL
-            //     _logger.Debug("Getting download URL from plugin for mod: {ModUrl}", pluginMod.ModUrl);
-            //     directDownloadUrl = await _pluginService.GetModDownloadUrlAsync(pluginMod.PluginSource, pluginMod.ModUrl);
-            //     
-            //     if (string.IsNullOrWhiteSpace(directDownloadUrl))
-            //     {
-            //         _logger.Warn("No direct download URL found for mod: {ModName}", pluginMod.Name);
-            //         await _notificationService.ShowNotification(
-            //             "Download not available",
-            //             $"Could not find download link for '{pluginMod.Name}'",
-            //             SoundType.GeneralChime
-            //         );
-            //         return;
-            //     }
-            // }
+            // Convert the download URL to a direct download URL
+            string directDownloadUrl = await ConvertToDirectDownloadUrlAsync(pluginMod.DownloadUrl);
+            
+            if (string.IsNullOrWhiteSpace(directDownloadUrl))
+            {
+                _logger.Warn("Could not convert to direct download URL for mod: {ModName}", pluginMod.Name);
+                await _notificationService.ShowNotification(
+                    "Download not available",
+                    $"Could not process download URL for '{pluginMod.Name}'",
+                    SoundType.GeneralChime
+                );
+                return;
+            }
 
-            _logger.Debug("Direct download URL: {DirectUrl}", directDownloadUrl);
+            _logger.Debug("Converted to direct download URL: {DirectUrl}", directDownloadUrl);
 
             await _notificationService.ShowNotification(
                 "Download started",
@@ -110,8 +104,8 @@ public class DownloadManagerService : IDownloadManagerService
                 Directory.CreateDirectory(downloadPath);
             }
 
-            // Download the file
-            var result = await _aria2Service.DownloadFileAsync(directDownloadUrl, downloadPath, ct);
+            // Download the file with retry logic
+            var result = await DownloadWithRetryAsync(directDownloadUrl, downloadPath, pluginMod.Name, ct);
 
             if (result)
             {
@@ -150,5 +144,164 @@ public class DownloadManagerService : IDownloadManagerService
                 SoundType.GeneralChime
             );
         }
+    }
+
+    private async Task<string> ConvertToDirectDownloadUrlAsync(string originalUrl)
+    {
+        if (string.IsNullOrWhiteSpace(originalUrl))
+            return originalUrl;
+
+        try
+        {
+            var uri = new Uri(originalUrl);
+            var host = uri.Host.ToLowerInvariant();
+
+            // Google Drive conversion
+            if (host.Contains("drive.google.com") || host.Contains("docs.google.com"))
+            {
+                return ConvertGoogleDriveUrl(originalUrl);
+            }
+
+            // Mega.nz conversion
+            if (host.Contains("mega.nz") || host.Contains("mega.co.nz"))
+            {
+                return await ConvertMegaUrlAsync(originalUrl);
+            }
+
+            // Patreon conversion
+            if (host.Contains("patreon.com") || host.Contains("patreonusercontent.com"))
+            {
+                return await ConvertPatreonUrlAsync(originalUrl);
+            }
+
+            // If it's already a direct URL or unknown platform, return as-is
+            return originalUrl;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error converting URL: {Url}", originalUrl);
+            return originalUrl; // Fallback to original URL
+        }
+    }
+
+    private string ConvertGoogleDriveUrl(string url)
+    {
+        try
+        {
+            // Convert Google Drive share URLs to direct download
+            // From: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+            // To: https://drive.google.com/uc?export=download&id=FILE_ID
+
+            var fileIdMatch = Regex.Match(url, @"/file/d/([a-zA-Z0-9_-]+)");
+            if (fileIdMatch.Success)
+            {
+                var fileId = fileIdMatch.Groups[1].Value;
+                var directUrl = $"https://drive.google.com/uc?export=download&id={fileId}";
+                _logger.Debug("Converted Google Drive URL: {Original} -> {Direct}", url, directUrl);
+                return directUrl;
+            }
+
+            // Handle other Google Drive URL formats
+            var idMatch = Regex.Match(url, @"[?&]id=([a-zA-Z0-9_-]+)");
+            if (idMatch.Success)
+            {
+                var fileId = idMatch.Groups[1].Value;
+                var directUrl = $"https://drive.google.com/uc?export=download&id={fileId}";
+                _logger.Debug("Converted Google Drive URL: {Original} -> {Direct}", url, directUrl);
+                return directUrl;
+            }
+
+            _logger.Warn("Could not extract file ID from Google Drive URL: {Url}", url);
+            return url;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error converting Google Drive URL: {Url}", url);
+            return url;
+        }
+    }
+
+    private async Task<string> ConvertMegaUrlAsync(string url)
+    {
+        try
+        {
+            // For Mega.nz, you might need to use their API or SDK
+            // This is a placeholder - you'll need to implement the actual Mega API integration
+            // The Mega API requires cryptographic operations to get direct download links
+            
+            _logger.Debug("Mega URL conversion not yet implemented: {Url}", url);
+            await _notificationService.ShowNotification(
+                "Download error",
+                $"Mega URL conversion not yet implemented: {url}",
+                SoundType.GeneralChime
+            );
+            
+            // For now, return the original URL
+            // You'll need to integrate with Mega's .NET SDK or API
+            return url;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error converting Mega URL: {Url}", url);
+            return url;
+        }
+    }
+
+    private async Task<string> ConvertPatreonUrlAsync(string url)
+    {
+        try
+        {
+            // If it's already a direct Patreon CDN URL, return as-is
+            if (url.Contains("patreonusercontent.com"))
+            {
+                return url;
+            }
+
+            // For Patreon post URLs, you might need to scrape or use their API
+            // This is a placeholder - implement based on your needs
+            _logger.Debug("Patreon URL conversion not yet implemented: {Url}", url);
+            await _notificationService.ShowNotification(
+                "Download error",
+                $"Patreon URL conversion not yet implemented: {url}",
+                SoundType.GeneralChime
+            );
+            
+            // For now, return the original URL
+            return url;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error converting Patreon URL: {Url}", url);
+            return url;
+        }
+    }
+
+    private async Task<bool> DownloadWithRetryAsync(string url, string downloadPath, string fileName, CancellationToken ct)
+    {
+        const int maxRetries = 3;
+        const int delayBetweenRetries = 2000;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                var result = await _aria2Service.DownloadFileAsync(url, downloadPath, ct);
+                if (result) return true;
+
+                if (attempt < maxRetries)
+                {
+                    _logger.Info("Download attempt {Attempt} failed for {FileName}, retrying in {Delay}ms", 
+                        attempt, fileName, delayBetweenRetries);
+                    await Task.Delay(delayBetweenRetries, ct);
+                }
+            }
+            catch (Exception ex) when (attempt < maxRetries)
+            {
+                _logger.Warn(ex, "Download attempt {Attempt} failed for {FileName}, retrying", attempt, fileName);
+                await Task.Delay(delayBetweenRetries, ct);
+            }
+        }
+
+        return false;
     }
 }
