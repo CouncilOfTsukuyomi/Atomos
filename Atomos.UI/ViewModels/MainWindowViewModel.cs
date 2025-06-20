@@ -1,6 +1,6 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Atomos.UI.Extensions;
@@ -32,6 +32,13 @@ public class MainWindowViewModel : ViewModelBase
     private ViewModelBase _currentPage = null!;
     private MenuItem _selectedMenuItem = null!;
     private Size _windowSize = new Size(800, 600);
+
+    private PluginSettingsViewModel? _pluginSettingsViewModel;
+    public PluginSettingsViewModel? PluginSettingsViewModel
+    {
+        get => _pluginSettingsViewModel;
+        set => this.RaiseAndSetIfChanged(ref _pluginSettingsViewModel, value);
+    }
 
     public ObservableCollection<MenuItem> MenuItems { get; }
     public ObservableCollection<Notification> Notifications =>
@@ -121,6 +128,9 @@ public class MainWindowViewModel : ViewModelBase
         var modsViewModel = _serviceProvider.GetRequiredService<ModsViewModel>();
         var pluginsViewModel = _serviceProvider.GetRequiredService<PluginsViewModel>();
 
+        // Subscribe to plugin settings requests
+        pluginsViewModel.PluginSettingsRequested += OnPluginSettingsRequested;
+
         MenuItems = new ObservableCollection<MenuItem>
         {
             new MenuItem(
@@ -152,6 +162,21 @@ public class MainWindowViewModel : ViewModelBase
         InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService, _taskbarFlashService);
 
         _ = InitializeWebSocketConnection(port);
+    }
+
+    private void OnPluginSettingsRequested(PluginSettingsViewModel settingsViewModel)
+    {
+        _logger.Info("Plugin settings requested for {PluginId}", settingsViewModel.Plugin.PluginId);
+    
+        // Subscribe to the closed event
+        settingsViewModel.Closed += () => {
+            _logger.Info("Plugin settings dialog closed, clearing PluginSettingsViewModel");
+            PluginSettingsViewModel = null;
+        };
+    
+        // Show the dialog and assign it
+        settingsViewModel.Show();
+        PluginSettingsViewModel = settingsViewModel;
     }
 
     private async Task InitializeWebSocketConnection(int port)

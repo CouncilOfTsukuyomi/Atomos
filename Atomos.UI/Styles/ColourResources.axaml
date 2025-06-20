@@ -11,6 +11,7 @@
     <!-- Additional colours for notifications -->
     <Color x:Key="AccentDarkColor">#5a46c7</Color>
     <Color x:Key="CardBackgroundColor">#363636</Color>
+    <Color x:Key="SurfaceColor">#2F2F2F</Color>
     <Color x:Key="BorderColor">#484848</Color>
     <Color x:Key="HoverColor">#404040</Color>
     <Color x:Key="DisabledColor">#555555</Color>
@@ -30,6 +31,7 @@
     <!-- Additional brushes -->
     <SolidColorBrush x:Key="AccentDarkBrush" Color="{StaticResource AccentDarkColor}"/>
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
     <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
     <SolidColorBrush x:Key="DisabledBrush" Color="{StaticResource DisabledColor}"/>

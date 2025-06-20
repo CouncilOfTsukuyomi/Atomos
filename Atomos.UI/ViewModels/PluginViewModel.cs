@@ -8,6 +8,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Atomos.UI.Views;
 using DynamicData;
 using DynamicData.Binding;
 using NLog;
@@ -52,6 +53,8 @@ public class PluginsViewModel : ViewModelBase, IDisposable
     public ReactiveCommand<Unit, Unit> RefreshCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenPluginDirectoryCommand { get; }
 
+    public event Action<PluginSettingsViewModel>? PluginSettingsRequested;
+
     public PluginsViewModel(
         IPluginManagementService pluginManagementService,
         IPluginDiscoveryService pluginDiscoveryService)
@@ -75,7 +78,7 @@ public class PluginsViewModel : ViewModelBase, IDisposable
 
         // Commands
         TogglePluginCommand = ReactiveCommand.CreateFromTask<PluginInfo>(TogglePluginAsync);
-        OpenSettingsCommand = ReactiveCommand.Create<PluginInfo>(OpenPluginSettings);
+        OpenSettingsCommand = ReactiveCommand.CreateFromTask<PluginInfo>(OpenPluginSettingsAsync);
         RefreshCommand = ReactiveCommand.CreateFromTask(RefreshAsync);
         OpenPluginDirectoryCommand = ReactiveCommand.Create(OpenPluginDirectory);
 
@@ -113,7 +116,6 @@ public class PluginsViewModel : ViewModelBase, IDisposable
         }
     }
 
-
     private Func<PluginInfo, bool> CreateSearchPredicate(string searchTerm)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
@@ -137,16 +139,31 @@ public class PluginsViewModel : ViewModelBase, IDisposable
             IsLoading = true;
             var fetchedPlugins = await _pluginManagementService.GetAvailablePluginsAsync();
 
+            foreach (var plugin in fetchedPlugins)
+            {
+                _logger.Debug("Fetched plugin {PluginId} - {DisplayName} with IsEnabled={IsEnabled}", 
+                    plugin.PluginId, plugin.DisplayName, plugin.IsEnabled);
+            }
+
             // Use DynamicData to efficiently update the collection
             _availablePluginsSource.Edit(updater =>
             {
                 updater.Clear();
-                updater.AddRange(fetchedPlugins);
+                
+                // Add each plugin individually and verify the state
+                foreach (var plugin in fetchedPlugins)
+                {
+                    _logger.Debug("Adding plugin {PluginId} to source with IsEnabled={IsEnabled}", 
+                        plugin.PluginId, plugin.IsEnabled);
+                    updater.Add(plugin);
+                }
             });
 
-            foreach (var plugin in fetchedPlugins)
+            // Verify what's actually in the source after adding
+            foreach (var plugin in _availablePluginsSource.Items)
             {
-                _logger.Debug("Found plugin {PluginId} - {DisplayName}", plugin.PluginId, plugin.DisplayName);
+                _logger.Debug("Plugin in source: {PluginId} - IsEnabled={IsEnabled}", 
+                    plugin.PluginId, plugin.IsEnabled);
             }
         }
         catch (Exception ex)
@@ -159,8 +176,6 @@ public class PluginsViewModel : ViewModelBase, IDisposable
         }
     }
 
-
-
     /// <summary>
     /// Toggles the enabled state of a plugin
     /// </summary>
@@ -168,7 +183,6 @@ public class PluginsViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            // TODO: We don't currently set the plugin to disable, I think it's enabled by default which isn't what we want
             // Debug the current state
             _logger.Debug("Current plugin state - PluginId: {PluginId}, IsLoaded: {IsLoaded}, IsEnabled: {IsEnabled}", 
                 plugin.PluginId, plugin.IsLoaded, plugin.IsEnabled);
@@ -193,13 +207,34 @@ public class PluginsViewModel : ViewModelBase, IDisposable
         }
     }
 
+
     /// <summary>
-    /// Opens plugin settings (placeholder)
+    /// Opens plugin settings dialog
     /// </summary>
-    private void OpenPluginSettings(PluginInfo plugin)
+    private async Task OpenPluginSettingsAsync(PluginInfo plugin)
     {
-        _logger.Info("Opening settings for plugin {PluginId}", plugin.PluginId);
-        // TODO: Implement plugin settings dialog
+        try
+        {
+            _logger.Info("Opening settings for plugin {PluginId}", plugin.PluginId);
+
+            // Check if plugin has configurable settings using the schema
+            var hasConfigurableSettings = await _pluginDiscoveryService.HasConfigurableSettingsAsync(plugin.PluginDirectory);
+            
+            if (!hasConfigurableSettings)
+            {
+                _logger.Info("Plugin {PluginId} has no configurable settings schema", plugin.PluginId);
+                return;
+            }
+
+            // Create the settings view model and request it to be shown
+            var settingsViewModel = new PluginSettingsViewModel(plugin, _pluginDiscoveryService);
+            PluginSettingsRequested?.Invoke(settingsViewModel);
+            settingsViewModel.Show();
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open settings for plugin {PluginId}", plugin.PluginId);
+        }
     }
 
     /// <summary>

@@ -126,7 +126,6 @@ public class TaskbarFlashService : ITaskbarFlashService
                 // Check if window came to foreground - this is the primary stop condition
                 if (GetForegroundWindow() == hwnd)
                 {
-                    _logger.Info("Window came to foreground, stopping flash");
                     break;
                 }
 

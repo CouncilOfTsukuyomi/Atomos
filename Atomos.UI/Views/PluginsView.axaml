@@ -1,5 +1,4 @@
-﻿
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -84,7 +83,7 @@
                           CornerRadius="12"
                           Padding="8,4">
                     <Border.Background>
-                      <SolidColorBrush Color="{Binding IsEnabled, Converter={x:Static conv:BoolToColorConverter.Instance}, ConverterParameter='#4CAF50|#FF9800'}"/>
+                      <SolidColorBrush Color="{Binding IsEnabled, Converter={x:Static conv:BoolToColourConverter.Instance}, ConverterParameter='#4CAF50|#FF9800'}"/>
                     </Border.Background>
                     <TextBlock Foreground="White"
                                FontSize="11"
@@ -160,11 +159,11 @@
                   <Button Command="{Binding $parent[UserControl].((vm:PluginsViewModel)DataContext).OpenSettingsCommand}"
                           CommandParameter="{Binding}"
                           Content="⚙️ Settings"
-                          IsEnabled="{Binding !!Configuration.Count}"/>
+                          IsEnabled="{Binding HasConfigurableSettings}"/>
                   
                   <!-- Enable/Disable Toggle -->
                   <ToggleButton Classes="ToggleSwitch"
-                                IsChecked="{Binding IsEnabled}"
+                                IsChecked="{Binding IsEnabled, Mode=OneWay}"
                                 Command="{Binding $parent[UserControl].((vm:PluginsViewModel)DataContext).TogglePluginCommand}"
                                 CommandParameter="{Binding}">
                     <TextBlock Text="{Binding IsEnabled, Converter={x:Static conv:BoolToStringConverter.Instance}, ConverterParameter='Disable|Enable'}"/>

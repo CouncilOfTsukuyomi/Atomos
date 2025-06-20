@@ -12,6 +12,9 @@ public class StringToBoolConverter : IValueConverter
     {
         if (value is string str)
         {
+            if (bool.TryParse(str, out var boolValue))
+                return boolValue;
+                
             return !string.IsNullOrEmpty(str);
         }
         
@@ -20,6 +23,13 @@ public class StringToBoolConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // Only convert if we're actually dealing with a boolean
+        if (value is bool boolValue)
+        {
+            return boolValue.ToString().ToLowerInvariant();
+        }
+        
+        // For anything else, return as-is
+        return value?.ToString() ?? "false";
     }
 }

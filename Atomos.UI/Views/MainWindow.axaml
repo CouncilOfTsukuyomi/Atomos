@@ -2,17 +2,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:views="clr-namespace:Atomos.UI.Views"
         mc:Ignorable="d"
         d:DesignWidth="800"
         d:DesignHeight="600"
         x:Class="Atomos.UI.Views.MainWindow"
         x:CompileBindings="True"
         x:DataType="vm:MainWindowViewModel"
-        xmlns:dd="clr-namespace:Avalonia.Input;assembly=Avalonia.Base"
         xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
         xmlns:models="clr-namespace:Atomos.UI.Models"
-        xmlns:views1="clr-namespace:Atomos.UI.Views"
+        xmlns:views="clr-namespace:Atomos.UI.Views"
         Title="Mod Forwarder"
         MinWidth="800"
         MinHeight="600"
@@ -126,18 +124,21 @@
                      Classes="notifications"/>
         
         <!-- Install View Overlay -->
-        <views1:InstallView DataContext="{Binding InstallViewModel}"
-                           Grid.Row="0" Grid.RowSpan="2"
-        />
+        <views:InstallView DataContext="{Binding InstallViewModel}"
+                           Grid.Row="0" Grid.RowSpan="2"/>
         
         <!-- Sentry Enable Overlay -->
-        <views1:SentryPromptView DataContext="{Binding SentryPromptViewModel}"
-                                Grid.Row="0" Grid.RowSpan="2"
-            />
+        <views:SentryPromptView DataContext="{Binding SentryPromptViewModel}"
+                                Grid.Row="0" Grid.RowSpan="2"/>
 
         <!-- Notification Hub View -->
-        <views1:NotificationHubView DataContext="{Binding NotificationHubViewModel}"
-                                   Grid.Row="0" Grid.RowSpan="2"
-            />
+        <views:NotificationHubView DataContext="{Binding NotificationHubViewModel}"
+                                   Grid.Row="0" Grid.RowSpan="2"/>
+
+        <!-- Plugin Settings Overlay -->
+        <views:PluginSettingsView x:Name="PluginSettingsOverlay"
+                                  DataContext="{Binding PluginSettingsViewModel}"
+                                  IsVisible="{Binding #PluginSettingsOverlay.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                  Grid.Row="0" Grid.RowSpan="2"/>
     </Grid>
 </Window>
