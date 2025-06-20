@@ -83,7 +83,11 @@ public static class DependencyInjection
         services.AddSingleton<HomeViewModel>();
         services.AddSingleton<PluginView>();
         
+        // Plugin Services - Enhanced version with GitHub integration
         services.AddPluginServices();
+        services.AddDefaultPluginServices(
+            registryUrl: "https://raw.githubusercontent.com/CouncilOfTsukuyomi/StaticResources/refs/heads/main/plugins.json",
+            useGitHubIntegration: true);
         
         services.SetupLogging();
 
