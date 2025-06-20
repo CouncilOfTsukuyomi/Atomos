@@ -1,12 +1,13 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using Atomos.UI.Models;
 using NLog;
 using PluginManager.Core.Interfaces;
@@ -21,6 +22,7 @@ namespace Atomos.UI.ViewModels
 
         private readonly IPluginManagementService _pluginManagementService;
         private readonly IPluginService _pluginService;
+        private readonly IDownloadManagerService _downloadManagerService;
         private readonly CompositeDisposable _disposables = new();
 
         private ObservableCollection<PluginDisplayItem> _pluginItems;
@@ -57,10 +59,14 @@ namespace Atomos.UI.ViewModels
         public ReactiveCommand<Unit, Unit> ExpandAllCommand { get; }
         public ReactiveCommand<Unit, Unit> CollapseAllCommand { get; }
 
-        public PluginDataViewModel(IPluginManagementService pluginManagementService, IPluginService pluginService)
+        public PluginDataViewModel(
+            IPluginManagementService pluginManagementService, 
+            IPluginService pluginService,
+            IDownloadManagerService downloadManagerService)
         {
             _pluginManagementService = pluginManagementService;
             _pluginService = pluginService;
+            _downloadManagerService = downloadManagerService;
             PluginItems = new ObservableCollection<PluginDisplayItem>();
 
             // Commands
@@ -78,6 +84,25 @@ namespace Atomos.UI.ViewModels
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe()
                 .DisposeWith(_disposables);
+        }
+        
+        public async Task DownloadModAsync(PluginMod pluginMod, CancellationToken ct = default)
+        {
+            try
+            {
+                _logger.Info("Starting download for mod: {ModName} from plugin source: {PluginSource}", 
+                    pluginMod.Name, pluginMod.PluginSource);
+                
+                await _downloadManagerService.DownloadModAsync(pluginMod, ct);
+                
+                _logger.Info("Successfully initiated download for mod: {ModName}", pluginMod.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to download mod: {ModName} from {PluginSource}", 
+                    pluginMod.Name, pluginMod.PluginSource);
+                throw;
+            }
         }
 
         /// <summary>

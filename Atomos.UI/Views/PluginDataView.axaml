@@ -160,11 +160,6 @@
                                Foreground="{StaticResource TextBrush}"
                                VerticalAlignment="Center"/>
                     
-                    <TextBlock Text="🔌"
-                               FontSize="18"
-                               Foreground="{StaticResource TextBrush}"
-                               VerticalAlignment="Center"/>
-                    
                     <StackPanel>
                       <TextBlock Text="{Binding PluginName}" 
                                  FontSize="16" 

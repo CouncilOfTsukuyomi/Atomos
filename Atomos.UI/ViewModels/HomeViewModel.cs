@@ -23,7 +23,6 @@ public class HomeViewModel : ViewModelBase, IDisposable
 
     private readonly IStatisticService _statisticService;
     private readonly IXmaModDisplay _xmaModDisplay;
-    private readonly IDownloadManagerService _downloadManagerService;
     private readonly IFileSizeService _fileSizeService;
     private readonly CompositeDisposable _disposables = new();
     private readonly SemaphoreSlim _statsSemaphore = new(1, 1);
@@ -57,12 +56,11 @@ public class HomeViewModel : ViewModelBase, IDisposable
         IStatisticService statisticService,
         IXmaModDisplay xmaModDisplay,
         IWebSocketClient webSocketClient,
-        IDownloadManagerService downloadManagerService, IFileSizeService fileSizeService)
+        IFileSizeService fileSizeService)
     {
         _statisticService = statisticService;
         _xmaModDisplay = xmaModDisplay;
         _webSocketClient = webSocketClient;
-        _downloadManagerService = downloadManagerService;
         _fileSizeService = fileSizeService;
 
         InfoItems = new ObservableCollection<InfoItem>();
@@ -123,11 +121,6 @@ public class HomeViewModel : ViewModelBase, IDisposable
         {
             IsLoading = false;
         }
-    }
-
-    public async Task DownloadModsAsync(XmaMods mod, CancellationToken ct = default)
-    {
-        await _downloadManagerService.DownloadModsAsync(mod, ct);
     }
 
     private async Task LoadStatisticsAsync()

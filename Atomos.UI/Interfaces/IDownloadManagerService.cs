@@ -1,10 +1,10 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using CommonLib.Models;
+using PluginManager.Core.Models;
 
 namespace Atomos.UI.Interfaces;
 
 public interface IDownloadManagerService
 {
-    Task DownloadModsAsync(XmaMods mod, CancellationToken ct);
+    Task DownloadModAsync(PluginMod pluginMod, CancellationToken ct = default);
 }

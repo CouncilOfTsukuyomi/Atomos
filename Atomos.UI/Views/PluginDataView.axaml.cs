@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
+using Atomos.UI.ViewModels;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using PluginManager.Core.Models;
 
 namespace Atomos.UI.Views;
 
@@ -12,48 +13,42 @@ public partial class PluginDataView : UserControl
     {
         InitializeComponent();
     }
-    
+
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
     }
-
-    private void OnViewModClicked(object? sender, RoutedEventArgs e)
+    
+    private void OnViewModClicked(object sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is Button button && button.Tag is string url && !string.IsNullOrEmpty(url))
+        if (sender is Button {Tag: string url})
         {
-            try
+            if (!string.IsNullOrWhiteSpace(url))
             {
-                Process.Start(new ProcessStartInfo
+                try
                 {
-                    FileName = url,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log error or show notification
-                Console.WriteLine($"Failed to open URL: {ex.Message}");
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                }
             }
         }
     }
-
-    private void OnDownloadModClicked(object? sender, RoutedEventArgs e)
+    
+    private async void OnDownloadModClicked(object sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is Button button && button.Tag is string downloadUrl && !string.IsNullOrEmpty(downloadUrl))
+        if (DataContext is PluginDataViewModel vm
+            && sender is Button button)
         {
-            try
+            if (button.DataContext is PluginMod pluginMod)
             {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = downloadUrl,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log error or show notification
-                Console.WriteLine($"Failed to open download URL: {ex.Message}");
+                await vm.DownloadModAsync(pluginMod);
             }
         }
     }
