@@ -127,6 +127,7 @@ public class MainWindowViewModel : ViewModelBase
         var homeViewModel = _serviceProvider.GetRequiredService<HomeViewModel>();
         var modsViewModel = _serviceProvider.GetRequiredService<ModsViewModel>();
         var pluginsViewModel = _serviceProvider.GetRequiredService<PluginsViewModel>();
+        var pluginDataViewModel = _serviceProvider.GetRequiredService<PluginDataViewModel>(); // Add this line
 
         // Subscribe to plugin settings requests
         pluginsViewModel.PluginSettingsRequested += OnPluginSettingsRequested;
@@ -147,6 +148,11 @@ public class MainWindowViewModel : ViewModelBase
                 "Plugins",
                 app?.Resources["PluginsIcon"] as StreamGeometry ?? StreamGeometry.Parse("M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M10 17L6 13L7.41 11.59L10 14.17L16.59 7.58L18 9L10 17Z"),
                 pluginsViewModel
+            ),
+            new MenuItem(
+                "Plugin Data",
+                app?.Resources["DataIcon"] as StreamGeometry ?? StreamGeometry.Parse("M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z"),
+                pluginDataViewModel
             )
         };
 

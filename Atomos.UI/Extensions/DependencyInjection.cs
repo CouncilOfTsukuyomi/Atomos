@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
         services.AddSingleton<PluginsViewModel>();
+        services.AddTransient<PluginDataViewModel>();
 
         // Views
         services.AddSingleton<MainWindow>();

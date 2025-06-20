@@ -1,0 +1,373 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Atomos.UI.ViewModels"
+             xmlns:models="using:Atomos.UI.Models"
+             xmlns:pluginModels="using:PluginManager.Core.Models"
+             xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+             xmlns:converters="using:Atomos.UI.Converters"
+             x:Class="Atomos.UI.Views.PluginDataView"
+             x:DataType="vm:PluginDataViewModel"
+             Foreground="{StaticResource TextBrush}">
+
+  <UserControl.Resources>
+    <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <!-- Plugin Header Button Style - Complete Override -->
+    <Style Selector="Button.pluginHeaderButton">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="Margin" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Border"
+                  Background="{StaticResource AccentBrush}"
+                  CornerRadius="12,12,0,0"
+                  Padding="20,15"
+                  BorderThickness="0"
+                  ClipToBounds="True">
+            <ContentPresenter Name="PART_ContentPresenter"
+                              Content="{TemplateBinding Content}"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Center"/>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    
+    <Style Selector="Button.pluginHeaderButton:pointerover /template/ Border#PART_Border">
+      <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+    </Style>
+    
+    <Style Selector="Button.pluginHeaderButton:pressed /template/ Border#PART_Border">
+      <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+    </Style>
+
+    <!-- Remove any focus visual -->
+    <Style Selector="Button.pluginHeaderButton:focus-visible">
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="20" Margin="20">
+      
+      <!-- Header -->
+      <StackPanel Orientation="Horizontal" Spacing="15">
+        <TextBlock Text="Plugin Data" 
+                   FontSize="24" 
+                   FontWeight="Bold"
+                   Foreground="{StaticResource TextBrush}"
+                   VerticalAlignment="Center"/>
+        
+        <TextBlock Text="{Binding PluginItems.Count, StringFormat=\{0\} plugins}"
+                   FontSize="12"
+                   Foreground="{StaticResource PrimaryBrush}"
+                   VerticalAlignment="Center"/>
+        
+        <Button Content="🔄 Refresh All" 
+                Command="{Binding RefreshCommand}"
+                IsEnabled="{Binding !IsLoading}"
+                Background="{StaticResource AccentBrush}"
+                Foreground="{StaticResource TextBrush}"
+                BorderThickness="0"
+                Padding="12,8"
+                CornerRadius="6"/>
+        
+        <!-- Collapse/Expand All Buttons -->
+        <Button Content="📂 Expand All"
+                Command="{Binding ExpandAllCommand}"
+                Background="{StaticResource SecondaryBrush}"
+                Foreground="{StaticResource TextBrush}"
+                BorderThickness="0"
+                Padding="8,6"
+                CornerRadius="4"
+                FontSize="11"/>
+        
+        <Button Content="📁 Collapse All"
+                Command="{Binding CollapseAllCommand}"
+                Background="{StaticResource SecondaryBrush}"
+                Foreground="{StaticResource TextBrush}"
+                BorderThickness="0"
+                Padding="8,6"
+                CornerRadius="4"
+                FontSize="11"/>
+      </StackPanel>
+      
+      <!-- Loading State -->
+      <Border IsVisible="{Binding IsLoading}" 
+              Background="{StaticResource SurfaceBrush}"
+              BorderBrush="{StaticResource BorderBrush}"
+              BorderThickness="1"
+              CornerRadius="8" 
+              Padding="40">
+        <StackPanel HorizontalAlignment="Center" Spacing="10">
+          <ProgressBar IsIndeterminate="True" 
+                       Width="300"
+                       Foreground="{StaticResource AccentBrush}"/>
+          <TextBlock Text="Loading plugin data..." 
+                     TextAlignment="Center"
+                     Foreground="{StaticResource TextBrush}"/>
+        </StackPanel>
+      </Border>
+      
+      <!-- Error State -->
+      <Border IsVisible="{Binding HasError}"
+              Background="{StaticResource SurfaceBrush}"
+              BorderBrush="{StaticResource DisableBrush}"
+              BorderThickness="1"
+              CornerRadius="8"
+              Padding="15">
+        <StackPanel Spacing="8">
+          <TextBlock Text="⚠️ Error Loading Data" 
+                     FontWeight="Bold" 
+                     Foreground="{StaticResource DisableBrush}"/>
+          <TextBlock Text="{Binding ErrorMessage}" 
+                     Foreground="{StaticResource DisabledTextBrush}"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+      
+      <!-- Plugin Data Cards -->
+      <ItemsControl ItemsSource="{Binding PluginItems}" 
+                    IsVisible="{Binding !IsLoading}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="models:PluginDisplayItem">
+            
+            <Border Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Margin="0,0,0,20">
+              
+              <StackPanel>
+                
+                <!-- Clickable Plugin Header -->
+                <Button Classes="pluginHeaderButton"
+                        Command="{Binding $parent[UserControl].((vm:PluginDataViewModel)DataContext).TogglePluginExpandCommand}"
+                        CommandParameter="{Binding}">
+                  
+                  <StackPanel Orientation="Horizontal" Spacing="15">
+                    
+                    <!-- Collapse/Expand Icon -->
+                    <TextBlock Text="{Binding IsExpanded, Converter={StaticResource BoolToStringConverter}, ConverterParameter='🔽|▶️'}"
+                               FontSize="16"
+                               Foreground="{StaticResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                    
+                    <TextBlock Text="🔌"
+                               FontSize="18"
+                               Foreground="{StaticResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                    
+                    <StackPanel>
+                      <TextBlock Text="{Binding PluginName}" 
+                                 FontSize="16" 
+                                 FontWeight="Bold"
+                                 Foreground="{StaticResource TextBrush}"/>
+                      <TextBlock Text="{Binding Mods.Count, StringFormat=\{0\} mods}" 
+                                 FontSize="12" 
+                                 Foreground="{StaticResource TextBrush}"
+                                 Opacity="0.8"
+                                 Margin="0,2,0,0"/>
+                    </StackPanel>
+                    
+                    <TextBlock Text="{Binding LastUpdated, StringFormat=Updated: \{0:HH:mm:ss\}}"
+                               FontSize="10"
+                               Foreground="{StaticResource TextBrush}"
+                               Opacity="0.7"
+                               VerticalAlignment="Center"/>
+                    
+                    <Button Content="🔄"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="{StaticResource TextBrush}"
+                            FontSize="14"
+                            Width="35"
+                            Height="30"
+                            CornerRadius="14"
+                            Command="{Binding $parent[UserControl].((vm:PluginDataViewModel)DataContext).RefreshPluginCommand}"
+                            CommandParameter="{Binding PluginId}"
+                            IsEnabled="{Binding !IsLoading}">
+                      <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                          <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+                        </Style>
+                      </Button.Styles>
+                    </Button>
+                  </StackPanel>
+                </Button>
+                
+                <!-- Collapsible Content Area -->
+                <StackPanel Margin="20" IsVisible="{Binding IsExpanded}">
+                  
+                  <!-- Plugin Loading State -->
+                  <Border IsVisible="{Binding IsLoading}"
+                          Background="{StaticResource SurfaceBrush}"
+                          BorderBrush="{StaticResource BorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="6"
+                          Padding="20">
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                      <ProgressBar IsIndeterminate="True" 
+                                   Width="100" 
+                                   Height="4"
+                                   Foreground="{StaticResource AccentBrush}"/>
+                      <TextBlock Text="Loading..." 
+                                 FontSize="12"
+                                 Foreground="{StaticResource TextBrush}"/>
+                    </StackPanel>
+                  </Border>
+                  
+                  <!-- Plugin Error State -->
+                  <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                          Background="{StaticResource SurfaceBrush}"
+                          BorderBrush="{StaticResource DisableBrush}"
+                          BorderThickness="1"
+                          CornerRadius="6"
+                          Padding="12">
+                    <StackPanel Spacing="6">
+                      <TextBlock Text="⚠️ Plugin Error" 
+                                 FontWeight="Bold" 
+                                 FontSize="12"
+                                 Foreground="{StaticResource DisableBrush}"/>
+                      <TextBlock Text="{Binding ErrorMessage}" 
+                                 FontSize="11"
+                                 Foreground="{StaticResource DisabledTextBrush}"
+                                 TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Border>
+                  
+                  <!-- Mods List -->
+                  <ItemsControl ItemsSource="{Binding Mods}"
+                                IsVisible="{Binding !IsLoading}">
+                    
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="pluginModels:PluginMod">
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Margin="0,0,0,12"
+                                Padding="15">
+                          <Border.Styles>
+                            <Style Selector="Border:pointerover">
+                              <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+                              <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                            </Style>
+                          </Border.Styles>
+                          
+                          <StackPanel Spacing="12">
+                            <!-- Main content with image and details -->
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                              <!-- Mod Image -->
+                              <Border CornerRadius="6"
+                                      Width="120"
+                                      Height="90"
+                                      ClipToBounds="True"
+                                      Background="{StaticResource BackgroundBrush}"
+                                      BorderBrush="{StaticResource BorderBrush}"
+                                      BorderThickness="1">
+                                <asyncImageLoader:AdvancedImage 
+                                     Source="{Binding ImageUrl}"
+                                     Stretch="UniformToFill"
+                                     StretchDirection="Both"/>
+                              </Border>
+                              
+                              <!-- Mod Details -->
+                              <StackPanel Spacing="6" VerticalAlignment="Top">
+                                <TextBlock
+                                    Text="{Binding Name}"
+                                    Foreground="{StaticResource TextBrush}"
+                                    FontWeight="Bold"
+                                    FontSize="14"
+                                    TextWrapping="Wrap"
+                                    MaxWidth="300"/>
+                                
+                                <TextBlock
+                                    Text="{Binding Publisher}"
+                                    Foreground="{StaticResource PrimaryBrush}"
+                                    FontStyle="Italic"
+                                    FontSize="12"/>
+                                
+                                <TextBlock
+                                    Text="{Binding PluginSource, StringFormat=Source: \{0\}}"
+                                    Foreground="{StaticResource AccentBrush}"
+                                    FontSize="11"/>
+                                
+                                <TextBlock
+                                    Text="{Binding UploadDate, StringFormat=Published: \{0:MM/dd/yyyy\}}"
+                                    Foreground="{StaticResource DisabledTextBrush}"
+                                    FontSize="10"/>
+                              </StackPanel>
+                            </StackPanel>
+
+                            <!-- Action Buttons Row -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                              <Button
+                                  Content="🔗 View Page"
+                                  Tag="{Binding ModUrl}"
+                                  Click="OnViewModClicked"
+                                  Background="{StaticResource SecondaryBrush}"
+                                  Foreground="{StaticResource TextBrush}"
+                                  BorderThickness="0"
+                                  Padding="8,4"
+                                  CornerRadius="4"
+                                  FontSize="11"
+                                  IsVisible="{Binding ModUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                              
+                              <Button
+                                  Content="⬇️ Download"
+                                  Tag="{Binding DownloadUrl}"
+                                  Click="OnDownloadModClicked"
+                                  Background="{StaticResource AccentBrush}"
+                                  Foreground="{StaticResource TextBrush}"
+                                  BorderThickness="0"
+                                  Padding="8,4"
+                                  CornerRadius="4"
+                                  FontSize="11"
+                                  IsVisible="{Binding DownloadUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  
+                  <!-- No Mods Message -->
+                  <Border IsVisible="{Binding !Mods.Count}"
+                          Background="{StaticResource SurfaceBrush}"
+                          BorderBrush="{StaticResource BorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="8"
+                          Padding="30">
+                    <StackPanel HorizontalAlignment="Center" Spacing="8">
+                      <TextBlock Text="📦"
+                                 FontSize="24"
+                                 HorizontalAlignment="Center"
+                                 Foreground="{StaticResource DisabledTextBrush}"/>
+                      <TextBlock Text="No mods available"
+                                 FontSize="14"
+                                 FontWeight="Bold"
+                                 Foreground="{StaticResource TextBrush}"
+                                 HorizontalAlignment="Center"/>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

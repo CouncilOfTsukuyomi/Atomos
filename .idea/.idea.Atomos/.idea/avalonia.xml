@@ -10,8 +10,11 @@
         <entry key="Atomos.UI/Styles/Elements/PluginStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/SettingsStyles.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Icons.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/HomeView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/InstallView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/MainWindow.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/ModsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/PluginDataView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginSettingsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/SettingsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
