@@ -50,8 +50,6 @@ public class HomeViewModel : ViewModelBase, IDisposable
         set => this.RaiseAndSetIfChanged(ref _isLoading, value);
     }
     
-    
-    
     public HomeViewModel(
         IStatisticService statisticService,
         IXmaModDisplay xmaModDisplay,
@@ -81,6 +79,7 @@ public class HomeViewModel : ViewModelBase, IDisposable
     {
         RxApp.MainThreadScheduler.ScheduleAsync(async (_, __) =>
         {
+            await _statisticService.FlushAndRefreshAsync(TimeSpan.FromSeconds(2));
             await LoadStatisticsAsync();
         });
     }
