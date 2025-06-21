@@ -41,7 +41,7 @@ public class XivLauncherService : IXivLauncherService
 
         var baseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
         // NOTE: If the .exe's get changed again for some reason - check this
-        var relativeWatchdogPath = "PenumbraModForwarder.Launcher.exe";
+        var relativeWatchdogPath = "Atomos.Launcher.exe";
         var absoluteWatchdogPath = Path.Combine(baseDirectory, relativeWatchdogPath);
 
         if (!Path.IsPathRooted(absoluteWatchdogPath))
@@ -49,7 +49,7 @@ public class XivLauncherService : IXivLauncherService
             absoluteWatchdogPath = Path.GetFullPath(absoluteWatchdogPath);
         }
 
-        const string watchdogLabel = "ModForwarder Launcher";
+        const string watchdogLabel = "Atomos";
 
         EnableAutoStart(enable, absoluteWatchdogPath, watchdogLabel);
 
