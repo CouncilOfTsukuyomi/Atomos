@@ -1,5 +1,5 @@
-﻿
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -69,8 +69,8 @@ public class Program
             // Initialize plugin services first
             await ServiceProvider.InitializePluginServicesAsync();
             
-            // Auto-install all default plugins
-            await AutoInstallDefaultPluginsAsync();
+            // Auto-install and update all default plugins
+            await AutoInstallAndUpdateDefaultPluginsAsync();
             
             _logger.Info("Application services initialized successfully");
         }
@@ -80,11 +80,11 @@ public class Program
         }
     }
 
-    private static async Task AutoInstallDefaultPluginsAsync()
+    private static async Task AutoInstallAndUpdateDefaultPluginsAsync()
     {
         try
         {
-            _logger.Info("Checking for default plugins to install...");
+            _logger.Info("Checking for plugins to install and update...");
             
             var pluginManagementService = ServiceProvider.GetRequiredService<IPluginManagementService>();
             var defaultPluginRegistryService = ServiceProvider.GetRequiredService<IDefaultPluginRegistryService>();
@@ -92,58 +92,135 @@ public class Program
             
             // Get all currently available (installed/discovered) plugins
             var availablePlugins = await pluginManagementService.GetAvailablePluginsAsync();
-            var installedPluginIds = availablePlugins.Select(p => p.PluginId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var installedPluginDict = availablePlugins.ToDictionary(p => p.PluginId, StringComparer.OrdinalIgnoreCase);
             
             // Get all plugins from the registry
             var registryPlugins = await defaultPluginRegistryService.GetAvailablePluginsAsync();
             
-            // Find plugins that need to be downloaded and installed
-            var pluginsToInstall = registryPlugins.Where(p => !installedPluginIds.Contains(p.Id)).ToList();
-            
-            if (pluginsToInstall.Any())
+            var installResults = new List<(string PluginName, bool Success, string Message)>();
+
+            foreach (var registryPlugin in registryPlugins)
             {
-                _logger.Info("Found {Count} plugins to install: {PluginNames}", 
-                    pluginsToInstall.Count, 
-                    string.Join(", ", pluginsToInstall.Select(p => p.Name)));
-                
-                foreach (var plugin in pluginsToInstall)
+                try
                 {
-                    try
+                    bool needsAction = false;
+                    string action = "";
+
+                    if (!installedPluginDict.TryGetValue(registryPlugin.Id, out var installedPlugin))
                     {
-                        // Use the new DownloadAndInstallAsync method
-                        var installResult = await pluginDownloader.DownloadAndInstallAsync(plugin);
+                        // Plugin not installed - need to install
+                        needsAction = true;
+                        action = "install";
+                    }
+                    else if (IsUpdateNeeded(installedPlugin.Version, registryPlugin.Version))
+                    {
+                        // Plugin needs update
+                        needsAction = true;
+                        action = "update";
+                        _logger.Info("Plugin update available: {PluginName} {CurrentVersion} -> {NewVersion}", 
+                            registryPlugin.Name, installedPlugin.Version, registryPlugin.Version);
+                    }
+
+                    if (needsAction)
+                    {
+                        _logger.Info("Starting {Action} for plugin: {PluginName} (v{Version})", 
+                            action, registryPlugin.Name, registryPlugin.Version);
+
+                        // Unload existing plugin if updating
+                        if (action == "update" && installedPlugin != null)
+                        {
+                            await pluginManagementService.SetPluginEnabledAsync(installedPlugin.PluginId, false);
+                            _logger.Info("Disabled old version of plugin: {PluginName}", registryPlugin.Name);
+                        }
+
+                        // Download and install the plugin
+                        var installResult = await pluginDownloader.DownloadAndInstallAsync(registryPlugin);
                         
                         if (installResult.Success)
                         {
-                            _logger.Info("Successfully installed plugin: {PluginName} to {InstalledPath}", 
-                                installResult.PluginName, installResult.InstalledPath);
+                            _logger.Info("Successfully {Action}ed plugin: {PluginName} to {InstalledPath}", 
+                                action, installResult.PluginName, installResult.InstalledPath);
+                            installResults.Add((registryPlugin.Name, true, $"Successfully {action}ed"));
                         }
                         else
                         {
-                            _logger.Error("Failed to install plugin {PluginName}: {Error}", 
-                                installResult.PluginName, installResult.ErrorMessage);
+                            _logger.Error("Failed to {Action} plugin {PluginName}: {Error}", 
+                                action, installResult.PluginName, installResult.ErrorMessage);
+                            installResults.Add((registryPlugin.Name, false, installResult.ErrorMessage ?? $"Failed to {action}"));
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        _logger.Error(ex, "Failed to install plugin: {PluginName} ({PluginId})", 
-                            plugin.Name, plugin.Id);
+                        _logger.Debug("Plugin {PluginName} is up to date (v{Version})", 
+                            registryPlugin.Name, installedPlugin?.Version ?? "unknown");
                     }
                 }
-                
-                // Re-initialize plugins after installation to discover the new ones
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Failed to process plugin: {PluginName} ({PluginId})", 
+                        registryPlugin.Name, registryPlugin.Id);
+                    installResults.Add((registryPlugin.Name, false, ex.Message));
+                }
+            }
+
+            // Re-initialise plugins after installation/updates to discover changes
+            if (installResults.Any(r => r.Success))
+            {
+                _logger.Info("Re-initializing plugin services after updates...");
                 await ServiceProvider.InitializePluginServicesAsync();
+            }
+            
+            // Log summary
+            var successCount = installResults.Count(r => r.Success);
+            var totalCount = installResults.Count;
+            
+            if (totalCount > 0)
+            {
+                _logger.Info("Plugin update summary: {SuccessCount}/{TotalCount} operations completed successfully", 
+                    successCount, totalCount);
                 
-                _logger.Info("Completed plugin installation process");
+                foreach (var result in installResults.Where(r => !r.Success))
+                {
+                    _logger.Warn("Plugin operation failed: {PluginName} - {Message}", result.PluginName, result.Message);
+                }
             }
             else
             {
-                _logger.Info("All plugins from registry are already installed");
+                _logger.Info("All plugins are up to date");
             }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to auto-install default plugins");
+            _logger.Error(ex, "Failed to auto-install and update default plugins");
+        }
+    }
+
+    /// <summary>
+    /// Compares version strings to determine if an update is needed
+    /// </summary>
+    private static bool IsUpdateNeeded(string currentVersion, string registryVersion)
+    {
+        try
+        {
+            // Handle null or empty versions
+            if (string.IsNullOrWhiteSpace(currentVersion) || string.IsNullOrWhiteSpace(registryVersion))
+                return !string.IsNullOrWhiteSpace(registryVersion);
+
+            // Try to parse as Version objects for proper comparison
+            if (Version.TryParse(currentVersion, out var current) && 
+                Version.TryParse(registryVersion, out var registry))
+            {
+                return registry > current;
+            }
+
+            // Fallback to string comparison if version parsing fails
+            return !string.Equals(currentVersion, registryVersion, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "Error comparing versions: current={CurrentVersion}, registry={RegistryVersion}", 
+                currentVersion, registryVersion);
+            return false; // Don't update if we can't determine versions
         }
     }
 

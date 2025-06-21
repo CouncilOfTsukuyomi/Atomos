@@ -16,6 +16,7 @@
         <entry key="Atomos.UI/Views/ModsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginDataView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginSettingsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/PluginView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/SentryPromptView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/SettingsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
