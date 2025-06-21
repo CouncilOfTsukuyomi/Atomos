@@ -14,8 +14,8 @@ public class FileLinkingService : IFileLinkingService
     private readonly IRegistryHelper _registryHelper;
 
     private const string ConsoleToolingExe = "Atomos.ConsoleTooling.exe";
-    private const string LauncherExe = "PenumbraModForwarder.Launcher.exe";
-    private const string StartupAppName = "PenumbraForwarderLauncher";
+    private const string LauncherExe = "Atomos.Launcher.exe";
+    private const string StartupAppName = "AtomosLauncher";
 
     private readonly string _consoleToolingPath;
     private readonly string _launcherPath;
