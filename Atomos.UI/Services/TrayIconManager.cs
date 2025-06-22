@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.IO;
 using Atomos.UI.Interfaces;
 using Avalonia.Controls;
@@ -6,10 +7,12 @@ using SharedResources;
 
 namespace Atomos.UI.Services;
 
-public class TrayIconManager : ITrayIconManager
+public class TrayIconManager : ITrayIconManager, IDisposable
 {
     private TrayIcon _trayIcon;
     private readonly ITrayIconController _trayIconController;
+    private bool _isInitialized = false;
+    private bool _disposed = false;
 
     public TrayIconManager(ITrayIconController trayIconController)
     {
@@ -18,6 +21,13 @@ public class TrayIconManager : ITrayIconManager
 
     public void InitializeTrayIcon()
     {
+        if (_isInitialized)
+        {
+            return;
+        }
+        
+        DisposeTrayIcon();
+
         var iconStream = ResourceLoader.GetResourceStream("Purple_arrow_cat_icon.ico");
         if (iconStream == null)
         {
@@ -47,6 +57,7 @@ public class TrayIconManager : ITrayIconManager
         _trayIcon.Menu.Items.Add(exitMenuItem);
         
         _trayIcon.IsVisible = true;
+        _isInitialized = true;
     }
     
     public void ShowTrayIcon()
@@ -62,6 +73,26 @@ public class TrayIconManager : ITrayIconManager
         if (_trayIcon != null)
         {
             _trayIcon.IsVisible = false;
+        }
+    }
+
+    private void DisposeTrayIcon()
+    {
+        if (_trayIcon != null)
+        {
+            _trayIcon.IsVisible = false;
+            _trayIcon.Dispose();
+            _trayIcon = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            DisposeTrayIcon();
+            _disposed = true;
+            _isInitialized = false;
         }
     }
 }
