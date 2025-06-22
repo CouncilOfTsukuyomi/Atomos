@@ -43,6 +43,9 @@ public class PluginViewModel : ViewModelBase, IDisposable
         set => this.RaiseAndSetIfChanged(ref _isLoading, value);
     }
 
+    private DateTime _lastRefresh = DateTime.MinValue;
+    private readonly TimeSpan _minRefreshInterval = TimeSpan.FromSeconds(10);
+
     /// <summary>
     /// Filtered plugins based on SearchTerm.
     /// </summary>
@@ -86,11 +89,12 @@ public class PluginViewModel : ViewModelBase, IDisposable
         RefreshCommand = ReactiveCommand.CreateFromTask(RefreshAsync);
         OpenPluginDirectoryCommand = ReactiveCommand.Create(OpenPluginDirectory);
 
-        // Load plugins immediately, then refresh periodically
+        // Load plugins immediately
         _ = LoadAvailablePluginsAsync();
         
-        Observable.Timer(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30))
-            .SelectMany(_ => Observable.FromAsync(LoadAvailablePluginsAsync))
+        Observable.Timer(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2))
+            .Where(_ => DateTime.UtcNow - _lastRefresh >= _minRefreshInterval)
+            .SelectMany(_ => Observable.FromAsync(() => LoadAvailablePluginsAsync(false)))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe()
             .DisposeWith(_disposables);
@@ -112,11 +116,20 @@ public class PluginViewModel : ViewModelBase, IDisposable
     /// <summary>
     /// Loads available plugins from the service and updates local collections.
     /// </summary>
-    private async Task LoadAvailablePluginsAsync()
+    private async Task LoadAvailablePluginsAsync(bool forceRefresh = true)
     {
         try
         {
+            // Prevent too frequent refreshes unless forced
+            if (!forceRefresh && DateTime.UtcNow - _lastRefresh < _minRefreshInterval)
+            {
+                _logger.Debug("Skipping plugin refresh - too soon since last refresh");
+                return;
+            }
+
             IsLoading = true;
+            _logger.Debug("Loading available plugins (forceRefresh: {ForceRefresh})", forceRefresh);
+            
             var fetchedPlugins = await _pluginManagementService.GetAvailablePluginsAsync();
 
             _logger.Debug("Fetched {Count} plugins from management service", fetchedPlugins.Count);
@@ -128,6 +141,7 @@ public class PluginViewModel : ViewModelBase, IDisposable
                 updater.AddRange(fetchedPlugins);
             });
 
+            _lastRefresh = DateTime.UtcNow;
             _logger.Debug("Updated plugin source with {Count} plugins", _availablePluginsSource.Count);
         }
         catch (Exception ex)
@@ -154,8 +168,11 @@ public class PluginViewModel : ViewModelBase, IDisposable
 
             await _pluginManagementService.SetPluginEnabledAsync(plugin.PluginId, desiredEnabledState);
 
+            // Wait a moment for the plugin to fully load/unload
+            await Task.Delay(500);
+
             // Refresh to get updated status
-            await LoadAvailablePluginsAsync();
+            await LoadAvailablePluginsAsync(true);
         }
         catch (Exception ex)
         {
@@ -249,7 +266,7 @@ public class PluginViewModel : ViewModelBase, IDisposable
                 _logger.Info("Settings rollback successful for plugin {PluginId}", plugin.PluginId);
                     
                 // Refresh plugin list to reflect any changes
-                await LoadAvailablePluginsAsync();
+                await LoadAvailablePluginsAsync(true);
             }
             else
             {

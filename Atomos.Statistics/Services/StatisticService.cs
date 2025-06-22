@@ -1,5 +1,12 @@
-﻿using System.Collections.Concurrent;
+﻿
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Channels;
+using System.Threading.Tasks;
 using Atomos.Statistics.Models;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
@@ -16,8 +23,10 @@ public class StatisticService : IStatisticService, IDisposable
     private readonly string _databasePath;
     private readonly IFileStorage _fileStorage;
     
+    // In-process synchronization only - let LiteDB handle cross-process
+    private static readonly SemaphoreSlim _globalDbSemaphore = new(1, 1);
+    
     // Connection pooling and batching
-    private readonly SemaphoreSlim _dbSemaphore = new(1, 1);
     private readonly Channel<DatabaseOperation> _operationChannel;
     private readonly ChannelWriter<DatabaseOperation> _operationWriter;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
@@ -30,6 +39,9 @@ public class StatisticService : IStatisticService, IDisposable
     // Batching configuration
     private const int BatchSize = 50;
     private const int BatchTimeoutMs = 100;
+    
+    // Database initialization tracking
+    private readonly TaskCompletionSource<bool> _databaseInitialized = new();
     
     private bool _disposed = false;
 
@@ -56,7 +68,21 @@ public class StatisticService : IStatisticService, IDisposable
         _operationChannel = Channel.CreateBounded<DatabaseOperation>(options);
         _operationWriter = _operationChannel.Writer;
 
-        InitializeDatabase();
+        // Start async initialization - don't block constructor
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await InitializeDatabaseAsync();
+                _databaseInitialized.SetResult(true);
+                _logger.Info("Database initialization completed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Database initialization failed");
+                _databaseInitialized.SetException(ex);
+            }
+        });
         
         // Start background processor
         _backgroundProcessor = Task.Run(ProcessOperationsAsync, _cancellationTokenSource.Token);
@@ -106,7 +132,20 @@ public class StatisticService : IStatisticService, IDisposable
 
     private async Task ProcessOperationsAsync()
     {
-        _logger.Info("Background processor started - waiting for operations");
+        _logger.Info("Background processor started - waiting for database initialization");
+        
+        // Wait for database to be initialized before processing operations
+        try
+        {
+            await _databaseInitialized.Task;
+            _logger.Info("Database initialized, background processor now active");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Database initialization failed, background processor will exit");
+            return;
+        }
+        
         var operations = new List<DatabaseOperation>();
         var reader = _operationChannel.Reader;
         
@@ -186,19 +225,12 @@ public class StatisticService : IStatisticService, IDisposable
 
         _logger.Info("Starting to process batch of {Count} operations", operations.Count);
 
-        await _dbSemaphore.WaitAsync(_cancellationTokenSource.Token);
-        try
+        await ExecuteDatabaseActionAsync<bool>(async db =>
         {
-            // Use connection string with shared mode
-            var connectionString = $"Filename={_databasePath};Mode=Shared;";
-            _logger.Debug("Opening database connection: {ConnectionString}", connectionString);
-            
-            using var database = new LiteDatabase(connectionString);
-            
             try
             {
-                var statsCollection = database.GetCollection<StatRecord>("stats");
-                var modsCollection = database.GetCollection<ModInstallationRecord>("mod_installations");
+                var statsCollection = db.GetCollection<StatRecord>("stats");
+                var modsCollection = db.GetCollection<ModInstallationRecord>("mod_installations");
                 
                 // Group operations by type for better performance
                 var statOps = operations.Where(op => op.Type == OperationType.IncrementStat).ToList();
@@ -222,6 +254,7 @@ public class StatisticService : IStatisticService, IDisposable
                 }
                 
                 _logger.Info("Successfully processed batch of {Count} operations", operations.Count);
+                return await Task.FromResult(true);
             }
             catch (Exception ex)
             {
@@ -246,12 +279,10 @@ public class StatisticService : IStatisticService, IDisposable
                             op.Type, op.ModName ?? op.StatName);
                     }
                 }
+                
+                throw;
             }
-        }
-        finally
-        {
-            _dbSemaphore.Release();
-        }
+        }, "Failed to process batch operations", false);
     }
 
     private void ProcessStatOperations(ILiteCollection<StatRecord> collection, List<DatabaseOperation> operations)
@@ -364,6 +395,17 @@ public class StatisticService : IStatisticService, IDisposable
 
         _logger.Debug("Cache miss for stat {Stat}, querying database", stat);
 
+        // Wait for database initialization if needed
+        try
+        {
+            await _databaseInitialized.Task;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Database not initialized, returning default value for stat {Stat}", stat);
+            return 0;
+        }
+
         // Fallback to database
         return await ExecuteDatabaseActionAsync(db =>
         {
@@ -383,9 +425,17 @@ public class StatisticService : IStatisticService, IDisposable
 
     public async Task<int> GetModsInstalledTodayAsync()
     {
-        // Clear cache before reading to ensure fresh data for time-sensitive queries
-        var cacheKey = $"mods_today_{DateTime.UtcNow:yyyy-MM-dd}";
-        
+        // Wait for database initialization if needed
+        try
+        {
+            await _databaseInitialized.Task;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Database not initialized, returning 0 for mods installed today");
+            return 0;
+        }
+
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
@@ -429,7 +479,17 @@ public class StatisticService : IStatisticService, IDisposable
 
     public async Task<ModInstallationRecord?> GetMostRecentModInstallationAsync()
     {
-        // Clear cache before reading to ensure fresh data for recent mod queries
+        // Wait for database initialization if needed
+        try
+        {
+            await _databaseInitialized.Task;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Database not initialized, returning null for most recent mod installation");
+            return null;
+        }
+
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
@@ -447,6 +507,17 @@ public class StatisticService : IStatisticService, IDisposable
 
     public async Task<int> GetUniqueModsInstalledCountAsync()
     {
+        // Wait for database initialization if needed
+        try
+        {
+            await _databaseInitialized.Task;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Database not initialized, returning 0 for unique mods count");
+            return 0;
+        }
+
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
@@ -464,6 +535,17 @@ public class StatisticService : IStatisticService, IDisposable
 
     public async Task<List<ModInstallationRecord>> GetAllInstalledModsAsync()
     {
+        // Wait for database initialization if needed
+        try
+        {
+            await _databaseInitialized.Task;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Database not initialized, returning empty list for all installed mods");
+            return new List<ModInstallationRecord>();
+        }
+
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
@@ -485,29 +567,63 @@ public class StatisticService : IStatisticService, IDisposable
     {
         _logger.Debug("Executing database action: {Context}", errorContext);
         
-        await _dbSemaphore.WaitAsync(_cancellationTokenSource.Token);
-        try
+        const int maxRetries = 3;
+        const int baseDelayMs = 50;
+        
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            // Use connection string with shared mode
-            var connectionString = $"Filename={_databasePath};Mode=Shared;";
-            using var database = new LiteDatabase(connectionString);
-            
-            var result = await action(database);
-            _logger.Debug("Database action completed successfully: {Context}", errorContext);
-            return result;
+            try
+            {
+                // Wait for in-process semaphore only
+                await _globalDbSemaphore.WaitAsync(_cancellationTokenSource.Token);
+                
+                try
+                {
+                    var connectionString = $"Filename={_databasePath};Connection=Shared;Timeout=00:00:30";
+                    
+                    using var database = new LiteDatabase(connectionString);
+                    
+                    var result = await action(database);
+                    _logger.Debug("Database action completed successfully: {Context}", errorContext);
+                    return result;
+                }
+                finally
+                {
+                    _globalDbSemaphore.Release();
+                }
+            }
+            catch (Exception ex) when (IsRetryableException(ex) && attempt < maxRetries)
+            {
+                var delayMs = baseDelayMs * (int)Math.Pow(2, attempt - 1); // Exponential backoff
+                _logger.Warn(ex, "Database action failed (attempt {Attempt}/{MaxRetries}), retrying in {Delay}ms: {Context}", 
+                    attempt, maxRetries, delayMs, errorContext);
+                
+                await Task.Delay(delayMs, _cancellationTokenSource.Token);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Database action failed permanently after {Attempt} attempts: {Context}", attempt, errorContext);
+                return defaultValue!;
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Database action failed: {Context}", errorContext);
-            return defaultValue!;
-        }
-        finally
-        {
-            _dbSemaphore.Release();
-        }
+        
+        _logger.Error("Database action failed after {MaxRetries} attempts: {Context}", maxRetries, errorContext);
+        return defaultValue!;
     }
 
-    private void InitializeDatabase()
+    private static bool IsRetryableException(Exception ex)
+    {
+        return ex is IOException ||
+               ex is UnauthorizedAccessException ||
+               ex is LiteException liteEx && (
+                   liteEx.Message.Contains("database is locked") ||
+                   liteEx.Message.Contains("lock timeout") ||
+                   liteEx.Message.Contains("Database timeout") ||
+                   liteEx.Message.Contains("timeout")
+               );
+    }
+
+    private async Task InitializeDatabaseAsync()
     {
         _logger.Info("Initializing database at: {DatabasePath}", _databasePath);
         
@@ -518,20 +634,21 @@ public class StatisticService : IStatisticService, IDisposable
             _logger.Info("Created missing directory for database at '{DirectoryPath}'", directoryPath);
         }
 
-        // Use connection string with shared mode
-        var connectionString = $"Filename={_databasePath};Mode=Shared;";
-    
-        using var db = new LiteDatabase(connectionString);
-    
-        // Ensure collections exist and create indexes
-        var stats = db.GetCollection<StatRecord>("stats");
-        stats.EnsureIndex(x => x.Name, true); // Unique index on Name
-    
-        var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
-        modInstallations.EnsureIndex(x => x.ModName);
-        modInstallations.EnsureIndex(x => x.InstallationTime);
-    
-        _logger.Info("Database initialized successfully with collections and indexes");
+        // Initialise with proper connection settings
+        await ExecuteDatabaseActionAsync<bool>(db =>
+        {
+            // Ensure collections exist and create indexes
+            var stats = db.GetCollection<StatRecord>("stats");
+            stats.EnsureIndex(x => x.Name, true); // Unique index on Name
+        
+            var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
+            modInstallations.EnsureIndex(x => x.ModName);
+            modInstallations.EnsureIndex(x => x.InstallationTime);
+        
+            _logger.Info("Database initialized successfully with collections and indexes");
+            
+            return Task.FromResult(true);
+        }, "Initialize database", false);
     }
 
     public void Dispose()
@@ -555,7 +672,6 @@ public class StatisticService : IStatisticService, IDisposable
             _logger.Warn(ex, "Background processor did not complete gracefully");
         }
         
-        _dbSemaphore?.Dispose();
         _cancellationTokenSource?.Dispose();
         
         _logger.Info("StatisticService disposed successfully");

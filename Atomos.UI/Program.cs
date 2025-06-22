@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using PluginManager.Core.Extensions;
 using PluginManager.Core.Interfaces;
-using PluginManager.Core.Models;
 
 namespace Atomos.UI;
 
