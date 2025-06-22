@@ -195,6 +195,7 @@ public class Program
         }
     }
 
+
     /// <summary>
     /// Compares version strings to determine if an update is needed
     /// </summary>
@@ -202,26 +203,43 @@ public class Program
     {
         try
         {
-            // Handle null or empty versions
             if (string.IsNullOrWhiteSpace(currentVersion) || string.IsNullOrWhiteSpace(registryVersion))
                 return !string.IsNullOrWhiteSpace(registryVersion);
-
-            // Try to parse as Version objects for proper comparison
-            if (Version.TryParse(currentVersion, out var current) && 
-                Version.TryParse(registryVersion, out var registry))
+            
+            var cleanCurrentVersion = CleanVersionString(currentVersion);
+            var cleanRegistryVersion = CleanVersionString(registryVersion);
+            
+            if (Version.TryParse(cleanCurrentVersion, out var current) && 
+                Version.TryParse(cleanRegistryVersion, out var registry))
             {
                 return registry > current;
             }
-
-            // Fallback to string comparison if version parsing fails
-            return !string.Equals(currentVersion, registryVersion, StringComparison.OrdinalIgnoreCase);
+            
+            return !string.Equals(cleanCurrentVersion, cleanRegistryVersion, StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
         {
             _logger.Warn(ex, "Error comparing versions: current={CurrentVersion}, registry={RegistryVersion}", 
                 currentVersion, registryVersion);
-            return false; // Don't update if we can't determine versions
+            return false; 
         }
+    }
+
+    /// <summary>
+    /// Cleans version strings by removing common prefixes
+    /// </summary>
+    private static string CleanVersionString(string version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+            return version;
+        
+        var cleaned = version.Trim();
+        if (cleaned.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+        {
+            cleaned = cleaned.Substring(1);
+        }
+
+        return cleaned;
     }
 
     public static AppBuilder BuildAvaloniaApp() =>

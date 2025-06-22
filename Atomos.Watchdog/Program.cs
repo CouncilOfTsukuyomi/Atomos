@@ -19,21 +19,18 @@ internal class Program
     private readonly IProcessManager _processManager;
     private readonly IConfigurationSetup _configurationSetup;
     private readonly IUpdateService _updateService;
-    private readonly IRunUpdater _runUpdater;
     private CancellationTokenSource? _cts;
 
     public Program(
         IConfigurationService configurationService,
         IProcessManager processManager,
         IConfigurationSetup configurationSetup,
-        IUpdateService updateService,
-        IRunUpdater runUpdater)
+        IUpdateService updateService)
     {
         _configurationService = configurationService;
         _processManager = processManager;
         _configurationSetup = configurationSetup;
         _updateService = updateService;
-        _runUpdater = runUpdater;
         _cts = new CancellationTokenSource();
     }
 
@@ -66,64 +63,6 @@ internal class Program
             // Inform that the Watchdog is up
             ApplicationBootstrapper.SetWatchdogInitialization();
             Environment.SetEnvironmentVariable("WATCHDOG_INITIALIZED", "true");
-
-            // Retrieve assembly version
-            var assembly = Assembly.GetExecutingAssembly();
-            var version = assembly.GetName().Version;
-            var semVersion = version == null
-                ? "Local Build"
-                : $"{version.Major}.{version.Minor}.{version.Build}";
-
-            // Check for updates
-            var isUpdateNeeded = _updateService
-                .NeedsUpdateAsync(semVersion, "CouncilOfTsukuyomi/Atomos")
-                .GetAwaiter()
-                .GetResult();
-
-            if (isUpdateNeeded)
-            {
-                _logger.Info("Update detected; launching updater.");
-
-                var currentExePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName ?? assembly.Location;
-                var installPath = Path.GetDirectoryName(currentExePath) 
-                                  ?? AppContext.BaseDirectory;
-                var programToRunAfterInstallation = Path.GetFileName(currentExePath);
-
-                var updateResult = _runUpdater
-                    .RunDownloadedUpdaterAsync(
-                        semVersion,
-                        "CouncilOfTsukuyomi/Atomos",
-                        installPath,
-                        true,
-                        programToRunAfterInstallation)
-                    .GetAwaiter()
-                    .GetResult();
-
-                if (updateResult)
-                {
-                    _logger.Info("Updater started successfully. Exiting this instance.");
-                    
-                    // Perform minimal cleanup and exit immediately for update
-                    try
-                    {
-                        CancelRunningTasks();
-                        _processManager?.Dispose();
-                        LogManager.Shutdown();
-                    }
-                    catch (Exception cleanupEx)
-                    {
-                        _logger.Error(cleanupEx, "Error during update cleanup");
-                    }
-                    
-                    _logger.Info("Exiting for update...");
-                    Environment.Exit(0);
-                    return; // This line should never be reached
-                }
-                else
-                {
-                    _logger.Warn("Updater failed or was not detected running. Continuing anyway.");
-                }
-            }
 
             // Hide console if on Windows
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

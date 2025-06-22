@@ -21,6 +21,7 @@
         <entry key="Atomos.UI/Views/SentryPromptView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/SettingsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/StandaloneInstallWindow.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/UpdatePromptView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/App.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/MainWindow.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />
         <entry key="PenumbraModForwarder.UI/Styles/AcrylicMaterials.axaml" value="PenumbraModForwarder.UI/PenumbraModForwarder.UI.csproj" />

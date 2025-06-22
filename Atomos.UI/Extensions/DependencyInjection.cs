@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Threading.Tasks;
 using Atomos.Statistics.Services;
 using Atomos.UI.Controllers;
 using Atomos.UI.Interfaces;
@@ -10,7 +8,6 @@ using Atomos.UI.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommonLib.Extensions;
-using CommonLib.Factory;
 using CommonLib.Interfaces;
 using CommonLib.Models;
 using CommonLib.Services;
@@ -48,7 +45,9 @@ public static class DependencyInjection
         services.AddSingleton<IFileStorage, FileStorage>();
         services.AddSingleton<IStatisticService, StatisticService>();
         services.AddSingleton<IFileSizeService, FileSizeService>();
-        services.AddSingleton<IXmaHttpClientFactory, XmaHttpClientFactory>();
+        services.AddSingleton<IUpdateService, UpdateService>();
+        services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
+        services.AddSingleton<IRunUpdater, RunUpdater>();
         services.AddSingleton<IFileDialogService>(provider =>
         {
             var applicationLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
@@ -61,7 +60,6 @@ public static class DependencyInjection
 
             return new FileDialogService(mainWindow);
         });
-        services.AddSingleton<IXmaModDisplay, XmaModDisplay>();
         services.AddSingleton<ITrayIconController, TrayIconController>();
         services.AddSingleton<ITrayIconManager, TrayIconManager>();
         services.AddSingleton<ITaskbarFlashService, TaskbarFlashService>();

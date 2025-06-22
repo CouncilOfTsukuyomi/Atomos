@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Reactive.Linq;
+using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Atomos.UI.Extensions;
@@ -14,10 +15,11 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using ReactiveUI;
 using Notification = Atomos.UI.Models.Notification;
+using Timer = System.Timers.Timer;
 
 namespace Atomos.UI.ViewModels;
 
-public class MainWindowViewModel : ViewModelBase
+public class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -28,6 +30,9 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IConfigurationListener _configurationListener;
     private readonly IConfigurationService _configurationService;
     private readonly ITaskbarFlashService _taskbarFlashService;
+    
+    private Timer? _updateCheckTimer;
+    private string _currentVersion = string.Empty;
 
     private ViewModelBase _currentPage = null!;
     private MenuItem _selectedMenuItem = null!;
@@ -47,6 +52,7 @@ public class MainWindowViewModel : ViewModelBase
     public InstallViewModel InstallViewModel { get; }
     public SentryPromptViewModel SentryPromptViewModel { get; }
     public NotificationHubViewModel NotificationHubViewModel { get; }
+    public UpdatePromptViewModel UpdatePromptViewModel { get; }
 
     public MenuItem SelectedMenuItem
     {
@@ -88,7 +94,9 @@ public class MainWindowViewModel : ViewModelBase
         IConfigurationListener configurationListener,
         ISoundManagerService soundManagerService,
         IConfigurationService configurationService,
-        ITaskbarFlashService taskbarFlashService)
+        ITaskbarFlashService taskbarFlashService,
+        IUpdateService updateService,
+        IRunUpdater runUpdater)
     {
         _serviceProvider = serviceProvider;
         _notificationService = notificationService;
@@ -98,6 +106,13 @@ public class MainWindowViewModel : ViewModelBase
         _configurationService = configurationService;
         _taskbarFlashService = taskbarFlashService;
         
+        // Get current version
+        // var assembly = Assembly.GetExecutingAssembly();
+        // var version = assembly.GetName().Version;
+        // _currentVersion = version == null ? "Local Build" : $"{version.Major}.{version.Minor}.{version.Build}";
+        _currentVersion = "0.2.1";
+        _logger.Info("Application version determined: {Version}", _currentVersion);
+        
         // Check the configuration to see if Sentry is enabled at startup
         if ((bool)_configurationService.ReturnConfigValue(c => c.Common.EnableSentry))
         {
@@ -105,17 +120,19 @@ public class MainWindowViewModel : ViewModelBase
             DependencyInjection.EnableSentryLogging();
         }
 
+        // Create UpdatePromptViewModel
+        UpdatePromptViewModel = new UpdatePromptViewModel(updateService, runUpdater);
+        _logger.Info("UpdatePromptViewModel created successfully");
+
         // Create and manage your SentryPromptViewModel
         SentryPromptViewModel = new SentryPromptViewModel(_configurationService, _webSocketClient)
         {
-            // Set this to false initially; you can display it if the user hasn't chosen yet
             IsVisible = false
         };
 
         var userHasChosenSentry = (bool)_configurationService.ReturnConfigValue(c => c.Common.UserChoseSentry);
         if (!userHasChosenSentry)
         {
-            // If the user has never made a choice, show the prompt overlay
             SentryPromptViewModel.IsVisible = true;
         }
 
@@ -127,7 +144,7 @@ public class MainWindowViewModel : ViewModelBase
         var homeViewModel = _serviceProvider.GetRequiredService<HomeViewModel>();
         var modsViewModel = _serviceProvider.GetRequiredService<ModsViewModel>();
         var pluginsViewModel = _serviceProvider.GetRequiredService<PluginViewModel>();
-        var pluginDataViewModel = _serviceProvider.GetRequiredService<PluginDataViewModel>(); // Add this line
+        var pluginDataViewModel = _serviceProvider.GetRequiredService<PluginDataViewModel>();
 
         // Subscribe to plugin settings requests
         pluginsViewModel.PluginSettingsRequested += OnPluginSettingsRequested;
@@ -167,8 +184,123 @@ public class MainWindowViewModel : ViewModelBase
 
         InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService, _taskbarFlashService);
 
-        _ = InitializeWebSocketConnection(port);
+        _ = InitializeAsync(port);
     }
+
+    private async Task InitializeAsync(int port)
+    {
+        _logger.Debug("Starting InitializeAsync with port: {Port}", port);
+        
+        StartUpdateCheckTimer();
+        
+        _logger.Debug("Starting initial update check");
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                _logger.Debug("About to call CheckForUpdatesAsync from Task.Run");
+                await CheckForUpdatesAsync();
+                _logger.Debug("Initial update check completed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Initial update check failed");
+            }
+        });
+        
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await InitializeWebSocketConnectionWithTimeout(port, cts.Token);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Failed to initialize WebSocket connection, but continuing without it");
+            }
+        });
+        
+        _logger.Debug("InitializeAsync completed");
+    }
+
+    private async Task InitializeWebSocketConnectionWithTimeout(int port, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.Debug("Attempting WebSocket connection to port {Port}", port);
+            
+            var connectTask = Task.Run(() => _webSocketClient.ConnectAsync(port), cancellationToken);
+            await connectTask;
+            
+            _logger.Info("WebSocket connection established successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Warn("WebSocket connection timed out after 10 seconds");
+            await _notificationService.ShowNotification(
+                "Connection timeout",
+                "Failed to connect to background service within 10 seconds."
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to initialize WebSocket connection");
+            await _notificationService.ShowNotification(
+                "Connection error",
+                "Failed to connect to background service."
+            );
+        }
+    }
+
+    private void StartUpdateCheckTimer()
+    {
+        _logger.Debug("Starting update check timer (5 minute intervals)");
+    
+        _updateCheckTimer = new Timer(TimeSpan.FromMinutes(5).TotalMilliseconds);
+        _updateCheckTimer.Elapsed += async (sender, e) =>
+        {
+            try
+            {
+                _logger.Debug("Timer elapsed - starting scheduled update check");
+                await CheckForUpdatesAsync();
+                _logger.Debug("Scheduled update check completed");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error during scheduled update check");
+            }
+        };
+        _updateCheckTimer.AutoReset = true;
+        _updateCheckTimer.Start();
+    
+        _logger.Debug("Update check timer started successfully");
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            _logger.Debug("CheckForUpdatesAsync started. UpdatePromptViewModel.IsVisible: {IsVisible}", UpdatePromptViewModel.IsVisible);
+        
+            // Only check if the update prompt isn't already visible
+            if (!UpdatePromptViewModel.IsVisible)
+            {
+                _logger.Debug("Checking for updates... Current version: {Version}", _currentVersion);
+                await UpdatePromptViewModel.CheckForUpdatesAsync(_currentVersion);
+                _logger.Debug("Update check call completed. UpdatePromptViewModel.IsVisible: {IsVisible}", UpdatePromptViewModel.IsVisible);
+            }
+            else
+            {
+                _logger.Debug("Skipping update check - update prompt is already visible");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to check for updates");
+        }
+    }
+
 
     private void OnPluginSettingsRequested(PluginSettingsViewModel settingsViewModel)
     {
@@ -184,20 +316,11 @@ public class MainWindowViewModel : ViewModelBase
         settingsViewModel.Show();
         PluginSettingsViewModel = settingsViewModel;
     }
-
-    private async Task InitializeWebSocketConnection(int port)
+    
+    public void Dispose()
     {
-        try
-        {
-            await Task.Run(() => _webSocketClient.ConnectAsync(port));
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Failed to initialize WebSocket connection");
-            await _notificationService.ShowNotification(
-                "Connection error",
-                "Failed to connect to background service."
-            );
-        }
+        _updateCheckTimer?.Stop();
+        _updateCheckTimer?.Dispose();
+        SentryPromptViewModel?.Dispose();
     }
 }

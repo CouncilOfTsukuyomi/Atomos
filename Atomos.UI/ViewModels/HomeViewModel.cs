@@ -22,7 +22,6 @@ public class HomeViewModel : ViewModelBase, IDisposable
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     private readonly IStatisticService _statisticService;
-    private readonly IXmaModDisplay _xmaModDisplay;
     private readonly IFileSizeService _fileSizeService;
     private readonly CompositeDisposable _disposables = new();
     private readonly SemaphoreSlim _statsSemaphore = new(1, 1);
@@ -35,13 +34,7 @@ public class HomeViewModel : ViewModelBase, IDisposable
         get => _infoItems;
         set => this.RaiseAndSetIfChanged(ref _infoItems, value);
     }
-
-    private ObservableCollection<XmaMods> _recentMods;
-    public ObservableCollection<XmaMods> RecentMods
-    {
-        get => _recentMods;
-        set => this.RaiseAndSetIfChanged(ref _recentMods, value);
-    }
+    
 
     private bool _isLoading;
     public bool IsLoading
@@ -52,27 +45,18 @@ public class HomeViewModel : ViewModelBase, IDisposable
     
     public HomeViewModel(
         IStatisticService statisticService,
-        IXmaModDisplay xmaModDisplay,
         IWebSocketClient webSocketClient,
         IFileSizeService fileSizeService)
     {
         _statisticService = statisticService;
-        _xmaModDisplay = xmaModDisplay;
         _webSocketClient = webSocketClient;
         _fileSizeService = fileSizeService;
 
         InfoItems = new ObservableCollection<InfoItem>();
-        RecentMods = new ObservableCollection<XmaMods>();
         
         _webSocketClient.ModInstalled += OnModInstalled;
 
         _ = LoadStatisticsAsync();
-
-        Observable.Timer(TimeSpan.Zero, TimeSpan.FromMinutes(5))
-            .SelectMany(_ => Observable.FromAsync(RefreshRecentModsAsync))
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe()
-            .DisposeWith(_disposables);
     }
 
     private async void OnModInstalled(object sender, EventArgs e)
@@ -82,44 +66,6 @@ public class HomeViewModel : ViewModelBase, IDisposable
             await _statisticService.FlushAndRefreshAsync(TimeSpan.FromSeconds(2));
             await LoadStatisticsAsync();
         });
-    }
-
-    private async Task RefreshRecentModsAsync()
-    {
-        try
-        {
-            IsLoading = true;
-
-            var modsFromSource = await _xmaModDisplay.GetRecentMods();
-
-            // Gather only one instance per ModUrl from the source data
-            var distinctSourceMods = modsFromSource
-                .GroupBy(m => m.ModUrl)
-                .Select(g => g.First())
-                .ToList();
-
-            var existingModUrls = RecentMods
-                .Select(rm => rm.ModUrl)
-                .ToHashSet();
-
-            foreach (var mod in distinctSourceMods)
-            {
-                if (!existingModUrls.Contains(mod.ModUrl))
-                {
-                    RecentMods.Add(mod);
-                }
-            }
-
-            _logger.Debug("Successfully updated the recent mods list without duplicates.");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Unable to retrieve or log recent mods");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
     }
 
     private async Task LoadStatisticsAsync()

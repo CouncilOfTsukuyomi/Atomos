@@ -127,6 +127,10 @@
         <views:InstallView DataContext="{Binding InstallViewModel}"
                            Grid.Row="0" Grid.RowSpan="2"/>
         
+        <!-- Update View Overlay -->
+        <views:UpdatePromptView DataContext="{Binding UpdatePromptViewModel}"
+                           Grid.Row="0" Grid.RowSpan="2"/>
+        
         <!-- Sentry Enable Overlay -->
         <views:SentryPromptView DataContext="{Binding SentryPromptViewModel}"
                                 Grid.Row="0" Grid.RowSpan="2"/>

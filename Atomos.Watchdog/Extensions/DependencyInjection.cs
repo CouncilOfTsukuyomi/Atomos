@@ -26,7 +26,6 @@ public static class DependencyInjection
         services.AddSingleton<IFileStorage, FileStorage>();
         services.AddSingleton<IAria2Service>(_ => new Aria2Service(AppContext.BaseDirectory));
         services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
-        services.AddSingleton<IRunUpdater, RunUpdater>();
 
         return services;
     }

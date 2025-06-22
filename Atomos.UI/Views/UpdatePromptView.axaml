@@ -1,0 +1,200 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Atomos.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Atomos.UI.Views.UpdatePromptView"
+             x:DataType="viewModels:UpdatePromptViewModel">
+
+    <!-- Semi-transparent backdrop -->
+    <Grid IsVisible="{Binding IsVisible}"
+          Background="#B0000000">
+        
+        <Border Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="0"
+                MaxWidth="520"
+                MaxHeight="450"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 4 #40000000">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Border Grid.Row="0"
+                        Background="{StaticResource SurfaceBrush}"
+                        CornerRadius="16,16,0,0"
+                        Padding="24,20">
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Center"
+                                    Spacing="12">
+                            <Border Background="{StaticResource AccentBrush}"
+                                    CornerRadius="20"
+                                    Width="40"
+                                    Height="40">
+                                <TextBlock Text="⬆"
+                                           FontSize="20"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold" />
+                            </Border>
+                            
+                            <TextBlock Text="Update Available"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        
+                        <TextBlock Text="A new version of Atomos is ready to install"
+                                   FontSize="14"
+                                   Foreground="{StaticResource TextBrush}"
+                                   Opacity="0.8"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Content area -->
+                <StackPanel Grid.Row="1" 
+                            Spacing="20" 
+                            Margin="24,24,24,16">
+                    
+                    <!-- Version comparison card -->
+                    <Border Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="20">
+                        <Grid ColumnDefinitions="*,Auto,*">
+                            
+                            <!-- Current version -->
+                            <StackPanel Grid.Column="0" 
+                                        Spacing="4">
+                                <TextBlock Text="CURRENT"
+                                           FontSize="11"
+                                           FontWeight="Medium"
+                                           Foreground="{StaticResource TextBrush}"
+                                           Opacity="0.7"
+                                           HorizontalAlignment="Center"
+                                           LetterSpacing="0.5" />
+                                <TextBlock Text="{Binding CurrentVersion}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                            
+                            <!-- Arrow -->
+                            <Border Grid.Column="1"
+                                    Background="{StaticResource AccentBrush}"
+                                    CornerRadius="16"
+                                    Width="32"
+                                    Height="32"
+                                    Margin="16,0">
+                                <TextBlock Text="→"
+                                           FontSize="16"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="Bold" />
+                            </Border>
+                            
+                            <!-- Target version -->
+                            <StackPanel Grid.Column="2" 
+                                        Spacing="4">
+                                <TextBlock Text="NEW"
+                                           FontSize="11"
+                                           FontWeight="Medium"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           HorizontalAlignment="Center"
+                                           LetterSpacing="0.5" />
+                                <TextBlock Text="{Binding TargetVersion}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Info message -->
+                    <Border Background="{StaticResource BackgroundBrush}"
+                            CornerRadius="8"
+                            Padding="18,14">
+                        <TextBlock Text="The application will restart automatically when the update completes."
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextBrush}"
+                                   Opacity="0.9"
+                                   TextWrapping="Wrap"
+                                   LineHeight="18"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center" />
+                    </Border>
+                    
+                    <StackPanel Spacing="16" 
+                                IsVisible="{Binding IsUpdating}">
+                        <TextBlock Text="{Binding UpdateStatus}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center" />
+                        
+                        <Border Background="{StaticResource BackgroundBrush}"
+                                CornerRadius="6"
+                                Height="8">
+                            <ProgressBar IsIndeterminate="True"
+                                         Background="Transparent"
+                                         Foreground="{StaticResource AccentBrush}"
+                                         Height="6"
+                                         CornerRadius="3"
+                                         Margin="1" />
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Action buttons -->
+                <Border Grid.Row="2"
+                        Background="{StaticResource SurfaceBrush}"
+                        CornerRadius="0,0,16,16"
+                        Padding="24,20"
+                        IsVisible="{Binding !IsUpdating}">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="12">
+                        
+                        <Button Content="Update Now"
+                                Command="{Binding UpdateCommand}"
+                                Width="140"
+                                Height="40"
+                                Background="{StaticResource AccentBrush}"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                FontSize="14"
+                                CornerRadius="8"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+                                </Style>
+                                <Style Selector="Button:pressed">
+                                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+                                    <Setter Property="RenderTransform" Value="scale(0.98)" />
+                                </Style>
+                            </Button.Styles>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

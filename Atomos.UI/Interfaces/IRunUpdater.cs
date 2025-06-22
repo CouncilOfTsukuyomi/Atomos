@@ -1,4 +1,6 @@
-﻿namespace Atomos.Watchdog.Interfaces;
+﻿using System.Threading.Tasks;
+
+namespace Atomos.UI.Interfaces;
 
 public interface IRunUpdater
 {
