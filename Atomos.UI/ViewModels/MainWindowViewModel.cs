@@ -107,10 +107,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _taskbarFlashService = taskbarFlashService;
         
         // Get current version
-        // var assembly = Assembly.GetExecutingAssembly();
-        // var version = assembly.GetName().Version;
-        // _currentVersion = version == null ? "Local Build" : $"{version.Major}.{version.Minor}.{version.Build}";
-        _currentVersion = "0.2.1";
+        var assembly = Assembly.GetExecutingAssembly();
+        var version = assembly.GetName().Version;
+        _currentVersion = version == null ? "Local Build" : $"{version.Major}.{version.Minor}.{version.Build}";
         _logger.Info("Application version determined: {Version}", _currentVersion);
         
         // Check the configuration to see if Sentry is enabled at startup
