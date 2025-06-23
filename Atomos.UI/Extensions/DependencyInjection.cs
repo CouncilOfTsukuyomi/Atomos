@@ -28,10 +28,8 @@ public static class DependencyInjection
             cfg.AddProfile<ConvertConfiguration>();
         });
         
-        // Register ConfigurationModel as a singleton
         services.AddSingleton<ConfigurationModel>();
-
-        // Services
+        
         services.AddSingleton<ISoundManagerService, SoundManagerService>();
         services.AddSingleton<IAria2Service>(_ => new Aria2Service(AppContext.BaseDirectory));
         services.AddSingleton<IRegistryHelper, RegistryHelper>();
@@ -63,25 +61,22 @@ public static class DependencyInjection
         services.AddSingleton<ITrayIconController, TrayIconController>();
         services.AddSingleton<ITrayIconManager, TrayIconManager>();
         services.AddSingleton<ITaskbarFlashService, TaskbarFlashService>();
-
-        // ViewModels
+        
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ErrorWindowViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
-        services.AddSingleton<PluginViewModel>();
+        services.AddScoped<PluginViewModel>();
         services.AddTransient<PluginDataViewModel>();
-
-        // Views
+        
         services.AddSingleton<MainWindow>();
         services.AddSingleton<ErrorWindowViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
-        services.AddSingleton<PluginView>();
+        services.AddScoped<PluginView>();
         
-        // Plugin Services - Enhanced version with GitHub integration
         services.AddPluginServices();
         services.AddDefaultPluginServices(
             registryUrl: "https://raw.githubusercontent.com/CouncilOfTsukuyomi/StaticResources/refs/heads/main/plugins.json",
