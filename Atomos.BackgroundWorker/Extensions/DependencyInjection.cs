@@ -44,9 +44,14 @@ namespace Atomos.BackgroundWorker.Extensions
             services.AddSingleton<IFileQueueProcessor, FileQueueProcessor>();
             services.AddSingleton<IFileProcessor, FileProcessor>();
             
-            services.AddHttpClient<IModInstallService, ModInstallService>(client =>
+            services.AddHttpClient<IModInstallService, ModInstallService>((serviceProvider, client) =>
             {
                 client.BaseAddress = new Uri(ApiConsts.BaseApiUrl);
+    
+                // Configure timeout using the PenumbraTimeOutInSeconds setting
+                var configService = serviceProvider.GetRequiredService<IConfigurationService>();
+                var timeoutSeconds = (int)configService.ReturnConfigValue(c => c.AdvancedOptions.PenumbraTimeOutInSeconds);
+                client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             });
             
             return services;
