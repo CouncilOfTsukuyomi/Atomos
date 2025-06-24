@@ -136,6 +136,7 @@
                                    TextAlignment="Center" />
                     </Border>
                     
+                    <!-- Progress section -->
                     <StackPanel Spacing="16" 
                                 IsVisible="{Binding IsUpdating}">
                         <TextBlock Text="{Binding UpdateStatus}"
@@ -146,16 +147,28 @@
                                    TextWrapping="Wrap"
                                    TextAlignment="Center" />
                         
-                        <Border Background="{StaticResource BackgroundBrush}"
-                                CornerRadius="6"
-                                Height="8">
-                            <ProgressBar IsIndeterminate="True"
-                                         Background="Transparent"
-                                         Foreground="{StaticResource AccentBrush}"
-                                         Height="6"
-                                         CornerRadius="3"
-                                         Margin="1" />
-                        </Border>
+                        <!-- Progress bar with percentage -->
+                        <StackPanel Spacing="8">
+                            <Border Background="{StaticResource BackgroundBrush}"
+                                    CornerRadius="6"
+                                    Height="12">
+                                <ProgressBar Value="{Binding UpdateProgress}"
+                                             Maximum="100"
+                                             Background="Transparent"
+                                             Foreground="{StaticResource AccentBrush}"
+                                             Height="10"
+                                             CornerRadius="5"
+                                             Margin="1" />
+                            </Border>
+                            
+                            <!-- Progress percentage -->
+                            <TextBlock Text="{Binding UpdateProgress, StringFormat={}{0:F1}%}"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource TextBrush}"
+                                       Opacity="0.8"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
 

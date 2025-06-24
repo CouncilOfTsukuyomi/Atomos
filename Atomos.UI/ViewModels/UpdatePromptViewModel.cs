@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive;
@@ -6,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using CommonLib.Interfaces;
+using CommonLib.Models;
 using NLog;
 using ReactiveUI;
 
@@ -23,6 +25,7 @@ public class UpdatePromptViewModel : ViewModelBase
     private string _targetVersion = string.Empty;
     private bool _isUpdating;
     private string _updateStatus = "Ready to update";
+    private double _updateProgress;
 
     public bool IsVisible
     {
@@ -52,6 +55,12 @@ public class UpdatePromptViewModel : ViewModelBase
     {
         get => _updateStatus;
         set => this.RaiseAndSetIfChanged(ref _updateStatus, value);
+    }
+
+    public double UpdateProgress
+    {
+        get => _updateProgress;
+        set => this.RaiseAndSetIfChanged(ref _updateProgress, value);
     }
 
     public ReactiveCommand<Unit, Unit> UpdateCommand { get; }
@@ -91,6 +100,7 @@ public class UpdatePromptViewModel : ViewModelBase
 
                 _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion}", CurrentVersion, TargetVersion);
                 UpdateStatus = "Ready to update";
+                UpdateProgress = 0;
                 IsVisible = true;
             }
             else
@@ -115,6 +125,7 @@ public class UpdatePromptViewModel : ViewModelBase
         try
         {
             IsUpdating = true;
+            UpdateProgress = 0;
                 
             UpdateStatus = "Initializing update process...";
             _logger.Info("User initiated update process from {CurrentVersion} to {TargetVersion}", CurrentVersion, TargetVersion);
@@ -127,22 +138,24 @@ public class UpdatePromptViewModel : ViewModelBase
             var installPath = Path.GetDirectoryName(currentExePath) ?? AppContext.BaseDirectory;
             var programToRunAfterInstallation = "Atomos.Launcher.exe";
             await Task.Delay(500);
-                
-            UpdateStatus = $"Downloading {TargetVersion}...";
+
+            // Create progress reporter for the update process
+            var progress = new Progress<DownloadProgress>(OnUpdateProgressChanged);
+            
             _logger.Debug("Starting download and update process");
-            await Task.Delay(1000);
-                
-            UpdateStatus = "Installing update...";
+            
             var updateResult = await _runUpdater.RunDownloadedUpdaterAsync(
                 CurrentVersion,
                 "CouncilOfTsukuyomi/Atomos",
                 installPath,
                 true,
-                programToRunAfterInstallation);
+                programToRunAfterInstallation,
+                progress); // Pass the progress reporter
 
             if (updateResult)
             {
                 UpdateStatus = "Update completed! Restarting application...";
+                UpdateProgress = 100;
                 _logger.Info("Update to {TargetVersion} completed successfully. Restarting application.", TargetVersion);
                     
                 await Task.Delay(2000);
@@ -154,6 +167,7 @@ public class UpdatePromptViewModel : ViewModelBase
             else
             {
                 UpdateStatus = "Update failed. Please try again later.";
+                UpdateProgress = 0;
                 _logger.Warn("Update to {TargetVersion} failed or updater was not detected running", TargetVersion);
                 IsUpdating = false;
                     
@@ -164,12 +178,26 @@ public class UpdatePromptViewModel : ViewModelBase
         catch (Exception ex)
         {
             UpdateStatus = "Update failed due to an error.";
+            UpdateProgress = 0;
             _logger.Error(ex, "Error during update process to {TargetVersion}", TargetVersion);
             IsUpdating = false;
                 
             await Task.Delay(4000);
             IsVisible = false;
         }
+    }
+
+    private void OnUpdateProgressChanged(DownloadProgress progress)
+    {
+        _logger.Debug("=== UPDATE PROGRESS UI UPDATE ===");
+        _logger.Debug("Status: {Status}", progress.Status);
+        _logger.Debug("Progress: {Progress}%", progress.PercentComplete);
+        
+        UpdateStatus = progress.Status ?? "Updating...";
+        UpdateProgress = progress.PercentComplete;
+
+        _logger.Debug("Updated UI - Status: {Status}, Progress: {Progress}%", UpdateStatus, UpdateProgress);
+        _logger.Debug("=== END UPDATE PROGRESS UI UPDATE ===");
     }
         
     private static string CleanVersionString(string version)

@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using CommonLib.Models;
 
 namespace Atomos.UI.Interfaces;
 
@@ -9,5 +11,6 @@ public interface IRunUpdater
         string gitHubRepo,
         string installationPath,
         bool enableSentry,
-        string? programToRunAfterInstallation = null);
+        string? programToRunAfterInstallation = null,
+        IProgress<DownloadProgress>? progress = null);
 }
