@@ -104,12 +104,16 @@
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="FontWeight" Value="SemiBold"/>
     <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    <Setter Property="HorizontalAlignment" Value="Left"/>
+    <Setter Property="TextAlignment" Value="Left"/>
   </Style>
 
   <Style Selector="TextBlock.statValue">
     <Setter Property="FontSize" Value="24"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
+    <Setter Property="HorizontalAlignment" Value="Left"/>
+    <Setter Property="TextAlignment" Value="Left"/>
   </Style>
 
   <Style Selector="TextBlock.recentModName">
@@ -117,6 +121,8 @@
     <Setter Property="FontWeight" Value="SemiBold"/>
     <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     <Setter Property="TextWrapping" Value="Wrap"/>
+    <Setter Property="HorizontalAlignment" Value="Left"/>
+    <Setter Property="TextAlignment" Value="Left"/>
   </Style>
 
 </Styles>

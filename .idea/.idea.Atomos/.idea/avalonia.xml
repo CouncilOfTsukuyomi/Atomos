@@ -11,14 +11,19 @@
         <entry key="Atomos.UI/Styles/Elements/HomeViewStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/InfoBox.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/ModList.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/Navigation.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/Notification.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/NotificationHub.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/PluginStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/SettingsStyles.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/TitleBar.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Icons.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/AboutView .axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/HomeView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/InstallView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/MainWindow.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/ModsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/NotificationHubView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginDataView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginSettingsView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/PluginView.axaml" value="Atomos.UI/Atomos.UI.csproj" />

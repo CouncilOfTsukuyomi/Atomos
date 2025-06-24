@@ -28,7 +28,6 @@
           <!-- Welcome Content -->
           <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="12">
             <TextBlock Text="Welcome to Atomos" Classes="welcomeTitle"/>
-            <TextBlock Text="Meow!" Classes="welcomeSubtitle"/>
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Border Classes="statusIndicator">
                 <StackPanel Orientation="Horizontal" Spacing="6">

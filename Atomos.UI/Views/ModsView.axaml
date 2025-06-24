@@ -1,5 +1,4 @@
-﻿
-<UserControl
+﻿<UserControl
     x:Class="Atomos.UI.Views.ModsView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -18,16 +17,16 @@
     </Design.DataContext>
 
     <ScrollViewer>
-        <StackPanel Spacing="0" MaxWidth="1200" HorizontalAlignment="Center" Margin="40,20">
+        <StackPanel Spacing="0" MaxWidth="1400" HorizontalAlignment="Center" Margin="40,30">
             
             <!-- Header Section -->
-            <Border Classes="modsCard headerCard" Margin="0,0,0,24">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+            <Border Classes="modsCard headerCard" Margin="0,0,0,32">
+                <StackPanel Spacing="20">
+                    <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
                         <Border Classes="modsHeaderIcon">
                             <TextBlock Text="📦" Classes="headerIconText"/>
                         </Border>
-                        <StackPanel VerticalAlignment="Center">
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="Installed Mods" Classes="modsTitle"/>
                             <TextBlock Text="Manage and search your installed modifications" Classes="modsSubtitle"/>
                         </StackPanel>
@@ -36,11 +35,11 @@
                     <!-- Search Box -->
                     <TextBox
                         Classes="modernSearchBox"
-                        Width="300"
+                        Width="400"
                         HorizontalAlignment="Center"
                         Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
                         Watermark="🔍 Search mods by name..."
-                        Margin="0,8,0,0"/>
+                        Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 
@@ -48,24 +47,24 @@
             <ItemsControl ItemsSource="{Binding FilteredMods}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Classes="modsCard modCard" Margin="0,0,0,12">
+                        <Border Classes="modsCard modCard" Margin="0,0,0,16">
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 
                                 <!-- Mod Icon -->
                                 <Border Grid.Column="0" Classes="modIcon">
-                                    <TextBlock Text="🎯" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="🎯" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 
                                 <!-- Mod Info -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
                                     <TextBlock Text="{Binding ModName}" Classes="modName"/>
                                     <TextBlock Text="{Binding InstallationTime, StringFormat='Installed: {0:MMM dd, yyyy HH:mm}'}" Classes="modInstallTime"/>
                                 </StackPanel>
                                 
                                 <!-- Status Indicator -->
                                 <Border Grid.Column="2" Classes="modStatusIndicator">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <Ellipse Width="8" Height="8" Fill="#4CAF50"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse Width="10" Height="10" Fill="#4CAF50"/>
                                         <TextBlock Text="Installed" Classes="modStatusText"/>
                                     </StackPanel>
                                 </Border>
@@ -76,11 +75,14 @@
             </ItemsControl>
 
             <!-- Empty State -->
-            <Border Classes="modsCard emptyStateCard" IsVisible="{Binding !FilteredMods.Count}" Margin="0,32,0,0">
-                <StackPanel Spacing="16" HorizontalAlignment="Center">
-                    <TextBlock Text="📭" FontSize="48" HorizontalAlignment="Center"/>
+            <Border Classes="modsCard emptyStateCard" IsVisible="{Binding !FilteredMods.Count}" Margin="0,40,0,0">
+                <StackPanel Spacing="20" HorizontalAlignment="Center">
+                    <TextBlock Text="📭" FontSize="64" HorizontalAlignment="Center"/>
                     <TextBlock Text="No mods found" Classes="emptyStateTitle" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Try adjusting your search terms or install some mods to get started" Classes="emptyStateSubtitle" HorizontalAlignment="Center" TextAlignment="Center"/>
+                    <TextBlock Text="Try adjusting your search terms or install some mods to get started" 
+                               Classes="emptyStateSubtitle" 
+                               HorizontalAlignment="Center" 
+                               TextAlignment="Center"/>
                 </StackPanel>
             </Border>
         </StackPanel>

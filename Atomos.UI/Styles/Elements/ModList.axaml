@@ -7,7 +7,7 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Padding" Value="24"/>
         <Setter Property="BoxShadow" Value="0 4 20 0 #1A000000"/>
         <Setter Property="Transitions">
             <Transitions>
@@ -30,20 +30,20 @@
                 <GradientStop Color="{StaticResource SecondaryColor}" Offset="1"/>
             </LinearGradientBrush>
         </Setter>
-        <Setter Property="Padding" Value="32"/>
+        <Setter Property="Padding" Value="40"/>
     </Style>
 
     <!-- Mod Card -->
     <Style Selector="Border.modCard">
-        <Setter Property="Padding" Value="16"/>
-        <Setter Property="MinHeight" Value="72"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="MinHeight" Value="80"/>
     </Style>
 
     <!-- Header Icon -->
     <Style Selector="Border.modsHeaderIcon">
-        <Setter Property="Width" Value="64"/>
-        <Setter Property="Height" Value="64"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Width" Value="80"/>
+        <Setter Property="Height" Value="80"/>
+        <Setter Property="CornerRadius" Value="20"/>
         <Setter Property="Background">
             <RadialGradientBrush>
                 <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
@@ -54,19 +54,19 @@
     </Style>
 
     <Style Selector="TextBlock.headerIconText">
-        <Setter Property="FontSize" Value="32"/>
+        <Setter Property="FontSize" Value="40"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
     <!-- Mod Icon -->
     <Style Selector="Border.modIcon">
-        <Setter Property="Width" Value="40"/>
-        <Setter Property="Height" Value="40"/>
-        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Width" Value="56"/>
+        <Setter Property="Height" Value="56"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="Background" Value="#1B2196F3"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="0,0,16,0"/>
+        <Setter Property="Margin" Value="0,0,20,0"/>
     </Style>
 
     <!-- Status Indicator -->
@@ -74,8 +74,8 @@
         <Setter Property="Background" Value="#1B4CAF50"/>
         <Setter Property="BorderBrush" Value="#4CAF50"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="12"/>
-        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="Padding" Value="12,6"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
@@ -84,19 +84,20 @@
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="12"/>
-        <Setter Property="Padding" Value="12,8"/>
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
     </Style>
 
     <Style Selector="TextBox.modernSearchBox:focus">
-        <Setter Property="BorderBrush" Value="#4A90E2"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
     </Style>
 
     <!-- Empty State Card -->
     <Style Selector="Border.emptyStateCard">
-        <Setter Property="Padding" Value="40"/>
-        <Setter Property="MinHeight" Value="200"/>
+        <Setter Property="Padding" Value="60"/>
+        <Setter Property="MinHeight" Value="300"/>
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="2"/>
@@ -104,46 +105,49 @@
 
     <!-- Typography -->
     <Style Selector="TextBlock.modsTitle">
-        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontSize" Value="32"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
 
     <Style Selector="TextBlock.modsSubtitle">
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
     </Style>
 
     <Style Selector="TextBlock.modName">
-        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontSize" Value="18"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
     </Style>
 
     <Style Selector="TextBlock.modInstallTime">
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
         <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
+        <Setter Property="LineHeight" Value="20"/>
     </Style>
 
     <Style Selector="TextBlock.modStatusText">
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="#4CAF50"/>
     </Style>
 
     <Style Selector="TextBlock.emptyStateTitle">
-        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
 
     <Style Selector="TextBlock.emptyStateSubtitle">
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
-        <Setter Property="MaxWidth" Value="400"/>
+        <Setter Property="MaxWidth" Value="500"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="LineHeight" Value="24"/>
     </Style>
 
 </Styles>

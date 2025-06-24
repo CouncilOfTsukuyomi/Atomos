@@ -1,5 +1,4 @@
-﻿
-<UserControl
+﻿<UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:system="clr-namespace:System;assembly=netstandard"
@@ -14,9 +13,9 @@
 
         <!-- Boolean Template -->
         <DataTemplate x:Key="BooleanTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,12">
+            <Border Classes="settingCard" Margin="0,0,0,16">
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
                                    Classes="settingLabel"/>
                         <TextBlock Text="{Binding Description}"
@@ -34,9 +33,9 @@
 
         <!-- String Template -->
         <DataTemplate x:Key="StringTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,12">
-                <StackPanel Spacing="8">
-                    <StackPanel>
+            <Border Classes="settingCard" Margin="0,0,0,16">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
                                    Classes="settingLabel"/>
                         <TextBlock Text="{Binding Description}"
@@ -51,9 +50,9 @@
 
         <!-- Integer Template -->
         <DataTemplate x:Key="IntegerTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,12">
-                <StackPanel Spacing="8">
-                    <StackPanel>
+            <Border Classes="settingCard" Margin="0,0,0,16">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
                                    Classes="settingLabel"/>
                         <TextBlock Text="{Binding Description}"
@@ -70,9 +69,9 @@
 
         <!-- Path Template -->
         <DataTemplate x:Key="PathTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,12">
-                <StackPanel Spacing="8">
-                    <StackPanel>
+            <Border Classes="settingCard" Margin="0,0,0,16">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
                                    Classes="settingLabel"/>
                         <TextBlock Text="{Binding Description}"
@@ -83,7 +82,7 @@
                         <TextBox Grid.Column="0"
                                  Text="{Binding Value, Mode=TwoWay}"
                                  Classes="modernTextBox"
-                                 Margin="0,0,8,0"/>
+                                 Margin="0,0,12,0"/>
                         <Button Grid.Column="1"
                                 Content="Browse"
                                 Classes="modernButton"
@@ -95,9 +94,9 @@
 
         <!-- Multi-Path Template -->
         <DataTemplate x:Key="MultiPathTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,12">
-                <StackPanel Spacing="12">
-                    <StackPanel>
+            <Border Classes="settingCard" Margin="0,0,0,16">
+                <StackPanel Spacing="16">
+                    <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
                                    Classes="settingLabel"/>
                         <TextBlock Text="{Binding Description}"
@@ -108,12 +107,13 @@
                     <ItemsControl ItemsSource="{Binding PathItems}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="helpers:PathItemViewModel">
-                                <Border Classes="pathItem" Margin="0,0,0,6">
+                                <Border Classes="pathItem" Margin="0,0,0,8">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding Path}"
                                                    Classes="pathText"
-                                                   VerticalAlignment="Center"/>
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,12,0"/>
                                         <Button Grid.Column="1"
                                                 Content="Remove"
                                                 Classes="removeButton"
@@ -141,22 +141,22 @@
     </UserControl.Resources>
 
     <ScrollViewer>
-        <StackPanel Spacing="0" MaxWidth="1200" HorizontalAlignment="Center" Margin="40,20">
+        <StackPanel Spacing="0" MaxWidth="1400" HorizontalAlignment="Center" Margin="40,30">
             
             <!-- Header Section -->
-            <Border Classes="settingsCard headerCard" Margin="0,0,0,24">
-                <StackPanel Spacing="16">
-                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+            <Border Classes="settingsCard headerCard" Margin="0,0,0,32">
+                <StackPanel Spacing="20">
+                    <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
                         <Border Classes="settingsHeaderIcon">
                             <Path Data="{StaticResource SettingsIcon}" 
                                   Fill="White" 
                                   Stretch="Uniform" 
-                                  Width="32" 
-                                  Height="32"
+                                  Width="40" 
+                                  Height="40"
                                   HorizontalAlignment="Center" 
                                   VerticalAlignment="Center"/>
                         </Border>
-                        <StackPanel VerticalAlignment="Center">
+                        <StackPanel VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="Settings" Classes="settingsTitle"/>
                             <TextBlock Text="Configure your application preferences" Classes="settingsSubtitle"/>
                         </StackPanel>
@@ -164,11 +164,11 @@
                     
                     <!-- Search Box -->
                     <TextBox Classes="modernSearchBox"
-                             Width="350"
+                             Width="400"
                              HorizontalAlignment="Center"
                              Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
                              Watermark="Search for a setting..."
-                             Margin="0,8,0,0"/>
+                             Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 
@@ -197,17 +197,20 @@
             </TabControl>
 
             <!-- Empty State -->
-            <Border Classes="settingsCard emptyStateCard" IsVisible="{Binding !FilteredGroups.Count}" Margin="0,32,0,0">
-                <StackPanel Spacing="16" HorizontalAlignment="Center">
+            <Border Classes="settingsCard emptyStateCard" IsVisible="{Binding !FilteredGroups.Count}" Margin="0,40,0,0">
+                <StackPanel Spacing="20" HorizontalAlignment="Center">
                     <Path Data="{StaticResource SettingsIcon}" 
                           Fill="{StaticResource DisabledTextBrush}" 
                           Stretch="Uniform" 
-                          Width="48" 
-                          Height="48"
+                          Width="64" 
+                          Height="64"
                           HorizontalAlignment="Center"
                           Opacity="0.5"/>
                     <TextBlock Text="No settings found" Classes="emptyStateTitle" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Try adjusting your search terms" Classes="emptyStateSubtitle" HorizontalAlignment="Center" TextAlignment="Center"/>
+                    <TextBlock Text="Try adjusting your search terms or check if you have any configuration groups available" 
+                               Classes="emptyStateSubtitle" 
+                               HorizontalAlignment="Center" 
+                               TextAlignment="Center"/>
                 </StackPanel>
             </Border>
         </StackPanel>

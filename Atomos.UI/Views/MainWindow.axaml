@@ -11,7 +11,7 @@
         xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
         xmlns:models="clr-namespace:Atomos.UI.Models"
         xmlns:views="clr-namespace:Atomos.UI.Views"
-        Title="Mod Forwarder"
+        Title="Atomos Mod Forwarder"
         MinWidth="800"
         MinHeight="600"
         TransparencyLevelHint="AcrylicBlur"
@@ -24,31 +24,30 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="30,*">
+    <Grid RowDefinitions="40,*">
         <!-- Custom Title Bar -->
-        <ExperimentalAcrylicBorder Grid.Row="0" Height="30" Material="{StaticResource TopBarAcrylicMaterial}">
+        <ExperimentalAcrylicBorder Grid.Row="0" Height="40" Material="{StaticResource TopBarAcrylicMaterial}">
             <Grid x:Name="TitleBar" Classes="titleBar">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Atomos Mod Forwarder" 
-                           VerticalAlignment="Center" 
-                           Margin="10,0" 
-                           Foreground="{DynamicResource TextBrush}" 
-                           Classes="titleText"/>
+                <!-- Left side with title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Atomos Mod Forwarder" Classes="titleText"/>
+                </StackPanel>
 
+                <!-- Window Controls -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <!-- Minimize Button -->
                     <Button Name="MinimizeButton" 
                             Classes="windowControl" 
-                            HorizontalContentAlignment="Center" 
-                            VerticalContentAlignment="Center">
-                        <Path Width="10" Height="2" Stretch="None" Stroke="{DynamicResource TextBrush}" StrokeThickness="1">
+                            ToolTip.Tip="Minimize">
+                        <Path Width="12" Height="2" Stretch="None">
                             <Path.Data>
                                 <StreamGeometry>
-                                    M 0,0 L 10,0
+                                    M 0,0 L 12,0
                                 </StreamGeometry>
                             </Path.Data>
                         </Path>
@@ -56,13 +55,12 @@
 
                     <!-- Close Button -->
                     <Button Name="CloseButton" 
-                            Classes="windowControl" 
-                            HorizontalContentAlignment="Center" 
-                            VerticalContentAlignment="Center">
-                        <Path Width="10" Height="10" Stretch="None" Stroke="{DynamicResource TextBrush}" StrokeThickness="1">
+                            Classes="windowControl closeButton"
+                            ToolTip.Tip="Close">
+                        <Path Width="12" Height="12" Stretch="None">
                             <Path.Data>
                                 <StreamGeometry>
-                                    M 0,0 L 10,10 M 0,10 L 10,0
+                                    M 0,0 L 12,12 M 0,12 L 12,0
                                 </StreamGeometry>
                             </Path.Data>
                         </Path>
@@ -72,14 +70,17 @@
         </ExperimentalAcrylicBorder>
 
         <!-- Main Content -->
-        <Grid Grid.Row="1" ColumnDefinitions="250,*">
+        <Grid Grid.Row="1" ColumnDefinitions="280,*">
             <!-- Navigation Panel -->
             <ExperimentalAcrylicBorder Grid.Column="0" Material="{StaticResource NavigationAcrylicMaterial}">
-                <Grid Classes="navPanel" RowDefinitions="Auto,*,Auto,Auto">
+                <Grid Classes="navPanel" RowDefinitions="Auto,*,Auto">
                     <!-- App Logo/Title -->
                     <StackPanel Grid.Row="0" Classes="appLogo">
-                        <PathIcon Data="{StaticResource HomeIcon}" Classes="logoIcon"/>
+                        <Border Classes="logoContainer">
+                            <PathIcon Data="{StaticResource HomeIcon}" Classes="logoIcon"/>
+                        </Border>
                         <TextBlock Text="Atomos" Classes="logoText"/>
+                        <TextBlock Text="Mod Forwarder" Classes="logoSubtext"/>
                     </StackPanel>
 
                     <!-- Navigation Items -->
@@ -89,37 +90,35 @@
                             SelectedItem="{Binding SelectedMenuItem}">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="models:MenuItem">
-                                <StackPanel Orientation="Horizontal" Spacing="15">
-                                    <PathIcon Data="{Binding Icon}" Foreground="{DynamicResource TextBrush}"/>
-                                    <TextBlock Text="{Binding Label}" 
-                                             VerticalAlignment="Center" 
-                                             Foreground="{DynamicResource TextBrush}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <PathIcon Data="{Binding Icon}"/>
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!-- About Button -->
-                    <Button Grid.Row="2" 
-                            Margin="10,0,10,10" 
-                            Command="{Binding NavigateToAboutCommand}" 
-                            Classes="transparent">
-                        <StackPanel Orientation="Horizontal" Spacing="15">
-                            <PathIcon Data="{StaticResource InfoIcon}"/>
-                            <TextBlock Text="About" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+                    <!-- Footer Section -->
+                    <StackPanel Grid.Row="2">
+                        <!-- Divider -->
+                        <Border Classes="navDivider"/>
+                        
+                        <!-- About Button -->
+                        <Button Command="{Binding NavigateToAboutCommand}" Classes="navButton">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <PathIcon Data="{StaticResource InfoIcon}"/>
+                                <TextBlock Text="About" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                    <!-- Settings Button -->
-                    <Button Grid.Row="3" 
-                            Margin="10,0,10,20" 
-                            Command="{Binding NavigateToSettingsCommand}" 
-                            Classes="transparent">
-                        <StackPanel Orientation="Horizontal" Spacing="15">
-                            <PathIcon Data="{StaticResource SettingsIcon}"/>
-                            <TextBlock Text="Settings" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+                        <!-- Settings Button -->
+                        <Button Command="{Binding NavigateToSettingsCommand}" Classes="navButton">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <PathIcon Data="{StaticResource SettingsIcon}"/>
+                                <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </ExperimentalAcrylicBorder>
 

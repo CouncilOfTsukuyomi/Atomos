@@ -1,31 +1,87 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
     <Style Selector="Grid.titleBar">
         <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Height" Value="40"/>
     </Style>
 
     <Style Selector="TextBlock.titleText">
         <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="10,0"/>
+        <Setter Property="Margin" Value="16,0"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Opacity" Value="0.9"/>
     </Style>
 
     <Style Selector="Button.windowControl">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Width" Value="45"/>
-        <Setter Property="Height" Value="30"/>
+        <Setter Property="Width" Value="48"/>
+        <Setter Property="Height" Value="40"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15"/>
+            </Transitions>
+        </Setter>
     </Style>
 
     <Style Selector="Button.windowControl:pointerover">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Opacity" Value="0.1"/>
+    </Style>
+
+    <Style Selector="Button.windowControl:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Opacity" Value="0.2"/>
+    </Style>
+
+    <Style Selector="Button.windowControl.closeButton:pointerover">
+        <Setter Property="Background" Value="#E74C3C"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <Style Selector="Button.windowControl.closeButton:pointerover Path">
+        <Setter Property="Stroke" Value="White"/>
     </Style>
 
     <Style Selector="Button.windowControl Path">
         <Setter Property="Stroke" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="StrokeThickness" Value="1.5"/>
+        <Setter Property="Opacity" Value="0.8"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Stroke" Duration="0:0:0.15"/>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15"/>
+            </Transitions>
+        </Setter>
     </Style>
+
+    <Style Selector="Button.windowControl:pointerover Path">
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <!-- App Icon in Title Bar -->
+    <Style Selector="Border.titleBarIcon">
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Margin" Value="12,0,8,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector="TextBlock.titleBarIconText">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
 </Styles>

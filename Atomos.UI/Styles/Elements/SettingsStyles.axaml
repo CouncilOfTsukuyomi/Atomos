@@ -8,7 +8,7 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Padding" Value="24"/>
         <Setter Property="BoxShadow" Value="0 4 20 0 #1A000000"/>
         <Setter Property="Transitions">
             <Transitions>
@@ -31,20 +31,20 @@
                 <GradientStop Color="{StaticResource SecondaryColor}" Offset="1"/>
             </LinearGradientBrush>
         </Setter>
-        <Setter Property="Padding" Value="32"/>
+        <Setter Property="Padding" Value="40"/>
     </Style>
 
     <!-- Setting Card -->
     <Style Selector="Border.settingCard">
-        <Setter Property="Padding" Value="16"/>
-        <Setter Property="MinHeight" Value="60"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="MinHeight" Value="80"/>
     </Style>
 
     <!-- Header Icon -->
     <Style Selector="Border.settingsHeaderIcon">
-        <Setter Property="Width" Value="64"/>
-        <Setter Property="Height" Value="64"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Width" Value="80"/>
+        <Setter Property="Height" Value="80"/>
+        <Setter Property="CornerRadius" Value="20"/>
         <Setter Property="Background">
             <RadialGradientBrush>
                 <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
@@ -58,16 +58,17 @@
     <Style Selector="TabControl.modernTabControl">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="16"/>
     </Style>
 
     <Style Selector="TabControl.modernTabControl TabStripItem">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0,0,0,2"/>
+        <Setter Property="BorderThickness" Value="0,0,0,3"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="Padding" Value="16,12"/>
-        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="Padding" Value="20,16"/>
+        <Setter Property="Margin" Value="0,0,12,0"/>
+        <Setter Property="FontSize" Value="16"/>
     </Style>
-
 
     <Style Selector="TabControl.modernTabControl TabStripItem:selected">
         <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
@@ -79,7 +80,7 @@
 
     <!-- Tab Content -->
     <Style Selector="Border.tabContent">
-        <Setter Property="Padding" Value="0,20,0,0"/>
+        <Setter Property="Padding" Value="0,24,0,0"/>
     </Style>
 
     <!-- Path Item -->
@@ -87,8 +88,9 @@
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="12"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
     </Style>
 
     <!-- Modern Controls -->
@@ -96,48 +98,77 @@
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="12,8"/>
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
+    </Style>
+
+    <Style Selector="TextBox.modernTextBox:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
     </Style>
 
     <Style Selector="NumericUpDown.modernNumericUpDown">
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
     </Style>
 
+    <!-- Settings CheckBox -->
     <Style Selector="CheckBox.modernCheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="MinWidth" Value="24"/>
+        <Setter Property="MinHeight" Value="24"/>
     </Style>
 
     <Style Selector="Button.modernButton">
         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20,12"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
+    </Style>
+
+    <Style Selector="Button.modernButton:pointerover">
+        <Setter Property="Opacity" Value="0.9"/>
     </Style>
 
     <Style Selector="Button.removeButton">
         <Setter Property="Background" Value="#E53E3E"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="6"/>
-        <Setter Property="Padding" Value="12,6"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="FontSize" Value="14"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="MinHeight" Value="44"/>
+    </Style>
+
+    <Style Selector="Button.removeButton:pointerover">
+        <Setter Property="Opacity" Value="0.9"/>
     </Style>
 
     <Style Selector="Button.addPathButton">
         <Setter Property="Background" Value="#38A169"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20,12"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
+    </Style>
+
+    <Style Selector="Button.addPathButton:pointerover">
+        <Setter Property="Opacity" Value="0.9"/>
     </Style>
 
     <!-- Search Box -->
@@ -145,69 +176,78 @@
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="12"/>
-        <Setter Property="Padding" Value="12,8"/>
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MinHeight" Value="50"/>
+    </Style>
+
+    <Style Selector="TextBox.modernSearchBox:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
     </Style>
 
     <!-- Empty State Card -->
     <Style Selector="Border.emptyStateCard">
-        <Setter Property="Padding" Value="40"/>
-        <Setter Property="MinHeight" Value="200"/>
+        <Setter Property="Padding" Value="60"/>
+        <Setter Property="MinHeight" Value="300"/>
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="2"/>
     </Style>
 
-    <!-- Typography -->
+    <!-- Typography - Larger and more readable -->
     <Style Selector="TextBlock.settingsTitle">
-        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontSize" Value="32"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
 
     <Style Selector="TextBlock.settingsSubtitle">
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
     </Style>
 
     <Style Selector="TextBlock.settingLabel">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style Selector="TextBlock.settingDescription">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="LineHeight" Value="20"/>
+    </Style>
+
+    <Style Selector="TextBlock.tabHeader">
         <Setter Property="FontSize" Value="16"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
 
-    <Style Selector="TextBlock.settingDescription">
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
-        <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="Margin" Value="0,4,0,0"/>
-    </Style>
-
-    <Style Selector="TextBlock.tabHeader">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-    </Style>
-
     <Style Selector="TextBlock.pathText">
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="15"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="LineHeight" Value="22"/>
     </Style>
 
     <Style Selector="TextBlock.emptyStateTitle">
-        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
 
     <Style Selector="TextBlock.emptyStateSubtitle">
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
-        <Setter Property="MaxWidth" Value="400"/>
+        <Setter Property="MaxWidth" Value="500"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="LineHeight" Value="24"/>
     </Style>
 
 </Styles>
