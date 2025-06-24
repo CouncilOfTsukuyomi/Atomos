@@ -8,6 +8,9 @@
         <entry key="Atomos.UI/Styles/ButtonStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/ColourResources.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/AboutInfoStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/HomeViewStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/InfoBox.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/ModList.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/PluginStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/SettingsStyles.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Icons.axaml" value="Atomos.UI/Atomos.UI.csproj" />

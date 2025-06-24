@@ -1,22 +1,94 @@
-﻿<UserControl
+﻿
+<UserControl
     x:Class="Atomos.UI.Views.HomeView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewModels="clr-namespace:Atomos.UI.ViewModels"
+    xmlns:models="clr-namespace:Atomos.UI.Models"
     x:DataType="viewModels:HomeViewModel"
     mc:Ignorable="d"
     d:DesignWidth="800"
-    d:DesignHeight="450">
-<Grid ColumnDefinitions="Auto,*,Auto" Margin="5" DragDrop.AllowDrop="True">
-    <!-- Left column (statistics, etc.) -->
-    <ScrollViewer Grid.Column="0" Margin="5">
-        <ItemsControl Classes="infoBoxes" ItemsSource="{Binding InfoItems}"/>
-    </ScrollViewer>
+    d:DesignHeight="450"
+    Foreground="{StaticResource TextBrush}">
 
-    <!-- Middle column is empty -->
+  <ScrollViewer>
+    <StackPanel Spacing="0" MaxWidth="1200" HorizontalAlignment="Center" Margin="40,20">
+      
+      <!-- Welcome Hero Section -->
+      <Border Classes="homeCard heroCard" Margin="0,0,0,32">
+        <Grid ColumnDefinitions="Auto,*">
+          
+          <!-- Welcome Icon -->
+          <Border Grid.Column="0" Classes="welcomeIcon">
+            <TextBlock Text="🏠" Classes="welcomeIconText"/>
+          </Border>
+          
+          <!-- Welcome Content -->
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="12">
+            <TextBlock Text="Welcome to Atomos" Classes="welcomeTitle"/>
+            <TextBlock Text="Meow!" Classes="welcomeSubtitle"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Border Classes="statusIndicator">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Ellipse Width="8" Height="8" Fill="#4CAF50"/>
+                  <TextBlock Text="Connected" FontSize="12" FontWeight="SemiBold"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
 
-    <!-- Right column: empty -->
-</Grid>
+      <!-- Regular Statistics Cards (First 4 items) -->
+      <ItemsControl ItemsSource="{Binding RegularStats}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal"/>
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="models:InfoItem">
+            <Border Classes="homeCard" Margin="8" MinWidth="220" MaxWidth="280">
+              <StackPanel Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                  <Border Classes="statIcon" Background="#1B2196F3">
+                    <TextBlock Text="📊" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" Classes="statLabel"/>
+                    <TextBlock Text="{Binding Value}" Classes="statValue" Foreground="#2196F3"/>
+                  </StackPanel>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- Last Mod Installed Card (Full Width) -->
+      <Border Classes="homeCard recentCard" Margin="8,24,8,8" IsVisible="{Binding !!LastModInstalled}">
+        <StackPanel Spacing="16">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <Border Classes="statIcon" Background="#1BE91E63">
+              <TextBlock Text="🎯" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+              <TextBlock Text="Last Installed Mod" Classes="statLabel"/>
+              <TextBlock Text="{Binding LastModInstalled.Value}" Classes="recentModName" TextWrapping="Wrap"/>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Loading indicator when InfoItems is empty -->
+      <Border Classes="homeCard" IsVisible="{Binding !InfoItems.Count}">
+        <StackPanel Spacing="16" HorizontalAlignment="Center">
+          <TextBlock Text="⏳" FontSize="32" HorizontalAlignment="Center"/>
+          <TextBlock Text="Loading statistics..." Classes="statLabel" HorizontalAlignment="Center"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
 </UserControl>

@@ -1,31 +1,149 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:models="clr-namespace:CommonLib.Models;assembly=CommonLib">
-    <Style Selector="ItemsControl.modsList">        
-        <Setter Property="ItemsPanel">
-            <ItemsPanelTemplate>
-                <StackPanel/>
-            </ItemsPanelTemplate>
-        </Setter>
-        
-        <Setter Property="ItemTemplate">
-            <DataTemplate x:DataType="models:ModInstallationRecord">
-                <Border BorderBrush="{StaticResource SecondaryBrush}"
-                        BorderThickness="0,0,0,1"
-                        Padding="12,8">
-                    <StackPanel>
-                        <TextBlock Text="{Binding ModName}"
-                                   Foreground="{DynamicResource TextBrush}"
-                                   FontSize="16"
-                                   FontWeight="Bold"/>
-                        <TextBlock Text="{Binding InstallationTime}"
-                                   Foreground="{DynamicResource TextBrush}"
-                                   FontSize="13"
-                                   Opacity="0.8"
-                                   Margin="0,2,0,0"/>
-                    </StackPanel>
-                </Border>
-            </DataTemplate>
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Base Mods Card -->
+    <Style Selector="Border.modsCard">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="BoxShadow" Value="0 4 20 0 #1A000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3"/>
+            </Transitions>
         </Setter>
     </Style>
+
+    <Style Selector="Border.modsCard:pointerover">
+        <Setter Property="BoxShadow" Value="0 6 24 0 #2A000000"/>
+        <Setter Property="RenderTransform" Value="translateY(-1px)"/>
+    </Style>
+
+    <!-- Header Card -->
+    <Style Selector="Border.headerCard">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="{StaticResource CardBackgroundColor}" Offset="0"/>
+                <GradientStop Color="{StaticResource SecondaryColor}" Offset="1"/>
+            </LinearGradientBrush>
+        </Setter>
+        <Setter Property="Padding" Value="32"/>
+    </Style>
+
+    <!-- Mod Card -->
+    <Style Selector="Border.modCard">
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="MinHeight" Value="72"/>
+    </Style>
+
+    <!-- Header Icon -->
+    <Style Selector="Border.modsHeaderIcon">
+        <Setter Property="Width" Value="64"/>
+        <Setter Property="Height" Value="64"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Background">
+            <RadialGradientBrush>
+                <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+                <GradientStop Color="{StaticResource PrimaryColor}" Offset="1"/>
+            </RadialGradientBrush>
+        </Setter>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector="TextBlock.headerIconText">
+        <Setter Property="FontSize" Value="32"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Mod Icon -->
+    <Style Selector="Border.modIcon">
+        <Setter Property="Width" Value="40"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Background" Value="#1B2196F3"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,16,0"/>
+    </Style>
+
+    <!-- Status Indicator -->
+    <Style Selector="Border.modStatusIndicator">
+        <Setter Property="Background" Value="#1B4CAF50"/>
+        <Setter Property="BorderBrush" Value="#4CAF50"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Modern Search Box -->
+    <Style Selector="TextBox.modernSearchBox">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <Style Selector="TextBox.modernSearchBox:focus">
+        <Setter Property="BorderBrush" Value="#4A90E2"/>
+    </Style>
+
+    <!-- Empty State Card -->
+    <Style Selector="Border.emptyStateCard">
+        <Setter Property="Padding" Value="40"/>
+        <Setter Property="MinHeight" Value="200"/>
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+
+    <!-- Typography -->
+    <Style Selector="TextBlock.modsTitle">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.modsSubtitle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.modName">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.modInstallTime">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
+    </Style>
+
+    <Style Selector="TextBlock.modStatusText">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#4CAF50"/>
+    </Style>
+
+    <Style Selector="TextBlock.emptyStateTitle">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.emptyStateSubtitle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="MaxWidth" Value="400"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
 </Styles>

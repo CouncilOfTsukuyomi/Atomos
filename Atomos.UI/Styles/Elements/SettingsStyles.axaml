@@ -1,34 +1,213 @@
-﻿<Styles xmlns="https://github.com/avaloniaui"
+﻿
+<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
-    <!-- Style for group headers -->
-    <Style Selector="TextBlock.groupHeader">
-        <Setter Property="FontWeight" Value="Bold"/>
-        <Setter Property="FontSize" Value="16"/>
-        <Setter Property="Margin" Value="0,20,0,5"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+
+    <!-- Base Settings Card -->
+    <Style Selector="Border.settingsCard">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="BoxShadow" Value="0 4 20 0 #1A000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3"/>
+            </Transitions>
+        </Setter>
     </Style>
 
-    <!-- Style for settings checkboxes -->
-    <Style Selector="CheckBox.settingsCheckbox">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <CheckBox IsChecked="{TemplateBinding IsChecked}"
-                                  IsEnabled="{TemplateBinding IsEnabled}"
-                                  Margin="0"/>
-                        <TextBlock Text="{TemplateBinding Content}"
-                                   Margin="5,0,0,0"
-                                   VerticalAlignment="Center"
-                                   Foreground="{TemplateBinding Foreground}"
-                                   FontWeight="Normal"/>
-                    </StackPanel>
-                </ControlTemplate>
-            </Setter.Value>
+    <Style Selector="Border.settingsCard:pointerover">
+        <Setter Property="BoxShadow" Value="0 6 24 0 #2A000000"/>
+        <Setter Property="RenderTransform" Value="translateY(-1px)"/>
+    </Style>
+
+    <!-- Header Card -->
+    <Style Selector="Border.headerCard">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="{StaticResource CardBackgroundColor}" Offset="0"/>
+                <GradientStop Color="{StaticResource SecondaryColor}" Offset="1"/>
+            </LinearGradientBrush>
         </Setter>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Margin" Value="10,0"/>
+        <Setter Property="Padding" Value="32"/>
+    </Style>
+
+    <!-- Setting Card -->
+    <Style Selector="Border.settingCard">
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="MinHeight" Value="60"/>
+    </Style>
+
+    <!-- Header Icon -->
+    <Style Selector="Border.settingsHeaderIcon">
+        <Setter Property="Width" Value="64"/>
+        <Setter Property="Height" Value="64"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Background">
+            <RadialGradientBrush>
+                <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+                <GradientStop Color="{StaticResource PrimaryColor}" Offset="1"/>
+            </RadialGradientBrush>
+        </Setter>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Modern Tab Control -->
+    <Style Selector="TabControl.modernTabControl">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <Style Selector="TabControl.modernTabControl TabStripItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0,0,0,2"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
+
+
+    <Style Selector="TabControl.modernTabControl TabStripItem:selected">
+        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+    </Style>
+
+    <Style Selector="TabControl.modernTabControl TabStripItem:pointerover">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+    </Style>
+
+    <!-- Tab Content -->
+    <Style Selector="Border.tabContent">
+        <Setter Property="Padding" Value="0,20,0,0"/>
+    </Style>
+
+    <!-- Path Item -->
+    <Style Selector="Border.pathItem">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="12"/>
+    </Style>
+
+    <!-- Modern Controls -->
+    <Style Selector="TextBox.modernTextBox">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <Style Selector="NumericUpDown.modernNumericUpDown">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+
+    <Style Selector="CheckBox.modernCheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="Button.modernButton">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="Button.removeButton">
+        <Setter Property="Background" Value="#E53E3E"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <Style Selector="Button.addPathButton">
+        <Setter Property="Background" Value="#38A169"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- Search Box -->
+    <Style Selector="TextBox.modernSearchBox">
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <!-- Empty State Card -->
+    <Style Selector="Border.emptyStateCard">
+        <Setter Property="Padding" Value="40"/>
+        <Setter Property="MinHeight" Value="200"/>
+        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+
+    <!-- Typography -->
+    <Style Selector="TextBlock.settingsTitle">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.settingsSubtitle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.settingLabel">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.settingDescription">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+    </Style>
+
+    <Style Selector="TextBlock.tabHeader">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.pathText">
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.emptyStateTitle">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.emptyStateSubtitle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="MaxWidth" Value="400"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
 
 </Styles>

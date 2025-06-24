@@ -1,53 +1,88 @@
-﻿<UserControl
+﻿
+<UserControl
     x:Class="Atomos.UI.Views.ModsView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewModels="clr-namespace:Atomos.UI.ViewModels"
+    xmlns:models="clr-namespace:CommonLib.Models;assembly=CommonLib"
     mc:Ignorable="d"
     d:DesignWidth="800"
     d:DesignHeight="450"
-    x:DataType="viewModels:ModsViewModel">
+    x:DataType="viewModels:ModsViewModel"
+    Foreground="{StaticResource TextBrush}">
 
     <Design.DataContext>
         <viewModels:ModsViewModel/>
     </Design.DataContext>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer>
+        <StackPanel Spacing="0" MaxWidth="1200" HorizontalAlignment="Center" Margin="40,20">
+            
+            <!-- Header Section -->
+            <Border Classes="modsCard headerCard" Margin="0,0,0,24">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                        <Border Classes="modsHeaderIcon">
+                            <TextBlock Text="📦" Classes="headerIconText"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Installed Mods" Classes="modsTitle"/>
+                            <TextBlock Text="Manage and search your installed modifications" Classes="modsSubtitle"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!-- Search Box -->
+                    <TextBox
+                        Classes="modernSearchBox"
+                        Width="300"
+                        HorizontalAlignment="Center"
+                        Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
+                        Watermark="🔍 Search mods by name..."
+                        Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
 
-        <!-- Header text -->
-        <TextBlock
-            Grid.Row="0"
-            Text="List of all installed mods"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Foreground="{DynamicResource TextBrush}"
-            FontSize="16"
-            FontWeight="Bold"
-            Margin="0,5,0,5"/>
+            <!-- Mods List -->
+            <ItemsControl ItemsSource="{Binding FilteredMods}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="modsCard modCard" Margin="0,0,0,12">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                
+                                <!-- Mod Icon -->
+                                <Border Grid.Column="0" Classes="modIcon">
+                                    <TextBlock Text="🎯" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                
+                                <!-- Mod Info -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                    <TextBlock Text="{Binding ModName}" Classes="modName"/>
+                                    <TextBlock Text="{Binding InstallationTime, StringFormat='Installed: {0:MMM dd, yyyy HH:mm}'}" Classes="modInstallTime"/>
+                                </StackPanel>
+                                
+                                <!-- Status Indicator -->
+                                <Border Grid.Column="2" Classes="modStatusIndicator">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="8" Height="8" Fill="#4CAF50"/>
+                                        <TextBlock Text="Installed" Classes="modStatusText"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-        <!-- Search box -->
-        <TextBox
-            Grid.Row="1"
-            Width="200"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
-            Watermark="Search Mods..."
-            Margin="5"/>
-
-        <!-- Filtered list of mods -->
-        <ScrollViewer Grid.Row="2">
-            <ItemsControl
-                Classes="modsList"
-                ItemsSource="{Binding FilteredMods}" />
-        </ScrollViewer>
-
-    </Grid>
+            <!-- Empty State -->
+            <Border Classes="modsCard emptyStateCard" IsVisible="{Binding !FilteredMods.Count}" Margin="0,32,0,0">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <TextBlock Text="📭" FontSize="48" HorizontalAlignment="Center"/>
+                    <TextBlock Text="No mods found" Classes="emptyStateTitle" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Try adjusting your search terms or install some mods to get started" Classes="emptyStateSubtitle" HorizontalAlignment="Center" TextAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

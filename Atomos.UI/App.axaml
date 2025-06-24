@@ -36,6 +36,7 @@
         <StyleInclude Source="/Styles/Elements/NotificationHub.axaml"/>
         <StyleInclude Source="/Styles/Elements/PluginStyle.axaml"/>
         <StyleInclude Source="/Styles/Elements/AboutInfoStyle.axaml"/>
+        <StyleInclude Source="/Styles/Elements/HomeViewStyle.axaml"/>
         <StyleInclude Source="avares://AsyncImageLoader.Avalonia/AdvancedImage.axaml" />
     </Application.Styles>
     

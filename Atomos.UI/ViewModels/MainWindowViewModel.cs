@@ -153,12 +153,12 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         {
             new MenuItem(
                 "Home",
-                app?.Resources["HomeIcon"] as StreamGeometry ?? StreamGeometry.Parse(""),
+                app?.Resources["HomeIcon"] as StreamGeometry ?? StreamGeometry.Parse("M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"),
                 homeViewModel
             ),
             new MenuItem(
                 "Mods",
-                app?.Resources["MenuIcon"] as StreamGeometry ?? StreamGeometry.Parse(""),
+                app?.Resources["ModsIcon"] as StreamGeometry ?? StreamGeometry.Parse("M19 3C20.1 3 21 3.9 21 5V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19M5 5V19H19V5H5M7 7H17V9H7V7M7 11H17V13H7V11M7 15H14V17H7V15Z"),
                 modsViewModel
             ),
             new MenuItem(

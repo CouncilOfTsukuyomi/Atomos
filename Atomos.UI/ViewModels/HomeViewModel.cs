@@ -34,7 +34,20 @@ public class HomeViewModel : ViewModelBase, IDisposable
         get => _infoItems;
         set => this.RaiseAndSetIfChanged(ref _infoItems, value);
     }
-    
+
+    private ObservableCollection<InfoItem> _regularStats;
+    public ObservableCollection<InfoItem> RegularStats
+    {
+        get => _regularStats;
+        set => this.RaiseAndSetIfChanged(ref _regularStats, value);
+    }
+
+    private InfoItem _lastModInstalled;
+    public InfoItem LastModInstalled
+    {
+        get => _lastModInstalled;
+        set => this.RaiseAndSetIfChanged(ref _lastModInstalled, value);
+    }
 
     private bool _isLoading;
     public bool IsLoading
@@ -53,6 +66,7 @@ public class HomeViewModel : ViewModelBase, IDisposable
         _fileSizeService = fileSizeService;
 
         InfoItems = new ObservableCollection<InfoItem>();
+        RegularStats = new ObservableCollection<InfoItem>();
         
         _webSocketClient.ModInstalled += OnModInstalled;
 
@@ -84,15 +98,21 @@ public class HomeViewModel : ViewModelBase, IDisposable
             var modsInstalledToday = await _statisticService.GetModsInstalledTodayAsync();
             newItems.Add(new InfoItem("Mods Installed Today", modsInstalledToday.ToString()));
 
-            var lastModInstallation = await _statisticService.GetMostRecentModInstallationAsync();
-            newItems.Add(lastModInstallation != null
-                ? new InfoItem("Last Mod Installed", lastModInstallation.ModName)
-                : new InfoItem("Last Mod Installed", "None"));
-
             var modsFolderSizeLabel = _fileSizeService.GetFolderSizeLabel(ConfigurationConsts.ModsPath);
             newItems.Add(new InfoItem("Mods Folder Size", modsFolderSizeLabel));
-            
-            InfoItems = newItems;
+
+            // Separate the regular stats from the last mod installed
+            RegularStats = newItems;
+
+            var lastModInstallation = await _statisticService.GetMostRecentModInstallationAsync();
+            LastModInstalled = lastModInstallation != null
+                ? new InfoItem("Last Mod Installed", lastModInstallation.ModName)
+                : new InfoItem("Last Mod Installed", "None");
+
+            // Keep the full collection for compatibility
+            var allItems = new ObservableCollection<InfoItem>(newItems);
+            allItems.Add(LastModInstalled);
+            InfoItems = allItems;
         }
         catch (Exception ex)
         {
