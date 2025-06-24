@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -7,6 +8,7 @@ using System.Text.RegularExpressions;
 using Atomos.UI.Interfaces;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
+using CommonLib.Models;
 using NLog;
 using PluginManager.Core.Interfaces;
 using PluginManager.Core.Models;
@@ -34,11 +36,12 @@ public class DownloadManagerService : IDownloadManagerService
         _pluginService = pluginService;
     }
 
-    public async Task DownloadModAsync(PluginMod pluginMod, CancellationToken ct = default)
+    public async Task DownloadModAsync(PluginMod pluginMod, CancellationToken ct = default, IProgress<DownloadProgress>? progress = null)
     {
         if (pluginMod?.ModUrl is not { Length: > 0 })
         {
             _logger.Warn("Cannot download. 'pluginMod' or 'pluginMod.ModUrl' is invalid.");
+            progress?.Report(new DownloadProgress { Status = "Invalid download parameters" });
             return;
         }
 
@@ -47,18 +50,25 @@ public class DownloadManagerService : IDownloadManagerService
             _logger.Info("Starting download for mod: {ModName} from plugin source: {PluginSource}", 
                 pluginMod.Name, pluginMod.PluginSource);
 
+            // Report initial progress
+            progress?.Report(new DownloadProgress { Status = "Preparing download..." });
+
             // Get the plugin that provided this mod
             var plugin = _pluginService.GetPlugin(pluginMod.PluginSource);
             if (plugin == null)
             {
                 _logger.Warn("Plugin {PluginSource} not found or not enabled", pluginMod.PluginSource);
+                var errorMsg = $"Plugin '{pluginMod.PluginSource}' is not available or enabled.";
+                progress?.Report(new DownloadProgress { Status = errorMsg });
                 await _notificationService.ShowNotification(
                     "Plugin not available",
-                    $"Plugin '{pluginMod.PluginSource}' is not available or enabled.",
+                    errorMsg,
                     SoundType.GeneralChime
                 );
                 return;
             }
+            
+            progress?.Report(new DownloadProgress { Status = "Converting download URL..." });
             
             // Convert the download URL to a direct download URL
             string directDownloadUrl = await ConvertToDirectDownloadUrlAsync(pluginMod.DownloadUrl);
@@ -66,15 +76,19 @@ public class DownloadManagerService : IDownloadManagerService
             if (string.IsNullOrWhiteSpace(directDownloadUrl))
             {
                 _logger.Warn("Could not convert to direct download URL for mod: {ModName}", pluginMod.Name);
+                var errorMsg = $"Could not process download URL for '{pluginMod.Name}'";
+                progress?.Report(new DownloadProgress { Status = errorMsg });
                 await _notificationService.ShowNotification(
                     "Download not available",
-                    $"Could not process download URL for '{pluginMod.Name}'",
+                    errorMsg,
                     SoundType.GeneralChime
                 );
                 return;
             }
 
             _logger.Debug("Converted to direct download URL: {DirectUrl}", directDownloadUrl);
+
+            progress?.Report(new DownloadProgress { Status = "Getting download path..." });
 
             await _notificationService.ShowNotification(
                 "Download started",
@@ -89,9 +103,11 @@ public class DownloadManagerService : IDownloadManagerService
             if (configuredPaths is null || !configuredPaths.Any())
             {
                 _logger.Warn("No download path configured. Aborting download for {Name}.", pluginMod.Name);
+                var errorMsg = "No download path configured in settings.";
+                progress?.Report(new DownloadProgress { Status = errorMsg });
                 await _notificationService.ShowNotification(
                     "Download failed",
-                    "No download path configured in settings.",
+                    errorMsg,
                     SoundType.GeneralChime
                 );
                 return;
@@ -104,12 +120,22 @@ public class DownloadManagerService : IDownloadManagerService
                 Directory.CreateDirectory(downloadPath);
             }
 
+            progress?.Report(new DownloadProgress { Status = "Starting download...", PercentComplete = 0 });
+
+            // Create a progress wrapper that includes notifications for major milestones
+            IProgress<DownloadProgress>? wrappedProgress = null;
+            if (progress != null)
+            {
+                wrappedProgress = new Progress<DownloadProgress>(p => OnDownloadProgressChanged(p, pluginMod.Name, progress));
+            }
+
             // Download the file with retry logic
-            var result = await DownloadWithRetryAsync(directDownloadUrl, downloadPath, pluginMod.Name, ct);
+            var result = await DownloadWithRetryAsync(directDownloadUrl, downloadPath, pluginMod.Name, ct, wrappedProgress);
 
             if (result)
             {
                 _logger.Info("Successfully downloaded {Name} to {Destination}", pluginMod.Name, downloadPath);
+                progress?.Report(new DownloadProgress { Status = "Download completed!", PercentComplete = 100 });
                 await _notificationService.ShowNotification(
                     "Download complete",
                     $"Downloaded: {pluginMod.Name}",
@@ -119,6 +145,7 @@ public class DownloadManagerService : IDownloadManagerService
             else
             {
                 _logger.Warn("Download of {Name} did not complete successfully.", pluginMod.Name);
+                progress?.Report(new DownloadProgress { Status = "Download failed" });
                 await _notificationService.ShowNotification(
                     "Download failed",
                     $"Failed to download: {pluginMod.Name}",
@@ -129,6 +156,7 @@ public class DownloadManagerService : IDownloadManagerService
         catch (OperationCanceledException)
         {
             _logger.Warn("Download canceled for {Name}.", pluginMod.Name);
+            progress?.Report(new DownloadProgress { Status = "Download canceled" });
             await _notificationService.ShowNotification(
                 "Download canceled",
                 $"Download canceled: {pluginMod.Name}",
@@ -138,11 +166,89 @@ public class DownloadManagerService : IDownloadManagerService
         catch (Exception ex)
         {
             _logger.Error(ex, "Error during download of {Name}.", pluginMod.Name);
+            progress?.Report(new DownloadProgress { Status = $"Download error: {ex.Message}" });
             await _notificationService.ShowNotification(
                 "Download error",
                 $"Error downloading {pluginMod.Name}: {ex.Message}",
                 SoundType.GeneralChime
             );
+        }
+    }
+
+    private void OnDownloadProgressChanged(DownloadProgress downloadProgress, string modName, IProgress<DownloadProgress> originalProgress)
+    {
+        _logger.Debug("=== DOWNLOAD PROGRESS UPDATE ===");
+        _logger.Debug("Mod: {ModName}", modName);
+        _logger.Debug("Status: {Status}", downloadProgress.Status);
+        _logger.Debug("Progress: {Percent}%", downloadProgress.PercentComplete);
+        _logger.Debug("Speed: {FormattedSpeed}", downloadProgress.FormattedSpeed);
+        _logger.Debug("Size: {FormattedSize}", downloadProgress.FormattedSize);
+
+        // Create enhanced status message like your updater
+        var enhancedProgress = new DownloadProgress
+        {
+            Status = CreateRichStatusMessage(downloadProgress, modName),
+            PercentComplete = downloadProgress.PercentComplete,
+            ElapsedTime = downloadProgress.ElapsedTime,
+            DownloadSpeedBytesPerSecond = downloadProgress.DownloadSpeedBytesPerSecond,
+            TotalBytes = downloadProgress.TotalBytes,
+            DownloadedBytes = downloadProgress.DownloadedBytes
+        };
+
+        // Also send updates to notification service for websocket clients if available
+        if (downloadProgress.PercentComplete > 0 && !string.IsNullOrEmpty(downloadProgress.FormattedSpeed))
+        {
+            // This might trigger websocket updates like your updater does
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _notificationService.UpdateProgress(
+                        modName, 
+                        enhancedProgress.Status, 
+                        downloadProgress.FormattedSpeed, 
+                        (int)downloadProgress.PercentComplete
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug(ex, "Failed to send progress update to notification service");
+                }
+            });
+        }
+
+        // Report to the original progress handler
+        originalProgress.Report(enhancedProgress);
+        
+        _logger.Debug("=== END DOWNLOAD PROGRESS UPDATE ===");
+    }
+
+    private static string CreateRichStatusMessage(DownloadProgress progress, string modName)
+    {
+        if (progress.PercentComplete >= 100)
+        {
+            return $"Downloaded {modName} successfully!";
+        }
+
+        if (progress.TotalBytes > 0 && progress.DownloadSpeedBytesPerSecond > 0)
+        {
+            return $"Downloading {modName}... {progress.FormattedSize} at {progress.FormattedSpeed}";
+        }
+        else if (progress.DownloadSpeedBytesPerSecond > 0)
+        {
+            return $"Downloading {modName} at {progress.FormattedSpeed}";
+        }
+        else if (progress.TotalBytes > 0)
+        {
+            return $"Downloading {modName}... {progress.FormattedSize}";
+        }
+        else if (!string.IsNullOrEmpty(progress.Status))
+        {
+            return $"{modName}: {progress.Status}";
+        }
+        else
+        {
+            return $"Downloading {modName}...";
         }
     }
 
@@ -276,7 +382,7 @@ public class DownloadManagerService : IDownloadManagerService
         }
     }
 
-    private async Task<bool> DownloadWithRetryAsync(string url, string downloadPath, string fileName, CancellationToken ct)
+    private async Task<bool> DownloadWithRetryAsync(string url, string downloadPath, string fileName, CancellationToken ct, IProgress<DownloadProgress>? progress = null)
     {
         const int maxRetries = 3;
         const int delayBetweenRetries = 2000;
@@ -285,19 +391,23 @@ public class DownloadManagerService : IDownloadManagerService
         {
             try
             {
-                var result = await _aria2Service.DownloadFileAsync(url, downloadPath, ct);
+                progress?.Report(new DownloadProgress { Status = $"Download attempt {attempt}/{maxRetries}..." });
+                
+                var result = await _aria2Service.DownloadFileAsync(url, downloadPath, ct, progress);
                 if (result) return true;
 
                 if (attempt < maxRetries)
                 {
                     _logger.Info("Download attempt {Attempt} failed for {FileName}, retrying in {Delay}ms", 
                         attempt, fileName, delayBetweenRetries);
+                    progress?.Report(new DownloadProgress { Status = $"Retrying in {delayBetweenRetries/1000} seconds..." });
                     await Task.Delay(delayBetweenRetries, ct);
                 }
             }
             catch (Exception ex) when (attempt < maxRetries)
             {
                 _logger.Warn(ex, "Download attempt {Attempt} failed for {FileName}, retrying", attempt, fileName);
+                progress?.Report(new DownloadProgress { Status = $"Attempt {attempt} failed, retrying..." });
                 await Task.Delay(delayBetweenRetries, ct);
             }
         }

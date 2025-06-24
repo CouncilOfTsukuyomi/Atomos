@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using Atomos.UI.Models;
+using CommonLib.Models;
 using NLog;
 using PluginManager.Core.Interfaces;
 using PluginManager.Core.Models;
@@ -92,10 +93,13 @@ namespace Atomos.UI.ViewModels
             {
                 _logger.Info("Starting download for mod: {ModName} from plugin source: {PluginSource}", 
                     pluginMod.Name, pluginMod.PluginSource);
-                
-                await _downloadManagerService.DownloadModAsync(pluginMod, ct);
-                
-                _logger.Info("Successfully initiated download for mod: {ModName}", pluginMod.Name);
+        
+                // Create a progress reporter that provides rich updates like your updater
+                var progress = new Progress<DownloadProgress>(OnDownloadProgressChanged);
+        
+                await _downloadManagerService.DownloadModAsync(pluginMod, ct, progress);
+        
+                _logger.Info("Successfully completed download for mod: {ModName}", pluginMod.Name);
             }
             catch (Exception ex)
             {
@@ -104,6 +108,17 @@ namespace Atomos.UI.ViewModels
                 throw;
             }
         }
+        
+        private void OnDownloadProgressChanged(DownloadProgress progress)
+        {
+            _logger.Info("=== PLUGIN DOWNLOAD PROGRESS ===");
+            _logger.Info("Status: {Status}", progress.Status);
+            _logger.Info("Progress: {Percent}% - {FormattedSize} at {FormattedSpeed}", 
+                progress.PercentComplete, progress.FormattedSize, progress.FormattedSpeed);
+            _logger.Info("Elapsed: {Elapsed}", progress.ElapsedTime);
+            _logger.Info("=== END PLUGIN DOWNLOAD PROGRESS ===");
+        }
+
 
         /// <summary>
         /// Toggle the expanded state of a specific plugin
