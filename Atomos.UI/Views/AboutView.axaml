@@ -1,0 +1,184 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
+             x:Class="Atomos.UI.Views.AboutView"
+             x:DataType="vm:AboutViewModel"
+             Foreground="{StaticResource TextBrush}">
+
+  <ScrollViewer>
+    <StackPanel Spacing="0" MaxWidth="900" HorizontalAlignment="Center" Margin="40">
+      
+      <!-- Hero Section with Gradient Background -->
+      <Border Classes="aboutViewCard heroCard">
+        <Grid ColumnDefinitions="Auto,*">
+          
+          <!-- App Icon -->
+          <Border Grid.Column="0" Classes="heroIcon">
+            <TextBlock Text="🔗" Classes="heroIconText"/>
+          </Border>
+          
+          <!-- App Info -->
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="16">
+            <TextBlock Text="{Binding ApplicationName}" Classes="appTitle"/>
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <Border Classes="versionBadge">
+                <TextBlock Text="{Binding Version}" Classes="versionText"/>
+              </Border>
+              <Border Classes="statusBadge">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Ellipse Width="8" Height="8" Fill="#4CAF50"/>
+                  <TextBlock Text="Active" FontSize="12" FontWeight="SemiBold"/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding Description}" Classes="appDescription"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Build Information Card -->
+      <Border Classes="aboutViewCard infoCard">
+        <StackPanel Spacing="20">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="🔧" FontSize="20"/>
+            <TextBlock Text="Build Information" Classes="cardTitle"/>
+          </StackPanel>
+          
+          <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Version" Classes="infoLabel"/>
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Version}" Classes="infoValue"/>
+            
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Built" Classes="infoLabel"/>
+            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BuildDate}" Classes="infoValue"/>
+            
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Runtime" Classes="infoLabel"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" Text=".NET 9.0" Classes="infoValue"/>
+            
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="License" Classes="infoLabel"/>
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="MIT" Classes="infoValue"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Third Party Libraries -->
+      <Border Classes="aboutViewCard">
+        <StackPanel Spacing="20">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="📚" FontSize="20"/>
+            <TextBlock Text="Third Party Libraries" Classes="cardTitle"/>
+          </StackPanel>
+          
+          <StackPanel Spacing="16">
+            <Border Classes="libraryCard">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                  <TextBlock Text="SevenZipExtractor" Classes="libraryName"/>
+                  <TextBlock Text="High-performance archive extraction library" Classes="libraryDescription"/>
+                  <TextBlock Text="by CollapseLauncher Team" Classes="libraryAuthor"/>
+                </StackPanel>
+                <Button Grid.Column="1" Classes="libraryButton" 
+                        Command="{Binding OpenSevenZipExtractorCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="🔗" FontSize="14"/>
+                    <TextBlock Text="View" FontSize="12"/>
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Border>
+            
+            <Border Classes="libraryCard">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                  <TextBlock Text="Avalonia UI" Classes="libraryName"/>
+                  <TextBlock Text="Cross-platform .NET UI framework" Classes="libraryDescription"/>
+                  <TextBlock Text="by Avalonia Team" Classes="libraryAuthor"/>
+                </StackPanel>
+                <Button Grid.Column="1" Classes="libraryButton" 
+                        Command="{Binding OpenAvaloniaCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="🔗" FontSize="14"/>
+                    <TextBlock Text="View" FontSize="12"/>
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Border>
+            
+            <Border Classes="libraryCard">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                  <TextBlock Text="ReactiveUI" Classes="libraryName"/>
+                  <TextBlock Text="Reactive programming framework for .NET" Classes="libraryDescription"/>
+                  <TextBlock Text="by ReactiveUI Team" Classes="libraryAuthor"/>
+                </StackPanel>
+                <Button Grid.Column="1" Classes="libraryButton" 
+                        Command="{Binding OpenReactiveUICommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="🔗" FontSize="14"/>
+                    <TextBlock Text="View" FontSize="12"/>
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Border>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Links and Support -->
+      <Border Classes="aboutViewCard">
+        <StackPanel Spacing="24">
+          <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+            <TextBlock Text="🌐" FontSize="24"/>
+            <TextBlock Text="Connect With Us" Classes="sectionTitle"/>
+          </StackPanel>
+          
+          <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
+            <Button Classes="discordButton" 
+                    Command="{Binding OpenDiscordCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="💬" FontSize="18" VerticalAlignment="Center"/>
+                <StackPanel>
+                  <TextBlock Text="Discord" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                  <TextBlock Text="Join our community" FontSize="11" Opacity="0.8"/>
+                </StackPanel>
+              </StackPanel>
+            </Button>
+            
+            <Button Classes="githubButton" 
+                    Command="{Binding OpenGitHubCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="⭐" FontSize="18" VerticalAlignment="Center"/>
+                <StackPanel>
+                  <TextBlock Text="GitHub" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                  <TextBlock Text="View source code" FontSize="11" Opacity="0.8"/>
+                </StackPanel>
+              </StackPanel>
+            </Button>
+            
+            <Button Classes="licenseButton" 
+                    Command="{Binding OpenLicenseCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="📄" FontSize="18" VerticalAlignment="Center"/>
+                <StackPanel>
+                  <TextBlock Text="License" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                  <TextBlock Text="View terms" FontSize="11" Opacity="0.8"/>
+                </StackPanel>
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Credits -->
+      <Border Margin="0,20,0,40" Classes="creditsSection">
+        <StackPanel HorizontalAlignment="Center" Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+            <TextBlock Text="Made with " Classes="footer"/>
+            <TextBlock Text="❤️" Classes="redHeart"/>
+            <TextBlock Text=" by the Council of Tsukuyomi team" Classes="footer"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+      
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

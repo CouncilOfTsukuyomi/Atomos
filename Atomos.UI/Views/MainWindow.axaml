@@ -75,7 +75,7 @@
         <Grid Grid.Row="1" ColumnDefinitions="250,*">
             <!-- Navigation Panel -->
             <ExperimentalAcrylicBorder Grid.Column="0" Material="{StaticResource NavigationAcrylicMaterial}">
-                <Grid Classes="navPanel" RowDefinitions="Auto,*,Auto">
+                <Grid Classes="navPanel" RowDefinitions="Auto,*,Auto,Auto">
                     <!-- App Logo/Title -->
                     <StackPanel Grid.Row="0" Classes="appLogo">
                         <PathIcon Data="{StaticResource HomeIcon}" Classes="logoIcon"/>
@@ -99,8 +99,19 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!-- Settings Button -->
+                    <!-- About Button -->
                     <Button Grid.Row="2" 
+                            Margin="10,0,10,10" 
+                            Command="{Binding NavigateToAboutCommand}" 
+                            Classes="transparent">
+                        <StackPanel Orientation="Horizontal" Spacing="15">
+                            <PathIcon Data="{StaticResource InfoIcon}"/>
+                            <TextBlock Text="About" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Settings Button -->
+                    <Button Grid.Row="3" 
                             Margin="10,0,10,20" 
                             Command="{Binding NavigateToSettingsCommand}" 
                             Classes="transparent">

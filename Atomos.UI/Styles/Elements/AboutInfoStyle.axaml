@@ -1,0 +1,301 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- About View Styles -->
+  
+  <!-- Base Card Style -->
+  <Style Selector="Border.aboutViewCard">
+    <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="16"/>
+    <Setter Property="Padding" Value="32"/>
+    <Setter Property="Margin" Value="0,0,0,24"/>
+    <Setter Property="BoxShadow" Value="0 8 32 0 #1A000000"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.3"/>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3"/>
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Border.aboutViewCard:pointerover">
+    <Setter Property="BoxShadow" Value="0 12 48 0 #2A000000"/>
+    <Setter Property="RenderTransform" Value="translateY(-2px)"/>
+  </Style>
+
+  <!-- Hero Card with Gradient -->
+  <Style Selector="Border.heroCard">
+    <Setter Property="Background">
+      <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="{StaticResource CardBackgroundColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource SecondaryColor}" Offset="1"/>
+      </LinearGradientBrush>
+    </Setter>
+    <Setter Property="Padding" Value="40"/>
+  </Style>
+
+  <!-- Info Cards -->
+  <Style Selector="Border.infoCard">
+    <Setter Property="Padding" Value="32"/>
+  </Style>
+
+  <!-- Library Cards -->
+  <Style Selector="Border.libraryCard">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="20"/>
+    <Setter Property="Margin" Value="0,0,0,8"/>
+  </Style>
+
+  <!-- Hero Icon with Animation -->
+  <Style Selector="Border.heroIcon">
+    <Setter Property="Width" Value="140"/>
+    <Setter Property="Height" Value="140"/>
+    <Setter Property="CornerRadius" Value="28"/>
+    <Setter Property="Background">
+      <RadialGradientBrush>
+        <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource PrimaryColor}" Offset="1"/>
+      </RadialGradientBrush>
+    </Setter>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Margin" Value="0,0,32,0"/>
+    <Setter Property="BoxShadow" Value="0 8 24 0 #40000000"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4"/>
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Border.heroIcon:pointerover">
+    <Setter Property="RenderTransform" Value="rotate(5deg) scale(1.05)"/>
+  </Style>
+
+  <Style Selector="TextBlock.heroIconText">
+    <Setter Property="FontSize" Value="72"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+
+  <!-- Version Badge -->
+  <Style Selector="Border.versionBadge">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="12,6"/>
+  </Style>
+
+  <Style Selector="TextBlock.versionText">
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+  </Style>
+
+  <!-- Status Badge -->
+  <Style Selector="Border.statusBadge">
+    <Setter Property="Background" Value="#1B4CAF50"/>
+    <Setter Property="BorderBrush" Value="#4CAF50"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="12,6"/>
+  </Style>
+
+  <!-- Statistics -->
+  <Style Selector="TextBlock.statNumber">
+    <Setter Property="FontSize" Value="28"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+  </Style>
+
+  <Style Selector="TextBlock.statLabel">
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+    <Setter Property="TextAlignment" Value="Center"/>
+  </Style>
+
+  <!-- Library Elements -->
+  <Style Selector="TextBlock.libraryName">
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.libraryDescription">
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.libraryAuthor">
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+    <Setter Property="FontStyle" Value="Italic"/>
+  </Style>
+
+  <Style Selector="Button.libraryButton">
+    <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="12,8"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+
+  <Style Selector="Button.libraryButton:pointerover">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+  </Style>
+
+  <!-- Enhanced Buttons -->
+  <Style Selector="Button.discordButton">
+    <Setter Property="Background">
+      <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#7289DA" Offset="0"/>
+        <GradientStop Color="#5865F2" Offset="1"/>
+      </LinearGradientBrush>
+    </Setter>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="20,16"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.discordButton:pointerover">
+    <Setter Property="RenderTransform" Value="translateY(-2px) scale(1.02)"/>
+  </Style>
+
+  <Style Selector="Button.githubButton">
+    <Setter Property="Background">
+      <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#24292E" Offset="0"/>
+        <GradientStop Color="#0D1117" Offset="1"/>
+      </LinearGradientBrush>
+    </Setter>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="20,16"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.githubButton:pointerover">
+    <Setter Property="RenderTransform" Value="translateY(-2px) scale(1.02)"/>
+  </Style>
+
+  <Style Selector="Button.licenseButton">
+    <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+    <Setter Property="BorderThickness" Value="2"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="20,16"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+        <BrushTransition Property="Background" Duration="0:0:0.2"/>
+      </Transitions>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.licenseButton:pointerover">
+    <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+    <Setter Property="RenderTransform" Value="translateY(-2px) scale(1.02)"/>
+  </Style>
+
+  <!-- Typography -->
+  <Style Selector="TextBlock.appTitle">
+    <Setter Property="FontSize" Value="42"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.appDescription">
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+    <Setter Property="LineHeight" Value="24"/>
+    <Setter Property="MaxWidth" Value="450"/>
+  </Style>
+
+  <Style Selector="TextBlock.cardTitle">
+    <Setter Property="FontSize" Value="20"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.sectionTitle">
+    <Setter Property="FontSize" Value="24"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+  </Style>
+
+  <Style Selector="TextBlock.infoLabel">
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    <Setter Property="Margin" Value="0,0,24,12"/>
+    <Setter Property="MinWidth" Value="80"/>
+    <Setter Property="VerticalAlignment" Value="Top"/>
+  </Style>
+
+  <Style Selector="TextBlock.infoValue">
+    <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Margin" Value="0,0,0,12"/>
+    <Setter Property="VerticalAlignment" Value="Top"/>
+  </Style>
+
+  <!-- Footer -->
+  <Style Selector="TextBlock.footer">
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+  </Style>
+
+  <!-- Red Heart -->
+  <Style Selector="TextBlock.redHeart">
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="Foreground" Value="#E53E3E"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+  </Style>
+
+  <Style Selector="TextBlock.footerSubtext">
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+    <Setter Property="FontStyle" Value="Italic"/>
+  </Style>
+
+  <!-- Credits Section Animation -->
+  <Style Selector="Border.creditsSection">
+    <Setter Property="Transitions">
+      <Transitions>
+        <DoubleTransition Property="Opacity" Duration="0:0:0.5"/>
+      </Transitions>
+    </Setter>
+  </Style>
+
+</Styles>

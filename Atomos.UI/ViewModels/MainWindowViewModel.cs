@@ -85,6 +85,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     }
 
     public ICommand NavigateToSettingsCommand { get; }
+    public ICommand NavigateToAboutCommand { get; }
 
     public MainWindowViewModel(
         IServiceProvider serviceProvider,
@@ -176,6 +177,12 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         {
             SelectedMenuItem = null;
             CurrentPage = ActivatorUtilities.CreateInstance<SettingsViewModel>(_serviceProvider);
+        });
+
+        NavigateToAboutCommand = ReactiveCommand.Create(() =>
+        {
+            SelectedMenuItem = null;
+            CurrentPage = new AboutViewModel();
         });
 
         _selectedMenuItem = MenuItems[0];
