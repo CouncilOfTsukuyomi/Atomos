@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading;
@@ -10,10 +11,12 @@ using Atomos.UI.Models;
 using Atomos.UI.Services;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using ReactiveUI;
+using SharedResources;
 using Notification = Atomos.UI.Models.Notification;
 using Timer = System.Timers.Timer;
 
@@ -37,12 +40,19 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private ViewModelBase _currentPage = null!;
     private MenuItem _selectedMenuItem = null!;
     private Size _windowSize = new Size(800, 600);
+    private Bitmap? _appLogoSource;
 
     private PluginSettingsViewModel? _pluginSettingsViewModel;
     public PluginSettingsViewModel? PluginSettingsViewModel
     {
         get => _pluginSettingsViewModel;
         set => this.RaiseAndSetIfChanged(ref _pluginSettingsViewModel, value);
+    }
+
+    public Bitmap? AppLogoSource
+    {
+        get => _appLogoSource;
+        private set => this.RaiseAndSetIfChanged(ref _appLogoSource, value);
     }
 
     public ObservableCollection<MenuItem> MenuItems { get; }
@@ -106,6 +116,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _soundManagerService = soundManagerService;
         _configurationService = configurationService;
         _taskbarFlashService = taskbarFlashService;
+        
+        // Load app logo
+        LoadAppLogo();
         
         // Get current version
         var assembly = Assembly.GetExecutingAssembly();
@@ -191,6 +204,27 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         InstallViewModel = new InstallViewModel(_webSocketClient, _soundManagerService, _taskbarFlashService);
 
         _ = InitializeAsync(port);
+    }
+
+    private void LoadAppLogo()
+    {
+        try
+        {
+            var logoStream = ResourceLoader.GetResourceStream("Purple_arrow_cat_image.png");
+            if (logoStream != null)
+            {
+                AppLogoSource = new Bitmap(logoStream);
+                _logger.Debug("App logo loaded successfully");
+            }
+            else
+            {
+                _logger.Warn("App logo resource not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to load app logo");
+        }
     }
 
     private async Task InitializeAsync(int port)

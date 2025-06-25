@@ -1,3 +1,4 @@
+
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -14,8 +15,7 @@
         Title="Atomos Mod Forwarder"
         MinWidth="800"
         MinHeight="600"
-        TransparencyLevelHint="AcrylicBlur"
-        Background="#262626"
+        Background="{StaticResource BackgroundBrush}"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         WindowStartupLocation="CenterScreen">
@@ -26,7 +26,7 @@
 
     <Grid RowDefinitions="40,*">
         <!-- Custom Title Bar -->
-        <ExperimentalAcrylicBorder Grid.Row="0" Height="40" Material="{StaticResource TopBarAcrylicMaterial}">
+        <Border Grid.Row="0" Height="40" Background="{StaticResource SecondaryBrush}">
             <Grid x:Name="TitleBar" Classes="titleBar">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -67,17 +67,21 @@
                     </Button>
                 </StackPanel>
             </Grid>
-        </ExperimentalAcrylicBorder>
+        </Border>
 
         <!-- Main Content -->
         <Grid Grid.Row="1" ColumnDefinitions="280,*">
             <!-- Navigation Panel -->
-            <ExperimentalAcrylicBorder Grid.Column="0" Material="{StaticResource NavigationAcrylicMaterial}">
+            <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}">
                 <Grid Classes="navPanel" RowDefinitions="Auto,*,Auto">
                     <!-- App Logo/Title -->
                     <StackPanel Grid.Row="0" Classes="appLogo">
                         <Border Classes="logoContainer">
-                            <PathIcon Data="{StaticResource HomeIcon}" Classes="logoIcon"/>
+                            <Image Source="{Binding AppLogoSource}" 
+                                   Classes="logoIcon"
+                                   Stretch="Uniform"
+                                   Width="48" 
+                                   Height="48"/>
                         </Border>
                         <TextBlock Text="Atomos" Classes="logoText"/>
                         <TextBlock Text="Mod Forwarder" Classes="logoSubtext"/>
@@ -97,35 +101,39 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-
+                    
                     <!-- Footer Section -->
-                    <StackPanel Grid.Row="2">
+                    <StackPanel Grid.Row="2" Margin="0,0,0,20">
                         <!-- Divider -->
-                        <Border Classes="navDivider"/>
+                        <Border Classes="navDivider" Margin="0,0,0,12"/>
                         
-                        <!-- About Button -->
-                        <Button Command="{Binding NavigateToAboutCommand}" Classes="navButton">
-                            <StackPanel Orientation="Horizontal" Spacing="16">
-                                <PathIcon Data="{StaticResource InfoIcon}"/>
-                                <TextBlock Text="About" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-
                         <!-- Settings Button -->
-                        <Button Command="{Binding NavigateToSettingsCommand}" Classes="navButton">
+                        <Button Command="{Binding NavigateToSettingsCommand}" 
+                                Classes="navButton"
+                                Margin="16,0,16,8">
                             <StackPanel Orientation="Horizontal" Spacing="16">
                                 <PathIcon Data="{StaticResource SettingsIcon}"/>
                                 <TextBlock Text="Settings" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+
+                        <!-- About Button -->
+                        <Button Command="{Binding NavigateToAboutCommand}" 
+                                Classes="navButton"
+                                Margin="16,0,16,0">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <PathIcon Data="{StaticResource InfoIcon}"/>
+                                <TextBlock Text="About" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Grid>
-            </ExperimentalAcrylicBorder>
+            </Border>
 
             <!-- Content Area -->
-            <ExperimentalAcrylicBorder Grid.Column="1" Material="{StaticResource ContentAcrylicMaterial}">
+            <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
                 <ContentControl Content="{Binding CurrentPage}" Margin="20"/>
-            </ExperimentalAcrylicBorder>
+            </Border>
         </Grid>
 
         <!-- Notification Overlay -->

@@ -2,28 +2,28 @@
     <ExperimentalAcrylicMaterial x:Key="TopBarAcrylicMaterial"
                                  BackgroundSource="Digger"
                                  TintColor="{StaticResource SecondaryColor}"
-                                 TintOpacity="0.9"
-                                 MaterialOpacity="0.7"
+                                 TintOpacity="0.8"
+                                 MaterialOpacity="0.9"
                                  FallbackColor="{StaticResource SecondaryColor}"/>
     
     <ExperimentalAcrylicMaterial x:Key="NavigationAcrylicMaterial"
                                  BackgroundSource="Digger"
-                                 TintColor="{StaticResource SecondaryColor}"
-                                 TintOpacity="0.9"
-                                 MaterialOpacity="0.7"
-                                 FallbackColor="{StaticResource SecondaryColor}"/>
+                                 TintColor="{StaticResource SurfaceColor}"
+                                 TintOpacity="0.85"
+                                 MaterialOpacity="0.9"
+                                 FallbackColor="{StaticResource SurfaceColor}"/>
     
     <ExperimentalAcrylicMaterial x:Key="ContentAcrylicMaterial"
                                  BackgroundSource="Digger"
                                  TintColor="{StaticResource BackgroundColor}"
-                                 TintOpacity="0.9"
-                                 MaterialOpacity="0.7"
+                                 TintOpacity="0.7"
+                                 MaterialOpacity="0.8"
                                  FallbackColor="{StaticResource BackgroundColor}"/>
     
     <ExperimentalAcrylicMaterial x:Key="StatusBarAcrylicMaterial"
                                  BackgroundSource="Digger"
                                  TintColor="{StaticResource BackgroundColor}"
-                                 TintOpacity="0.9"
-                                 MaterialOpacity="0.7"
+                                 TintOpacity="0.8"
+                                 MaterialOpacity="0.9"
                                  FallbackColor="{StaticResource BackgroundColor}"/>
 </ResourceDictionary>

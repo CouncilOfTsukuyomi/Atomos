@@ -63,4 +63,8 @@
     <ItemGroup>
         <UpToDateCheckInput Remove="Assets\avalonia-logo.ico" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Assets\" />
+    </ItemGroup>
 </Project>
