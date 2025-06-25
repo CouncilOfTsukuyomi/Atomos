@@ -120,6 +120,7 @@ public class NotificationHubViewModel : ViewModelBase
     public ReactiveCommand<Point, Unit> StartDragCommand { get; }
     public ReactiveCommand<Point, Unit> DragCommand { get; }
     public ReactiveCommand<Unit, Unit> EndDragCommand { get; }
+    public ReactiveCommand<Unit, Unit> CloseNotificationFlyoutCommand { get; }
 
     private Point _dragStartPosition;
     private Point _buttonStartPosition;
@@ -139,6 +140,12 @@ public class NotificationHubViewModel : ViewModelBase
             _logger.Debug($"Toggling notification flyout. Current state: {IsNotificationFlyoutOpen}");
             IsNotificationFlyoutOpen = !IsNotificationFlyoutOpen;
             _logger.Debug($"New flyout state: {IsNotificationFlyoutOpen}");
+        });
+        
+        CloseNotificationFlyoutCommand = ReactiveCommand.Create(() =>
+        {
+            _logger.Debug("Closing notification flyout via background click");
+            IsNotificationFlyoutOpen = false;
         });
 
         ClearAllNotificationsCommand = ReactiveCommand.CreateFromTask(ClearAllNotificationsAsync);

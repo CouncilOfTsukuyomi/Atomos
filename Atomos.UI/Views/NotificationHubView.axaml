@@ -1,5 +1,4 @@
-﻿
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -25,6 +24,11 @@
                     <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
                 </Transitions>
             </Border.Transitions>
+            
+            <!-- Add pointer event handling to the background overlay -->
+            <i:Interaction.Behaviors>
+                <behaviours:PointerReleasedBehaviour Command="{Binding CloseNotificationFlyoutCommand}"/>
+            </i:Interaction.Behaviors>
         </Border>
         
         <!-- Draggable Notification Button -->
@@ -93,6 +97,12 @@
                 BorderBrush="#3F3F46"
                 BorderThickness="1"
                 Classes="notificationFlyout">
+            
+            <!-- Prevent clicks on the flyout from closing it -->
+            <Border.RenderTransform>
+                <TranslateTransform/>
+            </Border.RenderTransform>
+            
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0" 
@@ -107,7 +117,7 @@
                                    Foreground="White"/>
                         <Button Grid.Column="1"
                                 Classes="transparent"
-                                Command="{Binding ToggleNotificationFlyoutCommand}"
+                                Command="{Binding CloseNotificationFlyoutCommand}"
                                 Padding="5">
                             <Path Width="12" Height="12"
                                   Fill="White"

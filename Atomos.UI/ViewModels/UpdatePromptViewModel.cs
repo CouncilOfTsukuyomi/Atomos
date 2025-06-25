@@ -1,7 +1,8 @@
-﻿
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ public class UpdatePromptViewModel : ViewModelBase
     private bool _isUpdating;
     private string _updateStatus = "Ready to update";
     private double _updateProgress;
+    private VersionInfo? _versionInfo;
 
     public bool IsVisible
     {
@@ -63,7 +65,19 @@ public class UpdatePromptViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _updateProgress, value);
     }
 
+    public VersionInfo? VersionInfo
+    {
+        get => _versionInfo;
+        set => this.RaiseAndSetIfChanged(ref _versionInfo, value);
+    }
+
+    // Convenience properties for UI binding
+    public List<ChangeEntry> Changes => VersionInfo?.Changes ?? new List<ChangeEntry>();
+    public bool HasChanges => Changes.Count > 0;
+    public List<DownloadInfo> AvailableDownloads => VersionInfo?.AvailableDownloads ?? new List<DownloadInfo>();
+
     public ReactiveCommand<Unit, Unit> UpdateCommand { get; }
+    public ReactiveCommand<string, Unit> OpenUrlCommand { get; }
 
     public UpdatePromptViewModel(IUpdateService updateService, IRunUpdater runUpdater)
     {
@@ -72,6 +86,29 @@ public class UpdatePromptViewModel : ViewModelBase
 
         var canExecuteUpdate = this.WhenAnyValue(x => x.IsUpdating, updating => !updating);
         UpdateCommand = ReactiveCommand.CreateFromTask(ExecuteUpdateCommand, canExecuteUpdate);
+        
+        // Command to open URLs (commits, PRs, etc.)
+        OpenUrlCommand = ReactiveCommand.Create<string>(OpenUrl);
+    }
+
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            _logger.Info("Opening URL: {Url}", url);
+            
+            // Use the OS default browser to open the URL
+            var psi = new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open URL: {Url}", url);
+        }
     }
 
     public async Task CheckForUpdatesAsync(string currentVersion)
@@ -89,19 +126,46 @@ public class UpdatePromptViewModel : ViewModelBase
 
             if (isUpdateNeeded)
             {
-                // Get the latest version to display
-                _logger.Debug("Fetching latest version information");
-                var latestVersion = await _updateService.GetMostRecentVersionAsync("CouncilOfTsukuyomi/Atomos");
+                // Get the latest version info including changelog
+                _logger.Debug("Fetching latest version information with changelog");
+                var versionInfo = await _updateService.GetMostRecentVersionInfoAsync("CouncilOfTsukuyomi/Atomos");
+                
+                if (versionInfo != null)
+                {
+                    VersionInfo = versionInfo;
+                    var cleanedVersion = CleanVersionString(versionInfo.Version);
+                    TargetVersion = cleanedVersion;
                     
-                var cleanedVersion = CleanVersionString(latestVersion);
-                TargetVersion = cleanedVersion;
-                    
-                _logger.Debug("Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}", latestVersion, cleanedVersion);
+                    _logger.Debug("Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}, changes: {ChangeCount}", 
+                        versionInfo.Version, cleanedVersion, versionInfo.Changes.Count);
 
-                _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion}", CurrentVersion, TargetVersion);
-                UpdateStatus = "Ready to update";
-                UpdateProgress = 0;
-                IsVisible = true;
+                    _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion} with {ChangeCount} changes", 
+                        CurrentVersion, TargetVersion, versionInfo.Changes.Count);
+                    
+                    UpdateStatus = "Ready to update";
+                    UpdateProgress = 0;
+                    IsVisible = true;
+                    
+                    // Notify UI that changelog properties have changed
+                    this.RaisePropertyChanged(nameof(Changes));
+                    this.RaisePropertyChanged(nameof(HasChanges));
+                    this.RaisePropertyChanged(nameof(AvailableDownloads));
+                }
+                else
+                {
+                    // Fallback to the old method if VersionInfo is not available
+                    _logger.Debug("Falling back to GetMostRecentVersionAsync");
+                    var latestVersion = await _updateService.GetMostRecentVersionAsync("CouncilOfTsukuyomi/Atomos");
+                    var cleanedVersion = CleanVersionString(latestVersion);
+                    TargetVersion = cleanedVersion;
+                    
+                    _logger.Debug("Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}", latestVersion, cleanedVersion);
+                    _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion}", CurrentVersion, TargetVersion);
+                    
+                    UpdateStatus = "Ready to update";
+                    UpdateProgress = 0;
+                    IsVisible = true;
+                }
             }
             else
             {
@@ -109,6 +173,7 @@ public class UpdatePromptViewModel : ViewModelBase
                 if (IsVisible)
                 {
                     IsVisible = false;
+                    VersionInfo = null;
                 }
             }
         }
@@ -150,7 +215,7 @@ public class UpdatePromptViewModel : ViewModelBase
                 installPath,
                 true,
                 programToRunAfterInstallation,
-                progress); // Pass the progress reporter
+                progress);
 
             if (updateResult)
             {

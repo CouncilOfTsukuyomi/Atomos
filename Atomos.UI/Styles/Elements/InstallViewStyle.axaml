@@ -39,12 +39,17 @@
     <Setter Property="Transitions">
       <Transitions>
         <BrushTransition Property="Background" Duration="0:0:0.2"/>
+        <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
       </Transitions>
     </Setter>
   </Style>
 
   <Style Selector="CheckBox.fileCheckBox:pointerover">
     <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+  </Style>
+  
+  <Style Selector="CheckBox.fileCheckBox:not(:pointerover)">
+    <Setter Property="Background" Value="Transparent"/>
   </Style>
 
   <!-- Install Button -->
