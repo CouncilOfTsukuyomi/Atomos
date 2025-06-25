@@ -28,12 +28,22 @@
         <Setter Property="BoxShadow" Value="0 4 16 0 #1A000000"/>
     </Style>
 
+    <!-- PathIcon style for icons -->
     <Style Selector="PathIcon.logoIcon">
         <Setter Property="Width" Value="28"/>
         <Setter Property="Height" Value="28"/>
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Image style for bitmap images -->
+    <Style Selector="Image.logoIcon">
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Stretch" Value="Uniform"/>
     </Style>
 
     <Style Selector="TextBlock.logoText">

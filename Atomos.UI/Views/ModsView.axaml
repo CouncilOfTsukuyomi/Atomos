@@ -52,7 +52,7 @@
                                 
                                 <!-- Mod Icon -->
                                 <Border Grid.Column="0" Classes="modIcon">
-                                    <TextBlock Text="🎯" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="🔧" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 
                                 <!-- Mod Info -->
@@ -77,7 +77,7 @@
             <!-- Empty State -->
             <Border Classes="modsCard emptyStateCard" IsVisible="{Binding !FilteredMods.Count}" Margin="0,40,0,0">
                 <StackPanel Spacing="20" HorizontalAlignment="Center">
-                    <TextBlock Text="📭" FontSize="64" HorizontalAlignment="Center"/>
+                    <TextBlock Text="📂" FontSize="64" HorizontalAlignment="Center"/>
                     <TextBlock Text="No mods found" Classes="emptyStateTitle" HorizontalAlignment="Center"/>
                     <TextBlock Text="Try adjusting your search terms or install some mods to get started" 
                                Classes="emptyStateSubtitle" 

@@ -1,5 +1,4 @@
-﻿
-<UserControl
+﻿<UserControl
     x:Class="Atomos.UI.Views.HomeView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -53,7 +52,7 @@
               <StackPanel Spacing="16">
                 <StackPanel Orientation="Horizontal" Spacing="12">
                   <Border Classes="statIcon" Background="#1B2196F3">
-                    <TextBlock Text="📊" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="📋" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                   </Border>
                   <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="{Binding Name}" Classes="statLabel"/>
@@ -71,7 +70,7 @@
         <StackPanel Spacing="16">
           <StackPanel Orientation="Horizontal" Spacing="12">
             <Border Classes="statIcon" Background="#1BE91E63">
-              <TextBlock Text="🎯" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              <TextBlock Text="📦" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
               <TextBlock Text="Last Installed Mod" Classes="statLabel"/>

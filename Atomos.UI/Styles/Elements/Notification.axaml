@@ -1,106 +1,203 @@
 ﻿
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
-    <!-- Navigation Panel -->
-    <Style Selector="Grid.navPanel">
-        <Setter Property="Margin" Value="0,24,0,0"/>
-    </Style>
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
+        xmlns:models="clr-namespace:Atomos.UI.Models">
 
-    <!-- App Logo Section -->
-    <Style Selector="StackPanel.appLogo">
-        <Setter Property="Margin" Value="24,20,24,32"/>
-        <Setter Property="Spacing" Value="12"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-    </Style>
-
-    <Style Selector="Border.logoContainer">
-        <Setter Property="Width" Value="56"/>
-        <Setter Property="Height" Value="56"/>
-        <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="Background">
-            <RadialGradientBrush>
-                <GradientStop Color="{StaticResource AccentColor}" Offset="0"/>
-                <GradientStop Color="{StaticResource PrimaryColor}" Offset="1"/>
-            </RadialGradientBrush>
+    <!-- Notification List Style -->
+    <Style Selector="ItemsControl.notifications">
+        <Setter Property="VerticalAlignment" Value="Bottom"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Margin" Value="0,0,32,32"/>
+        <Setter Property="ZIndex" Value="1000"/>
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel Spacing="16"/>
+            </ItemsPanelTemplate>
         </Setter>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="BoxShadow" Value="0 4 16 0 #1A000000"/>
+        <Setter Property="ItemTemplate">
+            <DataTemplate x:DataType="models:Notification">
+                <ExperimentalAcrylicBorder
+                    Name="NotificationBorder"
+                    CornerRadius="16"
+                    MinWidth="280"
+                    MaxWidth="440"
+                    Margin="0,0,8,0"
+                    Opacity="0">
+                    <ExperimentalAcrylicBorder.Material>
+                        <ExperimentalAcrylicMaterial
+                            BackgroundSource="Digger"
+                            TintColor="#1E1E1E"
+                            TintOpacity="0.8"
+                            MaterialOpacity="0.9"/>
+                    </ExperimentalAcrylicBorder.Material>
+                    
+                    <!-- Keep existing animation styles unchanged -->
+                    <ExperimentalAcrylicBorder.Styles>
+                        <Style Selector="ExperimentalAcrylicBorder[Tag=fade-in]">
+                            <Style.Animations>
+                                <Animation Duration="0:0:0.8" FillMode="Forward" Easing="CubicEaseOut">
+                                    <KeyFrame Cue="0%">
+                                        <Setter Property="Opacity" Value="0"/>
+                                    </KeyFrame>
+                                    <KeyFrame Cue="100%">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </KeyFrame>
+                                </Animation>
+                            </Style.Animations>
+                        </Style>
+                        
+                        <Style Selector="ExperimentalAcrylicBorder[Tag=fade-out]">
+                            <Style.Animations>
+                                <Animation Duration="0:0:0.5" FillMode="Forward" Easing="CubicEaseIn">
+                                    <KeyFrame Cue="0%">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </KeyFrame>
+                                    <KeyFrame Cue="100%">
+                                        <Setter Property="Opacity" Value="0"/>
+                                    </KeyFrame>
+                                </Animation>
+                            </Style.Animations>
+                        </Style>
+                    </ExperimentalAcrylicBorder.Styles>
+                    
+                    <ExperimentalAcrylicBorder.Tag>
+                        <Binding Path="AnimationState"/>
+                    </ExperimentalAcrylicBorder.Tag>
+
+                    <!-- Enhanced border with gradient and glow -->
+                    <Border BoxShadow="0 12 40 0 #40000000, 0 4 12 0 #20000000" 
+                            CornerRadius="16"
+                            BorderThickness="1"
+                            BorderBrush="#33FFFFFF">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="#2A2A2A" Offset="0"/>
+                                <GradientStop Color="#1A1A1A" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Status indicator bar -->
+                            <Border Grid.Column="0"
+                                    Width="4"
+                                    CornerRadius="2,0,0,2"
+                                    VerticalAlignment="Stretch"
+                                    Background="{DynamicResource AccentBrush}"/>
+                            
+                            <!-- Content area -->
+                            <StackPanel Grid.Column="1" 
+                                        Margin="20,20,16,20" 
+                                        Spacing="8" 
+                                        MaxWidth="360">
+                                
+                                <!-- Title with icon -->
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Ellipse Width="8" Height="8" 
+                                             Fill="{DynamicResource AccentBrush}"
+                                             VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Title}"
+                                              Foreground="#FFFFFF"
+                                              FontSize="16"
+                                              FontWeight="SemiBold"
+                                              TextWrapping="Wrap"/>
+                                </StackPanel>
+                                
+                                <!-- Status with enhanced styling -->
+                                <TextBlock Text="{Binding Status}"
+                                          Margin="16,0,0,0"
+                                          Foreground="{DynamicResource AccentBrush}"
+                                          FontSize="13"
+                                          FontWeight="Medium"
+                                          TextWrapping="Wrap"/>
+                                
+                                <!-- Message with better spacing -->
+                                <TextBlock Text="{Binding Message}"
+                                          Margin="16,0,0,12"
+                                          Foreground="#E0E0E0"
+                                          FontSize="14"
+                                          TextWrapping="Wrap"
+                                          LineHeight="20"/>
+                                
+                                <!-- Enhanced Progress Area -->
+                                <StackPanel IsVisible="{Binding ShowProgress}" 
+                                           Spacing="8"
+                                           Margin="16,0,0,0">
+                                    <TextBlock Text="{Binding ProgressText}"
+                                              Foreground="#B0B0B0"
+                                              FontSize="12"
+                                              Opacity="0.8">
+                                        <TextBlock.Styles>
+                                            <Style Selector="TextBlock">
+                                                <Setter Property="IsVisible" Value="{Binding IsProgressTextRedundant}"/>
+                                            </Style>
+                                        </TextBlock.Styles>
+                                    </TextBlock>
+                                    
+                                    <!-- Modern progress bar -->
+                                    <Border Background="#333333"
+                                            CornerRadius="8"
+                                            Height="6"
+                                            ClipToBounds="True">
+                                        <ProgressBar Minimum="0"
+                                                    Maximum="100"
+                                                    Value="{Binding Progress}"
+                                                    Background="Transparent"
+                                                    Foreground="{DynamicResource AccentBrush}"
+                                                    CornerRadius="8"/>
+                                    </Border>
+                                </StackPanel>
+                                
+                                <!-- Enhanced Loading Animation -->
+                                <Border IsVisible="{Binding ShowProgress}"
+                                        HorizontalAlignment="Left"
+                                        Margin="16,8,0,0"
+                                        CornerRadius="20"
+                                        Background="{DynamicResource AccentColor}"
+                                        Padding="8">
+                                    <gif:GifImage Source="avares://Atomos.UI/Animations/LoadingAnimation.gif"
+                                                 Width="28"
+                                                 Height="28"/>
+                                </Border>
+                            </StackPanel>
+                            
+                            <!-- Enhanced Close Button -->
+                            <Button Grid.Column="2"
+                                    Command="{Binding CloseCommand}"
+                                    Width="36"
+                                    Height="36"
+                                    Padding="0"
+                                    Margin="0,16,16,0"
+                                    VerticalAlignment="Top"
+                                    ToolTip.Tip="Close"
+                                    Classes="notification-close">
+                                <Border CornerRadius="18"
+                                        Background="#22FFFFFF">
+                                    <Path Data="{StaticResource CloseIcon}"
+                                          Stretch="Uniform"
+                                          Width="12"
+                                          Height="12"
+                                          Stroke="#CCCCCC"
+                                          StrokeThickness="1.5"/>
+                                </Border>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </ExperimentalAcrylicBorder>
+            </DataTemplate>
+        </Setter>
     </Style>
 
-    <!-- PathIcon style for icons -->
-    <Style Selector="PathIcon.logoIcon">
-        <Setter Property="Width" Value="28"/>
-        <Setter Property="Height" Value="28"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-
-    <!-- Image style for bitmap images -->
-    <Style Selector="Image.logoIcon">
-        <Setter Property="Width" Value="32"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Stretch" Value="Uniform"/>
-    </Style>
-
-    <Style Selector="TextBlock.logoText">
-        <Setter Property="TextAlignment" Value="Center"/>
-        <Setter Property="FontSize" Value="20"/>
-        <Setter Property="FontWeight" Value="Bold"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="0,4,0,0"/>
-    </Style>
-
-    <Style Selector="TextBlock.logoSubtext">
-        <Setter Property="TextAlignment" Value="Center"/>
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="Opacity" Value="0.8"/>
-    </Style>
-
-    <!-- Navigation Items -->
-    <Style Selector="ListBox.navItems">
-        <Setter Property="Margin" Value="16,0,16,24"/>
+    <!-- Enhanced Close Button Animations -->
+    <Style Selector="Button.notification-close">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0"/>
-    </Style>
-
-    <Style Selector="ListBox.navItems ListBoxItem">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Margin" Value="0,0,0,4"/>
-        <Setter Property="Padding" Value="16,12"/>
-        <Setter Property="CornerRadius" Value="12"/>
-        <Setter Property="MinHeight" Value="48"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="ListBox.navItems ListBoxItem:pointerover">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-        <Setter Property="RenderTransform" Value="translateX(4px)"/>
-    </Style>
-
-    <Style Selector="ListBox.navItems ListBoxItem:selected">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-        <Setter Property="RenderTransform" Value="translateX(6px)"/>
-    </Style>
-
-    <Style Selector="ListBox.navItems ListBoxItem PathIcon">
-        <Setter Property="Width" Value="20"/>
-        <Setter Property="Height" Value="20"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Opacity" Value="0.8"/>
         <Setter Property="Transitions">
             <Transitions>
                 <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
@@ -108,101 +205,15 @@
         </Setter>
     </Style>
 
-    <Style Selector="ListBox.navItems ListBoxItem:selected PathIcon">
-        <Setter Property="Opacity" Value="1"/>
-        <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+    <Style Selector="Button.notification-close:pointerover Border">
+        <Setter Property="Background" Value="#44FF4444"/>
     </Style>
 
-    <Style Selector="ListBox.navItems ListBoxItem:pointerover PathIcon">
-        <Setter Property="Opacity" Value="1"/>
+    <Style Selector="Button.notification-close:pointerover Path">
+        <Setter Property="Stroke" Value="#FF6B6B"/>
     </Style>
 
-    <Style Selector="ListBox.navItems ListBoxItem TextBlock">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Opacity" Value="0.9"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
-            </Transitions>
-        </Setter>
+    <Style Selector="Button.notification-close:pressed Border">
+        <Setter Property="Background" Value="#66FF4444"/>
     </Style>
-
-    <Style Selector="ListBox.navItems ListBoxItem:selected TextBlock">
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Opacity" Value="1"/>
-        <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
-    </Style>
-
-    <Style Selector="ListBox.navItems ListBoxItem:pointerover TextBlock">
-        <Setter Property="Opacity" Value="1"/>
-    </Style>
-
-    <!-- Navigation Buttons (About/Settings) -->
-    <Style Selector="Button.navButton">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="16,12"/>
-        <Setter Property="CornerRadius" Value="12"/>
-        <Setter Property="MinHeight" Value="48"/>
-        <Setter Property="Margin" Value="16,0,16,8"/>
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.2"/>
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="Button.navButton:pointerover">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-        <Setter Property="RenderTransform" Value="translateX(4px)"/>
-    </Style>
-
-    <Style Selector="Button.navButton:pressed">
-        <Setter Property="RenderTransform" Value="translateX(2px)"/>
-    </Style>
-
-    <Style Selector="Button.navButton PathIcon">
-        <Setter Property="Width" Value="18"/>
-        <Setter Property="Height" Value="18"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Opacity" Value="0.8"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="Button.navButton:pointerover PathIcon">
-        <Setter Property="Opacity" Value="1"/>
-    </Style>
-
-    <Style Selector="Button.navButton TextBlock">
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="FontWeight" Value="Medium"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Opacity" Value="0.9"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <Style Selector="Button.navButton:pointerover TextBlock">
-        <Setter Property="Opacity" Value="1"/>
-    </Style>
-
-    <!-- Divider -->
-    <Style Selector="Border.navDivider">
-        <Setter Property="Height" Value="1"/>
-        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="Margin" Value="24,16,24,16"/>
-        <Setter Property="Opacity" Value="0.3"/>
-    </Style>
-
 </Styles>

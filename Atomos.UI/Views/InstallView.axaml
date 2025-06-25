@@ -4,53 +4,51 @@
              x:Class="Atomos.UI.Views.InstallView"
              x:DataType="vm:InstallViewModel">
     <Grid IsVisible="{Binding IsSelectionVisible}" Background="#80000000">
-        <ExperimentalAcrylicBorder Material="{StaticResource ContentAcrylicMaterial}"
-                                   Padding="20"
-                                   MaxWidth="500"
-                                   MaxHeight="600"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   CornerRadius="10">
-            <StackPanel Spacing="15">
-                <!-- Title -->
-                <TextBlock Text="Select Files to Install"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextBrush}"
-                           HorizontalAlignment="Center"/>
+        <Border Classes="installDialog"
+                Width="520"
+                MaxHeight="620"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel Spacing="20">
+                <!-- Title with Icon -->
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                    <TextBlock Text="📦" FontSize="24" VerticalAlignment="Center"/>
+                    <TextBlock Text="Select Files to Install"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
 
                 <!-- Files List -->
-                <ScrollViewer MaxHeight="400">
-                    <ItemsControl ItemsSource="{Binding Files}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Content="{Binding FileName}"
-                                          IsChecked="{Binding IsSelected}"
-                                          Margin="0,5"
-                                          Foreground="{StaticResource TextBrush}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <Border Classes="fileListContainer">
+                    <ScrollViewer MaxHeight="380">
+                        <ItemsControl ItemsSource="{Binding Files}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding FileName}"
+                                              IsChecked="{Binding IsSelected}"
+                                              Classes="fileCheckBox"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
 
                 <!-- Buttons -->
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Spacing="10">
+                            Spacing="12">
                     <Button Content="Install"
                             Command="{Binding InstallCommand}"
                             Width="100"
-                            Background="{StaticResource AccentBrush}"
-                            Foreground="{StaticResource TextBrush}"
-                            Classes="ButtonStyle"/>
+                            Classes="installButton"/>
                     <Button Content="Cancel"
                             Command="{Binding CancelCommand}"
                             Width="100"
-                            Background="{StaticResource SecondaryBrush}"
-                            Foreground="{StaticResource TextBrush}"
-                            Classes="ButtonStyle"/>
+                            Classes="cancelButton"/>
                 </StackPanel>
             </StackPanel>
-        </ExperimentalAcrylicBorder>
+        </Border>
     </Grid>
 </UserControl>
