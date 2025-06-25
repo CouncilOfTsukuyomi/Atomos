@@ -1,4 +1,5 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+﻿
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -9,7 +10,7 @@
              x:Class="Atomos.UI.Views.PluginView"
              x:DataType="vm:PluginViewModel">
 
-  <Grid RowDefinitions="Auto,*">
+  <Grid RowDefinitions="Auto,*,Auto">
     
     <!-- Header Section -->
     <Border Grid.Row="0" 
@@ -50,7 +51,7 @@
     </Border>
 
     <!-- Plugin List -->
-    <ScrollViewer Grid.Row="1" Margin="20,0,20,20">
+    <ScrollViewer Grid.Row="1" Margin="20,0,20,10">
       <ItemsControl ItemsSource="{Binding FilteredPlugins}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="models:PluginInfo">
@@ -196,6 +197,83 @@
                  HorizontalAlignment="Center"
                  TextAlignment="Center"/>
     </StackPanel>
+
+    <!-- Footer Section -->
+    <Border Grid.Row="2"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1,1,1,0"
+            CornerRadius="8,8,0,0"
+            Padding="24,20"
+            Margin="20,10,20,0">
+      <StackPanel Spacing="12">
+        
+        <!-- Header -->
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+          <TextBlock Text="💡" FontSize="18" VerticalAlignment="Center"/>
+          <TextBlock Text="Want a new plugin?"
+                     Foreground="{DynamicResource TextBrush}"
+                     FontSize="16"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center"/>
+        </StackPanel>
+        
+        <!-- Description -->
+        <TextBlock Text="Have an idea for a plugin or need specific functionality? We'd love to hear from you!"
+                   Foreground="{DynamicResource DisabledTextBrush}"
+                   FontSize="14"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   Margin="0,0,0,8"/>
+        
+        <!-- Action Buttons -->
+        <StackPanel Orientation="Horizontal" 
+                    HorizontalAlignment="Center" 
+                    Spacing="12">
+          
+            <!-- Discord Button -->
+            <Button Content="💬 Join Discord"
+                    Command="{Binding OpenDiscordCommand}"
+                    Background="#5865F2"
+                    Foreground="White"
+                    BorderThickness="0"
+                    CornerRadius="8"
+                    Padding="16,8"
+                    FontWeight="SemiBold"
+                    Cursor="Hand"/>
+          
+            <!-- GitHub Issues Button -->
+            <Button Content="🐛 Request Feature"
+                    Command="{Binding OpenGitHubIssuesCommand}"
+                    Background="#24292E"
+                    Foreground="White"
+                    BorderThickness="0"
+                    CornerRadius="8"
+                    Padding="16,8"
+                    FontWeight="SemiBold"
+                    Cursor="Hand"/>
+          
+            <!-- Documentation Button -->
+            <Button Content="📚 Plugin Examples"
+                    Command="{Binding OpenPluginDocsCommand}"
+                    Background="{DynamicResource AccentBrush}"
+                    Foreground="White"
+                    BorderThickness="0"
+                    CornerRadius="8"
+                    Padding="16,8"
+                    FontWeight="SemiBold"
+                    Cursor="Hand"/>
+        </StackPanel>
+        
+        <!-- Additional Info -->
+        <TextBlock Text="Plugin requests • Bug reports • Development documentation"
+                   Foreground="{DynamicResource DisabledTextBrush}"
+                   FontSize="12"
+                   HorizontalAlignment="Center"
+                   Opacity="0.8"
+                   Margin="0,4,0,0"/>
+      </StackPanel>
+    </Border>
 
   </Grid>
 </UserControl>

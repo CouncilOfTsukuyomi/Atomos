@@ -5,7 +5,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewModels="clr-namespace:Atomos.UI.ViewModels"
-    xmlns:models="clr-namespace:CommonLib.Models;assembly=CommonLib"
     mc:Ignorable="d"
     d:DesignWidth="800"
     d:DesignHeight="450"
@@ -17,7 +16,7 @@
     </Design.DataContext>
 
     <ScrollViewer>
-        <StackPanel Spacing="0" MaxWidth="1400" HorizontalAlignment="Center" Margin="40,30">
+        <StackPanel Spacing="0" HorizontalAlignment="Stretch" Margin="40,30">
             
             <!-- Header Section -->
             <Border Classes="modsCard headerCard" Margin="0,0,0,32">
@@ -28,7 +27,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Center" Spacing="4">
                             <TextBlock Text="Installed Mods" Classes="modsTitle"/>
-                            <TextBlock Text="Manage and search your installed modifications" Classes="modsSubtitle"/>
+                            <TextBlock Text="Search your installed mods" Classes="modsSubtitle"/>
                         </StackPanel>
                     </StackPanel>
                     
@@ -43,28 +42,34 @@
                 </StackPanel>
             </Border>
 
-            <!-- Mods List -->
+            <!-- Mods Grid Layout -->
             <ItemsControl ItemsSource="{Binding FilteredMods}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Classes="modsContainer"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Classes="modsCard modCard" Margin="0,0,0,16">
+                        <Border Classes="modsCard modCard">
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 
                                 <!-- Mod Icon -->
                                 <Border Grid.Column="0" Classes="modIcon">
-                                    <TextBlock Text="🔧" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="🔧" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 
                                 <!-- Mod Info -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                                     <TextBlock Text="{Binding ModName}" Classes="modName"/>
                                     <TextBlock Text="{Binding InstallationTime, StringFormat='Installed: {0:MMM dd, yyyy HH:mm}'}" Classes="modInstallTime"/>
                                 </StackPanel>
                                 
                                 <!-- Status Indicator -->
                                 <Border Grid.Column="2" Classes="modStatusIndicator">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Ellipse Width="10" Height="10" Fill="#4CAF50"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse Width="8" Height="8" Fill="#4CAF50"/>
                                         <TextBlock Text="Installed" Classes="modStatusText"/>
                                     </StackPanel>
                                 </Border>

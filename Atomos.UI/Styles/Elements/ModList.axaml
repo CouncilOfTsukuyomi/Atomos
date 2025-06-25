@@ -1,4 +1,5 @@
-﻿<Styles xmlns="https://github.com/avaloniaui"
+﻿
+<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Base Mods Card -->
@@ -33,10 +34,28 @@
         <Setter Property="Padding" Value="40"/>
     </Style>
 
-    <!-- Mod Card -->
+    <!-- Mod Cards Container for Columns -->
+    <Style Selector="WrapPanel.modsContainer">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+
+    <!-- Individual Mod Card - Compact for Columns -->
     <Style Selector="Border.modCard">
-        <Setter Property="Padding" Value="24"/>
-        <Setter Property="MinHeight" Value="80"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Margin" Value="0,0,16,16"/>
+        <Setter Property="MinHeight" Value="70"/>
+        <Setter Property="Width" Value="380"/>
+        <Setter Property="MaxWidth" Value="400"/>
+    </Style>
+
+    <!-- Compact Mod Card for Dense Layout -->
+    <Style Selector="Border.modCardCompact">
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="Margin" Value="0,0,12,12"/>
+        <Setter Property="MinHeight" Value="60"/>
+        <Setter Property="Width" Value="320"/>
+        <Setter Property="MaxWidth" Value="340"/>
     </Style>
 
     <!-- Header Icon -->
@@ -59,14 +78,24 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- Mod Icon -->
+    <!-- Mod Icon - Smaller for Compact Layout -->
     <Style Selector="Border.modIcon">
-        <Setter Property="Width" Value="56"/>
-        <Setter Property="Height" Value="56"/>
-        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="Width" Value="48"/>
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="Background" Value="#1B2196F3"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="0,0,20,0"/>
+        <Setter Property="Margin" Value="0,0,12,0"/>
+    </Style>
+
+    <!-- Compact Mod Icon -->
+    <Style Selector="Border.modIconCompact">
+        <Setter Property="Width" Value="40"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Background" Value="#1B2196F3"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,10,0"/>
     </Style>
 
     <!-- Status Indicator -->
@@ -74,8 +103,18 @@
         <Setter Property="Background" Value="#1B4CAF50"/>
         <Setter Property="BorderBrush" Value="#4CAF50"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="14"/>
-        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Compact Status Indicator -->
+    <Style Selector="Border.modStatusIndicatorCompact">
+        <Setter Property="Background" Value="#1B4CAF50"/>
+        <Setter Property="BorderBrush" Value="#4CAF50"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="6,3"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
@@ -116,22 +155,49 @@
     </Style>
 
     <Style Selector="TextBlock.modName">
-        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontSize" Value="16"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="Margin" Value="0,0,0,4"/>
+        <Setter Property="Margin" Value="0,0,0,3"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="MaxLines" Value="2"/>
+    </Style>
+
+    <!-- Compact Mod Name -->
+    <Style Selector="TextBlock.modNameCompact">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="TextWrapping" Value="NoWrap"/>
+        <Setter Property="Margin" Value="0,0,0,2"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
 
     <Style Selector="TextBlock.modInstallTime">
-        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
         <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
-        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="LineHeight" Value="16"/>
+    </Style>
+
+    <!-- Compact Install Time -->
+    <Style Selector="TextBlock.modInstallTimeCompact">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="FontFamily" Value="Consolas,Monaco,monospace"/>
+        <Setter Property="LineHeight" Value="14"/>
     </Style>
 
     <Style Selector="TextBlock.modStatusText">
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#4CAF50"/>
+    </Style>
+
+    <!-- Compact Status Text -->
+    <Style Selector="TextBlock.modStatusTextCompact">
+        <Setter Property="FontSize" Value="10"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="#4CAF50"/>
     </Style>

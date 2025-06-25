@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -58,6 +57,11 @@ public class PluginViewModel : ViewModelBase, IDisposable
     public ReactiveCommand<Unit, Unit> RefreshCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenPluginDirectoryCommand { get; }
     
+    // Footer Navigation Commands
+    public ReactiveCommand<Unit, Unit> OpenDiscordCommand { get; }
+    public ReactiveCommand<Unit, Unit> OpenGitHubIssuesCommand { get; }
+    public ReactiveCommand<Unit, Unit> OpenPluginDocsCommand { get; }
+    
     public event Action<PluginSettingsViewModel>? PluginSettingsRequested;
 
     public PluginViewModel(
@@ -88,6 +92,11 @@ public class PluginViewModel : ViewModelBase, IDisposable
         RollbackSettingsCommand = ReactiveCommand.CreateFromTask<PluginInfo>(RollbackPluginSettingsAsync);
         RefreshCommand = ReactiveCommand.CreateFromTask(RefreshAsync);
         OpenPluginDirectoryCommand = ReactiveCommand.Create(OpenPluginDirectory);
+
+        // Footer Navigation Commands
+        OpenDiscordCommand = ReactiveCommand.Create(OpenDiscord);
+        OpenGitHubIssuesCommand = ReactiveCommand.Create(OpenGitHubIssues);
+        OpenPluginDocsCommand = ReactiveCommand.Create(OpenPluginDocs);
 
         // Load plugins immediately
         _ = LoadAvailablePluginsAsync();
@@ -352,6 +361,97 @@ public class PluginViewModel : ViewModelBase, IDisposable
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to open plugin directory");
+        }
+    }
+
+    /// <summary>
+    /// Opens the Discord server for community support and plugin requests
+    /// </summary>
+    private void OpenDiscord()
+    {
+        try
+        {
+            var discordUrl = "https://discord.gg/rtGXwMn7pX";
+            OpenUrl(discordUrl);
+            _logger.Info("Opened Discord community link");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open Discord link");
+        }
+    }
+
+    /// <summary>
+    /// Opens the GitHub Issues page for feature requests and bug reports
+    /// </summary>
+    private void OpenGitHubIssues()
+    {
+        try
+        {
+            var githubUrl = "https://github.com/CouncilOfTsukuyomi/Atomos/issues/new";
+            OpenUrl(githubUrl);
+            _logger.Info("Opened GitHub Issues page");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open GitHub Issues link");
+        }
+    }
+
+    /// <summary>
+    /// Opens the plugin development documentation and examples
+    /// </summary>
+    private void OpenPluginDocs()
+    {
+        try
+        {
+            var docsUrl = "https://github.com/CouncilOfTsukuyomi/PluginTemplate";
+            OpenUrl(docsUrl);
+            _logger.Info("Opened plugin development documentation");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open plugin documentation link");
+        }
+    }
+
+    /// <summary>
+    /// Opens a URL in the default browser
+    /// </summary>
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "xdg-open",
+                    Arguments = url,
+                    UseShellExecute = true
+                });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "open",
+                    Arguments = url,
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open URL: {Url}", url);
         }
     }
 
