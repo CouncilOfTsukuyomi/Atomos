@@ -23,6 +23,7 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
     
     private readonly IPluginDiscoveryService _pluginDiscoveryService;
     private readonly CompositeDisposable _disposables = new();
+    private readonly Dictionary<string, string> _originalValues = new();
     
     private PluginInfo _plugin;
     private bool _hasUnsavedChanges;
@@ -67,9 +68,46 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
         SaveCommand = ReactiveCommand.CreateFromTask(SaveSettingsAsync);
         CancelCommand = ReactiveCommand.Create(Cancel);
         ResetToDefaultsCommand = ReactiveCommand.CreateFromTask(ResetToDefaultsAsync);
-
-        // Load configuration immediately on the UI thread
+        
+        ConfigurationItems.CollectionChanged += (sender, e) =>
+        {
+            if (e.NewItems != null)
+            {
+                foreach (PluginConfigurationItem item in e.NewItems)
+                {
+                    SubscribeToItemChanges(item);
+                }
+            }
+        };
+        
         _ = LoadConfigurationAsync();
+    }
+
+    private void SubscribeToItemChanges(PluginConfigurationItem item)
+    {
+        _originalValues[item.Key] = item.Value;
+        
+        item.WhenAnyValue(x => x.Value)
+            .Skip(1)
+            .Subscribe(newValue =>
+            {
+                CheckForUnsavedChanges();
+                _logger.Debug("Configuration item '{Key}' changed to '{Value}'", item.Key, newValue);
+            })
+            .DisposeWith(_disposables);
+    }
+
+    private void CheckForUnsavedChanges()
+    {
+        var hasChanges = ConfigurationItems.Any(item => 
+            _originalValues.TryGetValue(item.Key, out var originalValue) && 
+            originalValue != item.Value);
+        
+        if (HasUnsavedChanges != hasChanges)
+        {
+            HasUnsavedChanges = hasChanges;
+            _logger.Debug("Unsaved changes status changed to: {HasChanges}", hasChanges);
+        }
     }
 
     public void Show()
@@ -95,13 +133,12 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
         {
             IsLoading = true;
             ConfigurationItems.Clear();
-
-            // First: Try to load from saved settings file
+            _originalValues.Clear();
+            
             var settings = await _pluginDiscoveryService.GetPluginSettingsAsync(Plugin.PluginDirectory);
         
             if (settings?.Configuration?.Any() == true)
             {
-                // Load from saved settings (this should be the primary path)
                 _logger.Debug("Loading configuration from saved settings for plugin {PluginId}", Plugin.PluginId);
             
                 foreach (var kvp in settings.Configuration)
@@ -125,7 +162,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             }
             else if (Plugin.Configuration?.Any() == true)
             {
-                // Fallback: Load from plugin schema (first time only)
                 _logger.Debug("Loading configuration from plugin schema for plugin {PluginId}", Plugin.PluginId);
             
                 foreach (var kvp in Plugin.Configuration)
@@ -149,13 +185,11 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             }
             else
             {
-                // No saved settings and no schema
                 _logger.Debug("No configuration schema found in plugin {PluginId}", Plugin.PluginId);
             }
 
-            await Task.Delay(100); // Small delay to show loading state
-        
-            // Update UI on main thread
+            await Task.Delay(100);
+            
             RxApp.MainThreadScheduler.Schedule(() =>
             {
                 foreach (var item in ConfigurationItems)
@@ -166,6 +200,8 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
         
             _logger.Info("Loaded {Count} configuration items for plugin {PluginId}", 
                 ConfigurationItems.Count, Plugin.PluginId);
+            
+            HasUnsavedChanges = false;
         }
         catch (Exception ex)
         {
@@ -208,7 +244,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
 
     private string FormatDisplayName(string key)
     {
-        // Convert camelCase/PascalCase to Display Name
         return System.Text.RegularExpressions.Regex.Replace(key, "(\\B[A-Z])", " $1");
     }
 
@@ -218,7 +253,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
         {
             IsLoading = true;
             
-            // Extract values from configuration items
             var configuration = new Dictionary<string, object>();
             
             foreach (var item in ConfigurationItems)
@@ -227,8 +261,7 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                 var value = ConvertValueForSaving(item.Value, item.Type);
                 configuration[key] = value;
             }
-
-            // Save plugin settings to file
+            
             var settings = new PluginSettings
             {
                 IsEnabled = Plugin.IsEnabled,
@@ -238,11 +271,15 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             
             await _pluginDiscoveryService.SavePluginSettingsAsync(Plugin.PluginDirectory, settings);
             
-            // Also update in-memory plugin configuration
             await _pluginDiscoveryService.UpdatePluginConfigurationAsync(Plugin.PluginId, configuration);
             
+            foreach (var item in ConfigurationItems)
+            {
+                _originalValues[item.Key] = item.Value;
+            }
+            
             HasUnsavedChanges = false;
-            Hide(); // Close the dialog after successful save
+            Hide();
             
             _logger.Info("Saved {Count} configuration settings for plugin {PluginId}", 
                 configuration.Count, Plugin.PluginId);
@@ -265,7 +302,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             ConfigurationType.Number => int.TryParse(value, out var intVal) ? intVal : 
                                        double.TryParse(value, out var doubleVal) ? doubleVal : 0,
             ConfigurationType.Boolean => bool.TryParse(value, out var boolVal) ? boolVal : false,
-            // Keep strings as strings - don't convert them!
             _ => value ?? string.Empty
         };
     }
@@ -279,8 +315,7 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             {
                 item.Value = string.Empty;
             }
-
-            HasUnsavedChanges = true;
+            
             _logger.Info("Reset configuration to defaults for plugin {PluginId}", Plugin.PluginId);
         }
         catch (Exception ex)
@@ -291,8 +326,17 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
 
     public void Cancel()
     {
+        // Restore original values
+        foreach (var item in ConfigurationItems)
+        {
+            if (_originalValues.TryGetValue(item.Key, out var originalValue))
+            {
+                item.Value = originalValue;
+            }
+        }
+        
         HasUnsavedChanges = false;
-        Hide(); // Close the dialog
+        Hide();
     }
 
     public void Dispose()

@@ -15,6 +15,7 @@
         <entry key="Atomos.UI/Styles/Elements/Navigation.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/Notification.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/NotificationHub.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/PluginSettingsStyles.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/PluginStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/SettingsStyles.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/TitleBar.axaml" value="Atomos.UI/Atomos.UI.csproj" />

@@ -8,88 +8,50 @@
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="Atomos.UI.Views.PluginSettingsView"
              x:DataType="vm:PluginSettingsViewModel">
-
   <!-- Overlay Background -->
-  <Grid Background="#80000000">
+  <Grid Classes="pluginSettingsOverlay">
     
     <!-- Settings Dialog -->
-    <Border Background="{DynamicResource CardBackgroundBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            Padding="0"
-            MaxWidth="700"
-            MaxHeight="650"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            CornerRadius="12">
+    <Border Classes="pluginSettingsDialog">
       
       <Grid RowDefinitions="Auto,*,Auto">
         
         <!-- Header -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource AccentBrush}"
-                CornerRadius="12,12,0,0"
-                Padding="20,15">
+        <Border Grid.Row="0" Classes="pluginSettingsHeader">
           <Grid ColumnDefinitions="Auto,*,Auto">
             <TextBlock Grid.Column="0"
                        Text="⚙️"
-                       FontSize="20"
-                       Foreground="White"
-                       VerticalAlignment="Center"
-                       Margin="0,0,15,0"/>
+                       Classes="pluginSettingsHeaderIcon"/>
             
-            <StackPanel Grid.Column="1">
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
               <TextBlock Text="{Binding Plugin.DisplayName}"
-                         FontSize="16"
-                         FontWeight="Bold"
-                         Foreground="White"/>
+                         Classes="pluginSettingsTitle"/>
               <TextBlock Text="{Binding Plugin.PluginId}"
-                         FontSize="11"
-                         Foreground="#E0FFFFFF"
-                         Margin="0,2,0,0"/>
+                         Classes="pluginSettingsSubtitle"/>
             </StackPanel>
 
             <Button Grid.Column="2"
                     Content="✕"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Foreground="White"
-                    FontSize="16"
-                    Width="30"
-                    Height="30"
-                    CornerRadius="15"
-                    HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"
+                    Classes="pluginSettingsCloseButton"
                     Command="{Binding CancelCommand}"/>
           </Grid>
         </Border>
 
         <!-- Content -->
-        <ScrollViewer Grid.Row="1" 
-                      Padding="20"
-                      MaxHeight="400">
-          <StackPanel Spacing="15" Margin="0,0,0,60">
+        <ScrollViewer Grid.Row="1" Classes="pluginSettingsContent">
+          <StackPanel Classes="pluginSettingsContentStack">
             
             <!-- Plugin Description -->
             <TextBlock Text="{Binding Plugin.Description}"
-                       FontSize="13"
-                       Foreground="{DynamicResource TextBrush}"
-                       TextWrapping="Wrap"
-                       Margin="0,0,0,10"/>
+                       Classes="pluginDescription"/>
 
             <!-- Loading Indicator -->
             <Border IsVisible="{Binding IsLoading}"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="30"
-                    HorizontalAlignment="Center">
+                    Classes="pluginSettingsLoadingContainer">
               <StackPanel Orientation="Horizontal" Spacing="10">
                 <ProgressBar IsIndeterminate="True" Width="100" Height="4"/>
                 <TextBlock Text="Loading settings..."
-                           Foreground="{DynamicResource TextBrush}"
-                           VerticalAlignment="Center"/>
+                           Classes="pluginSettingsLoadingText"/>
               </StackPanel>
             </Border>
 
@@ -98,67 +60,56 @@
                           IsVisible="{Binding !IsLoading}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="models:PluginConfigurationItem">
-                  <Border Background="{DynamicResource SurfaceBrush}"
-                          BorderBrush="{DynamicResource BorderBrush}"
-                          BorderThickness="1"
-                          CornerRadius="6"
-                          Padding="15"
-                          Margin="0,0,0,10">
+                  <Border Classes="pluginConfigurationItem">
                     
                     <Grid RowDefinitions="Auto,Auto,Auto">
                       
                       <!-- Setting Header -->
                       <StackPanel Grid.Row="0" Margin="0,0,0,8">
                         <TextBlock Text="{Binding DisplayName}"
-                                   FontWeight="SemiBold"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextBrush}"/>
+                                   Classes="configurationItemTitle"/>
                         <TextBlock Text="{Binding Description}"
-                                   FontSize="11"
-                                   Foreground="{DynamicResource DisabledTextBrush}"
-                                   TextWrapping="Wrap"
-                                   Margin="0,2,0,0"/>
+                                   Classes="configurationItemDescription"/>
                       </StackPanel>
 
                       <!-- Setting Input -->
-                      <Grid Grid.Row="1">
+                      <Grid Grid.Row="1" Classes="configurationItemInput">
                         
                         <!-- Text Input -->
                         <TextBox IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Text}"
                                  Text="{Binding Value}"
-                                 Watermark="Enter value..."/>
+                                 Watermark="Enter value..."
+                                 Classes="configurationItemTextInput"/>
                         
                         <!-- TextArea Input -->
                         <TextBox IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=TextArea}"
                                  Text="{Binding Value}"
-                                 AcceptsReturn="True"
-                                 MinHeight="60"
-                                 TextWrapping="Wrap"
-                                 Watermark="Enter multi-line value..."/>
+                                 Watermark="Enter multi-line value..."
+                                 Classes="configurationItemTextAreaInput"/>
                         
                         <!-- Number Input -->
                         <NumericUpDown IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Number}"
                                        Value="{Binding NumberValue}"
-                                       ShowButtonSpinner="True"/>
+                                       Classes="configurationItemNumberInput"/>
                         
                         <!-- Boolean Input -->
                         <ToggleSwitch IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Boolean}"
                                       IsChecked="{Binding BooleanValue}"
-                                      Content="{Binding DisplayName}"/>
+                                      Content="{Binding DisplayName}"
+                                      Classes="configurationItemBooleanInput"/>
                         
                         <!-- Choice Input -->
                         <ComboBox IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Choice}"
                                   ItemsSource="{Binding Choices}"
-                                  SelectedItem="{Binding Value}"/>
+                                  SelectedItem="{Binding Value}"
+                                  Classes="configurationItemChoiceInput"/>
                         
                       </Grid>
 
                       <!-- Setting Key -->
                       <TextBlock Grid.Row="2"
                                  Text="{Binding Key, StringFormat='Key: {0}'}"
-                                 FontSize="9"
-                                 Foreground="{DynamicResource DisabledTextBrush}"
-                                 Margin="0,6,0,0"/>
+                                 Classes="configurationItemKey"/>
                     </Grid>
                   </Border>
                 </DataTemplate>
@@ -167,26 +118,14 @@
 
             <!-- No Settings Message -->
             <Border IsVisible="{Binding !ConfigurationItems.Count}"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="30">
+                    Classes="pluginNoSettingsContainer">
               <StackPanel HorizontalAlignment="Center" Spacing="8">
                 <TextBlock Text="📋"
-                           FontSize="24"
-                           HorizontalAlignment="Center"
-                           Foreground="{DynamicResource DisabledTextBrush}"/>
+                           Classes="pluginNoSettingsIcon"/>
                 <TextBlock Text="No configurable settings"
-                           FontSize="14"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center"
-                           Foreground="{DynamicResource TextBrush}"/>
+                           Classes="pluginNoSettingsTitle"/>
                 <TextBlock Text="This plugin doesn't expose any settings to configure."
-                           FontSize="12"
-                           HorizontalAlignment="Center"
-                           Foreground="{DynamicResource DisabledTextBrush}"
-                           TextAlignment="Center"/>
+                           Classes="pluginNoSettingsText"/>
               </StackPanel>
             </Border>
 
@@ -194,59 +133,34 @@
         </ScrollViewer>
 
         <!-- Footer -->
-        <Border Grid.Row="2"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,1,0,0"
-                CornerRadius="0,0,12,12"
-                Padding="20,15">
+        <Border Grid.Row="2" Classes="pluginSettingsFooter">
           <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             
             <!-- Reset Button -->
             <Button Grid.Column="0"
                     Command="{Binding ResetToDefaultsCommand}"
                     Content="🔄 Reset"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    Foreground="{DynamicResource TextBrush}"
-                    FontSize="12"
-                    Padding="10,6"/>
+                    Classes="pluginSettingsResetButton"/>
 
             <!-- Unsaved Changes Indicator -->
             <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Center"
-                        IsVisible="{Binding HasUnsavedChanges}">
-              <Ellipse Width="8" Height="8" 
-                       Fill="#FF9800" 
-                       VerticalAlignment="Center"
-                       Margin="0,0,6,0"/>
+                        IsVisible="{Binding HasUnsavedChanges}"
+                        Classes="pluginSettingsUnsavedIndicator">
+              <Ellipse Classes="pluginSettingsUnsavedDot"/>
               <TextBlock Text="Unsaved changes"
-                         Foreground="#FF9800"
-                         FontSize="12"
-                         FontWeight="Bold"
-                         VerticalAlignment="Center"/>
+                         Classes="pluginSettingsUnsavedText"/>
             </StackPanel>
 
             <!-- Action Buttons -->
             <Button Grid.Column="2"
                     Command="{Binding CancelCommand}"
                     Content="Cancel"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    Foreground="{DynamicResource TextBrush}"
-                    FontSize="12"
-                    Padding="12,6"
-                    Margin="0,0,8,0"/>
+                    Classes="pluginSettingsCancelButton"/>
 
             <Button Grid.Column="3"
                     Command="{Binding SaveCommand}"
                     Content="💾 Save &amp; Close"
-                    Background="{DynamicResource AccentBrush}"
-                    BorderBrush="{DynamicResource AccentBrush}"
-                    Foreground="White"
-                    FontSize="12"
-                    Padding="12,6"/>
+                    Classes="pluginSettingsSaveButton"/>
 
           </Grid>
         </Border>
