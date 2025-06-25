@@ -91,7 +91,7 @@ public static class DependencyInjection
 
         return services;
     }
-
+    
     /// <summary>
     /// Initialise application services including early plugin services
     /// Call this method after building the service provider but before showing the main window
@@ -100,14 +100,59 @@ public static class DependencyInjection
     {
         try
         {
-            // Initialize plugin services (includes early plugin updates)
-            await serviceProvider.InitializePluginServicesAsync();
+            _ = Task.Run(async () =>
+            {
+                var logger = serviceProvider.GetService<ILogger<Program>>();
+                var notificationService = serviceProvider.GetService<INotificationService>();
+                
+                try
+                {
+                    logger?.LogInformation("Starting background plugin installation and updates...");
+                    
+                    if (notificationService != null)
+                    {
+                        await notificationService.ShowNotification(
+                            "Setting Up Plugins", 
+                            "Checking for new plugins and updates...", 
+                            null, 
+                            3);
+                    }
+                    
+                    await serviceProvider.InitializePluginServicesAsync();
+                    
+                    if (notificationService != null)
+                    {
+                        await notificationService.ShowNotification(
+                            "Plugins Ready", 
+                            "All plugins have been installed and updated successfully, refresh to view.", 
+                            null, 
+                            5);
+                    }
+
+                    logger?.LogInformation("Background plugin installation and updates completed successfully");
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogError(ex, "Failed to initialize plugin services in background");
+                    
+                    if (notificationService != null)
+                    {
+                        await notificationService.ShowErrorNotification(
+                            "Plugin Setup Failed", 
+                            "Some plugins may not have installed or updated properly. Check logs for details.", 
+                            null, 
+                            6);
+                    }
+                }
+            });
+            
+            var logger = serviceProvider.GetService<ILogger<Program>>();
+            logger?.LogInformation("Application services initialized. Plugin installation and updates running in background.");
         }
         catch (Exception ex)
         {
-            // Log the error but don't stop the application
             var logger = serviceProvider.GetService<ILogger<Program>>();
-            logger?.LogError(ex, "Failed to initialize plugin services, but application will continue");
+            logger?.LogError(ex, "Failed to start background plugin initialization");
         }
     }
     
