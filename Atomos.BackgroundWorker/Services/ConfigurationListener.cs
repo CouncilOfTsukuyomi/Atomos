@@ -38,7 +38,7 @@ public class ConfigurationListener : IConfigurationListener, IDisposable
                 HandleSentryChange(shouldEnableSentry);
                 break;
 
-            case "Common.EnableDebugLogs" when e.NewValue is bool shouldEnableLogging:
+            case "AdvancedOptions.EnableDebugLogs" when e.NewValue is bool shouldEnableLogging:
                 HandleDebugLogsChange(shouldEnableLogging);
                 break;
         }
