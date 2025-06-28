@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 using Atomos.UI.Extensions;
 using Atomos.UI.Interfaces;
 using CommonLib.Events;
@@ -7,13 +8,14 @@ using NLog;
 
 namespace Atomos.UI.Services;
 
-public class ConfigurationListener : IConfigurationListener
+public class ConfigurationListener : IConfigurationListener, IDisposable
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     private readonly IConfigurationService _configurationService;
     private readonly IXivLauncherService _xivLauncherService;
     private readonly IFileLinkingService _fileLinkingService;
+    private bool _disposed;
 
     public ConfigurationListener(
         IConfigurationService configurationService,
@@ -49,13 +51,13 @@ public class ConfigurationListener : IConfigurationListener
         {
             if (config.Common.FileLinkingEnabled)
             {
-                _logger.Debug("File linking enabled in initilization");
+                _logger.Debug("File linking enabled in initialization");
                 _fileLinkingService.EnableFileLinking();
             }
 
             if (config.Common.StartOnBoot)
             {
-                _logger.Debug("Start on boot enabled in initilization");
+                _logger.Debug("Start on boot enabled in initialization");
                 _fileLinkingService.EnableStartup();
             }
         }
@@ -66,54 +68,97 @@ public class ConfigurationListener : IConfigurationListener
     /// </summary>
     private void ConfigurationServiceOnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
     {
+        if (_disposed) return;
+        
         _logger.Debug($"Detected change in {e.PropertyName}");
 
-        if (e is { PropertyName: "Common.StartOnFfxivBoot", NewValue: bool shouldAutoStart })
+        switch (e.PropertyName)
         {
-            _xivLauncherService.EnableAutoStartWatchdog(shouldAutoStart);
-        }
+            case "Common.StartOnFfxivBoot" when e.NewValue is bool shouldAutoStart:
+                _xivLauncherService.EnableAutoStartWatchdog(shouldAutoStart);
+                break;
 
+            case "Common.FileLinkingEnabled" when e.NewValue is bool shouldLinkFiles:
+                HandleFileLinkingChange(shouldLinkFiles);
+                break;
+
+            case "Common.StartOnBoot" when e.NewValue is bool shouldStartOnBoot:
+                HandleStartOnBootChange(shouldStartOnBoot);
+                break;
+
+            case "Common.EnableSentry" when e.NewValue is bool shouldEnableSentry:
+                HandleSentryChange(shouldEnableSentry);
+                break;
+
+            case "Common.EnableDebugLogs" when e.NewValue is bool shouldEnableLogging:
+                HandleDebugLogsChange(shouldEnableLogging);
+                break;
+        }
+    }
+
+    private void HandleFileLinkingChange(bool shouldLinkFiles)
+    {
         // Only apply changes that matter on Windows
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
+
+        if (shouldLinkFiles)
         {
-            if (e is { PropertyName: "Common.FileLinkingEnabled", NewValue: bool shouldLinkFiles })
-            {
-                if (shouldLinkFiles)
-                {
-                    _fileLinkingService.EnableFileLinking();
-                }
-                else
-                {
-                    _fileLinkingService.DisableFileLinking();
-                }
-            }
-
-            if (e is { PropertyName: "Common.StartOnBoot", NewValue: bool shouldStartOnBoot })
-            {
-                if (shouldStartOnBoot)
-                {
-                    _fileLinkingService.EnableStartup();
-                }
-                else
-                {
-                    _fileLinkingService.DisableStartup();
-                }
-            }
+            _fileLinkingService.EnableFileLinking();
         }
-
-
-        if (e is { PropertyName: "Common.EnableSentry", NewValue: bool shouldEnableSentry })
+        else
         {
-            if (shouldEnableSentry)
-            {
-                _logger.Debug("EnableSentry event triggered");
-                DependencyInjection.EnableSentryLogging();
-            }
-            else
-            {
-                _logger.Debug("DisableSentry event triggered");
-                DependencyInjection.DisableSentryLogging();
-            }
+            _fileLinkingService.DisableFileLinking();
         }
+    }
+
+    private void HandleStartOnBootChange(bool shouldStartOnBoot)
+    {
+        // Only apply changes that matter on Windows
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
+
+        if (shouldStartOnBoot)
+        {
+            _fileLinkingService.EnableStartup();
+        }
+        else
+        {
+            _fileLinkingService.DisableStartup();
+        }
+    }
+
+    private void HandleSentryChange(bool shouldEnableSentry)
+    {
+        if (shouldEnableSentry)
+        {
+            _logger.Debug("EnableSentry event triggered");
+            DependencyInjection.EnableSentryLogging();
+        }
+        else
+        {
+            _logger.Debug("DisableSentry event triggered");
+            DependencyInjection.DisableSentryLogging();
+        }
+    }
+
+    private void HandleDebugLogsChange(bool shouldEnableLogging)
+    {
+        if (shouldEnableLogging)
+        {
+            _logger.Debug("Enabling debug logs");
+            DependencyInjection.EnableDebugLogging();
+        }
+        else
+        {
+            _logger.Debug("Disabling debug logs");
+            DependencyInjection.DisableDebugLogging();
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        
+        _configurationService.ConfigurationChanged -= ConfigurationServiceOnConfigurationChanged;
+        _disposed = true;
     }
 }

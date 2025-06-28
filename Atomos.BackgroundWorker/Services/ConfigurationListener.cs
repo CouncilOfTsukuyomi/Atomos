@@ -4,41 +4,54 @@ using CommonLib.Events;
 using CommonLib.Interfaces;
 using NLog;
 
-namespace Atomos.BackgroundWorker.Services
+namespace Atomos.BackgroundWorker.Services;
+
+public class ConfigurationListener : IConfigurationListener
 {
-    public class ConfigurationListener : IConfigurationListener
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+    private readonly IConfigurationService _configurationService;
+
+    public ConfigurationListener(IConfigurationService configurationService)
     {
-        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-        private readonly IConfigurationService _configurationService;
-
-        public ConfigurationListener(IConfigurationService configurationService)
-        {
-            _configurationService = configurationService;
+        _configurationService = configurationService;
             
-            StartListening();
-        }
+        StartListening();
+    }
 
-        private void StartListening()
-        {
-            _logger.Debug("Configuration Listen Events hooked");
-            _configurationService.ConfigurationChanged += ConfigurationServiceOnConfigurationChanged;
-        }
+    private void StartListening()
+    {
+        _logger.Debug("Configuration Listen Events hooked");
+        _configurationService.ConfigurationChanged += ConfigurationServiceOnConfigurationChanged;
+    }
 
-        private void ConfigurationServiceOnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
+    private void ConfigurationServiceOnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
+    {
+        if (e is { PropertyName: "Common.EnableSentry", NewValue: bool shouldEnableSentry })
         {
-            if (e is { PropertyName: "Common.EnableSentry", NewValue: bool shouldEnableSentry })
+            if (shouldEnableSentry)
             {
-                if (shouldEnableSentry)
-                {
-                    _logger.Debug("EnableSentry event triggered");
-                    DependencyInjection.EnableSentryLogging();
-                }
-                else
-                {
-                    _logger.Debug("DisableSentry event triggered");
-                    DependencyInjection.DisableSentryLogging();
-                }
+                _logger.Debug("EnableSentry event triggered");
+                DependencyInjection.EnableSentryLogging();
+            }
+            else
+            {
+                _logger.Debug("DisableSentry event triggered");
+                DependencyInjection.DisableSentryLogging();
+            }
+        }
+
+        if (e is { PropertyName: "Common.EnableDebugLogs", NewValue: bool shouldEnableLogging })
+        {
+            if (shouldEnableLogging)
+            {
+                _logger.Debug("Enabling debug logs");
+                DependencyInjection.EnableDebugLogging();
+            }
+            else
+            {
+                _logger.Debug("Disabling debug logs");
+                DependencyInjection.DisableDebugLogging();
             }
         }
     }

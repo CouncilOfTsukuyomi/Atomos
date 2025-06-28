@@ -182,4 +182,15 @@ public static class DependencyInjection
     {
         MergedSentryLogging.DisableSentryLogging();
     }
+    
+    public static void EnableDebugLogging()
+    {
+        MergedDebugLogging.EnableDebugLogging();
+    }
+
+    public static void DisableDebugLogging()
+    {
+        MergedDebugLogging.DisableDebugLogging();
+    }
+
 }
