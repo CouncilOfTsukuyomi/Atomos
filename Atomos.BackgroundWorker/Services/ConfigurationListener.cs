@@ -6,11 +6,12 @@ using NLog;
 
 namespace Atomos.BackgroundWorker.Services;
 
-public class ConfigurationListener : IConfigurationListener
+public class ConfigurationListener : IConfigurationListener, IDisposable
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     private readonly IConfigurationService _configurationService;
+    private bool _disposed;
 
     public ConfigurationListener(IConfigurationService configurationService)
     {
@@ -27,32 +28,55 @@ public class ConfigurationListener : IConfigurationListener
 
     private void ConfigurationServiceOnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
     {
-        if (e is { PropertyName: "Common.EnableSentry", NewValue: bool shouldEnableSentry })
-        {
-            if (shouldEnableSentry)
-            {
-                _logger.Debug("EnableSentry event triggered");
-                DependencyInjection.EnableSentryLogging();
-            }
-            else
-            {
-                _logger.Debug("DisableSentry event triggered");
-                DependencyInjection.DisableSentryLogging();
-            }
-        }
+        if (_disposed) return;
+        
+        _logger.Debug($"Detected change in {e.PropertyName}");
 
-        if (e is { PropertyName: "Common.EnableDebugLogs", NewValue: bool shouldEnableLogging })
+        switch (e.PropertyName)
         {
-            if (shouldEnableLogging)
-            {
-                _logger.Debug("Enabling debug logs");
-                DependencyInjection.EnableDebugLogging();
-            }
-            else
-            {
-                _logger.Debug("Disabling debug logs");
-                DependencyInjection.DisableDebugLogging();
-            }
+            case "Common.EnableSentry" when e.NewValue is bool shouldEnableSentry:
+                HandleSentryChange(shouldEnableSentry);
+                break;
+
+            case "Common.EnableDebugLogs" when e.NewValue is bool shouldEnableLogging:
+                HandleDebugLogsChange(shouldEnableLogging);
+                break;
         }
+    }
+    
+    private void HandleSentryChange(bool shouldEnableSentry)
+    {
+        if (shouldEnableSentry)
+        {
+            _logger.Debug("EnableSentry event triggered");
+            DependencyInjection.EnableSentryLogging();
+        }
+        else
+        {
+            _logger.Debug("DisableSentry event triggered");
+            DependencyInjection.DisableSentryLogging();
+        }
+    }
+
+    private void HandleDebugLogsChange(bool shouldEnableLogging)
+    {
+        if (shouldEnableLogging)
+        {
+            _logger.Debug("Enabling debug logs");
+            DependencyInjection.EnableDebugLogging();
+        }
+        else
+        {
+            _logger.Debug("Disabling debug logs");
+            DependencyInjection.DisableDebugLogging();
+        }
+    }
+    
+    public void Dispose()
+    {
+        if (_disposed) return;
+        
+        _configurationService.ConfigurationChanged -= ConfigurationServiceOnConfigurationChanged;
+        _disposed = true;
     }
 }
