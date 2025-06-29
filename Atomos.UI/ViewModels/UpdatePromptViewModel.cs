@@ -1,8 +1,8 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reactive;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -70,14 +70,16 @@ public class UpdatePromptViewModel : ViewModelBase
         get => _versionInfo;
         set => this.RaiseAndSetIfChanged(ref _versionInfo, value);
     }
-
-    // Convenience properties for UI binding
+    
     public List<ChangeEntry> Changes => VersionInfo?.Changes ?? new List<ChangeEntry>();
     public bool HasChanges => Changes.Count > 0;
     public List<DownloadInfo> AvailableDownloads => VersionInfo?.AvailableDownloads ?? new List<DownloadInfo>();
 
     public ReactiveCommand<Unit, Unit> UpdateCommand { get; }
     public ReactiveCommand<string, Unit> OpenUrlCommand { get; }
+    public ReactiveCommand<ChangeEntry, Unit> OpenAuthorProfileCommand { get; }
+    public ReactiveCommand<ChangeEntry, Unit> OpenCommitCommand { get; }
+    public ReactiveCommand<ChangeEntry, Unit> OpenPullRequestCommand { get; }
 
     public UpdatePromptViewModel(IUpdateService updateService, IRunUpdater runUpdater)
     {
@@ -87,17 +89,20 @@ public class UpdatePromptViewModel : ViewModelBase
         var canExecuteUpdate = this.WhenAnyValue(x => x.IsUpdating, updating => !updating);
         UpdateCommand = ReactiveCommand.CreateFromTask(ExecuteUpdateCommand, canExecuteUpdate);
         
-        // Command to open URLs (commits, PRs, etc.)
         OpenUrlCommand = ReactiveCommand.Create<string>(OpenUrl);
+        OpenAuthorProfileCommand = ReactiveCommand.Create<ChangeEntry>(OpenAuthorProfile);
+        OpenCommitCommand = ReactiveCommand.Create<ChangeEntry>(OpenCommit);
+        OpenPullRequestCommand = ReactiveCommand.Create<ChangeEntry>(OpenPullRequest);
     }
 
     private void OpenUrl(string url)
     {
+        if (string.IsNullOrEmpty(url)) return;
+        
         try
         {
             _logger.Info("Opening URL: {Url}", url);
             
-            // Use the OS default browser to open the URL
             var psi = new ProcessStartInfo
             {
                 FileName = url,
@@ -109,6 +114,33 @@ public class UpdatePromptViewModel : ViewModelBase
         {
             _logger.Error(ex, "Failed to open URL: {Url}", url);
         }
+    }
+
+    private void OpenAuthorProfile(ChangeEntry changeEntry)
+    {
+        if (!changeEntry.HasAuthor) return;
+        
+        var url = changeEntry.AuthorUrl;
+        _logger.Info("Opening author profile: {Author} -> {Url}", changeEntry.Author, url);
+        OpenUrl(url);
+    }
+
+    private void OpenCommit(ChangeEntry changeEntry)
+    {
+        if (!changeEntry.HasCommitHash) return;
+        
+        var url = changeEntry.CommitUrl;
+        _logger.Info("Opening commit: {CommitHash} -> {Url}", changeEntry.CommitHash, url);
+        OpenUrl(url);
+    }
+
+    private void OpenPullRequest(ChangeEntry changeEntry)
+    {
+        if (!changeEntry.HasPullRequest) return;
+        
+        var url = changeEntry.PullRequestUrl;
+        _logger.Info("Opening pull request: #{PrNumber} -> {Url}", changeEntry.PullRequestNumber, url);
+        OpenUrl(url);
     }
 
     public async Task CheckForUpdatesAsync(string currentVersion)
