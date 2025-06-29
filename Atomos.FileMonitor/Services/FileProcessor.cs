@@ -23,6 +23,7 @@ public sealed class FileProcessor : IFileProcessor
     public event EventHandler<FileMovedEvent>? FileMoved;
     public event EventHandler<FilesExtractedEventArgs>? FilesExtracted;
     public event EventHandler<ExtractionProgressChangedEventArgs>? ExtractionProgressChanged;
+    public event EventHandler<ArchiveContentsInspectedEventArgs>? ArchiveContentsInspected;
 
     public FileProcessor(IFileStorage fileStorage, IConfigurationService configurationService)
     {
@@ -69,12 +70,15 @@ public sealed class FileProcessor : IFileProcessor
             if (await ArchiveContainsModFileAsync(filePath, cancellationToken))
             {
                 var finalFilePath = relocateFiles ? MoveFile(filePath) : filePath;
-                await ProcessArchiveFileAsync(finalFilePath, cancellationToken, taskId); // Use upstream taskId!
+                
+                var archiveContents = await InspectArchiveAsync(finalFilePath, cancellationToken);
+                ArchiveContentsInspected?.Invoke(this, 
+                    new ArchiveContentsInspectedEventArgs(finalFilePath, archiveContents, taskId));
             }
             else
             {
                 _logger.Info(
-                    "Archive {FilePath} doesn’t contain any recognized mod files; leaving file in place.",
+                    "Archive {FilePath} doesn't contain any recognized mod files; leaving file in place.",
                     filePath
                 );
             }
@@ -82,6 +86,196 @@ public sealed class FileProcessor : IFileProcessor
         else
         {
             _logger.Warn("Unhandled file type: {FullPath}", filePath);
+        }
+    }
+
+    public async Task<List<ArchiveFileInfo>> InspectArchiveAsync(string archivePath, CancellationToken cancellationToken)
+    {
+        var archiveFiles = new List<ArchiveFileInfo>();
+
+        try
+        {
+            using var archiveFile = new ArchiveFile(archivePath);
+            var skipPreDt = (bool)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.SkipPreDt);
+
+            foreach (var entry in archiveFile.Entries)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var extension = Path.GetExtension(entry.FileName)?.ToLowerInvariant() ?? string.Empty;
+                var isModFile = FileExtensionsConsts.ModFileTypes.Contains(extension);
+                
+                if (!isModFile)
+                    continue;
+                
+                var isPreDt = PreDtRegex.IsMatch(entry.FileName) || 
+                             entry.FileName.IndexOf("Endwalker", StringComparison.OrdinalIgnoreCase) != -1;
+            
+            if (skipPreDt && isPreDt)
+            {
+                _logger.Info("Skipping file from previous update during inspection: {FileName}", entry.FileName);
+                continue;
+            }
+
+                var fileInfo = new ArchiveFileInfo
+                {
+                    FileName = Path.GetFileName(entry.FileName),
+                    RelativePath = entry.FileName,
+                    Size = entry.Size,
+                    Extension = extension,
+                    IsModFile = isModFile,
+                    IsPreDt = isPreDt,
+                    LastModified = entry.LastWriteTime
+                };
+
+                archiveFiles.Add(fileInfo);
+            }
+
+            _logger.Info("Inspected archive {ArchivePath} - found {FileCount} mod files", 
+                Path.GetFileName(archivePath), archiveFiles.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error inspecting archive: {ArchivePath}", archivePath);
+            throw;
+        }
+
+        await Task.Delay(50, cancellationToken);
+        return archiveFiles.OrderBy(f => f.RelativePath).ToList();
+    }
+
+    public async Task ExtractSelectedFilesAsync(string archivePath, List<string> selectedFileNames, 
+        CancellationToken cancellationToken, string taskId)
+    {
+        var extractedFiles = new ConcurrentBag<string>();
+        var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+
+        try
+        {
+            List<Entry> selectedEntries;
+            string archiveDirectory;
+            
+            using (var archiveFile = new ArchiveFile(archivePath))
+            {
+                archiveDirectory = Path.GetDirectoryName(archivePath) ?? string.Empty;
+                
+                // Filter entries to only selected files
+                selectedEntries = archiveFile.Entries
+                    .Where(entry => selectedFileNames.Contains(entry.FileName))
+                    .ToList();
+
+                if (!selectedEntries.Any())
+                {
+                    _logger.Info("No files selected for extraction from: {ArchiveFileName}", Path.GetFileName(archivePath));
+                    ExtractionProgressChanged?.Invoke(this,
+                        new ExtractionProgressChangedEventArgs(taskId, "No files selected for extraction.", 100));
+                    return;
+                }
+
+                ExtractionProgressChanged?.Invoke(this,
+                    new ExtractionProgressChangedEventArgs(taskId, 
+                        $"Starting extraction of {selectedEntries.Count} selected file(s)...", 0));
+
+                var totalFiles = selectedEntries.Count;
+                int extractedCount = 0;
+                var semaphore = new SemaphoreSlim(Environment.ProcessorCount * 2);
+                var extractionStartTime = DateTime.Now;
+
+                await Parallel.ForEachAsync(selectedEntries, options, async (entry, token) =>
+                {
+                    await semaphore.WaitAsync(token);
+                    try
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var destinationPath = Path.Combine(archiveDirectory, entry.FileName);
+                        var destinationDirectory = Path.GetDirectoryName(destinationPath);
+                        if (destinationDirectory != null)
+                            _fileStorage.CreateDirectory(destinationDirectory);
+
+                        var stopwatch = Stopwatch.StartNew();
+                        _logger.Info("Starting extraction of selected file: {FileName}", entry.FileName);
+
+                        try
+                        {
+                            lock (_extractionLock)
+                            {
+                                entry.Extract(destinationPath);
+                            }
+                            stopwatch.Stop();
+                            _logger.Info(
+                                "Completed extraction of {FileName} in {Elapsed:0.000} seconds to {DestPath}",
+                                entry.FileName,
+                                stopwatch.Elapsed.TotalSeconds,
+                                destinationPath
+                            );
+                            extractedFiles.Add(destinationPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            stopwatch.Stop();
+                            _logger.Error(ex, 
+                                "Failed to extract {FileName} after {Elapsed:0.000} seconds",
+                                entry.FileName,
+                                stopwatch.Elapsed.TotalSeconds
+                            );
+                            throw;
+                        }
+
+                        var done = Interlocked.Increment(ref extractedCount);
+                        int percent = (int)((double)done / totalFiles * 100);
+                        ExtractionProgressChanged?.Invoke(this,
+                            new ExtractionProgressChangedEventArgs(taskId, 
+                                $"Extracted {done} of {totalFiles} selected file(s)...", percent));
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
+
+                var extractionEndTime = DateTime.Now;
+                var totalExtractionTime = extractionEndTime - extractionStartTime;
+
+                _logger.Info(
+                    "Selected files extracted from {ArchiveFileName} in {TotalTime:0.000} seconds",
+                    Path.GetFileName(archivePath),
+                    totalExtractionTime.TotalSeconds
+                );
+            }
+
+            ExtractionProgressChanged?.Invoke(this,
+                new ExtractionProgressChangedEventArgs(taskId, "Selective extraction complete.", 100));
+
+            await Task.Delay(100, cancellationToken);
+
+            if (extractedFiles.Any())
+            {
+                FilesExtracted?.Invoke(this,
+                    new FilesExtractedEventArgs(Path.GetFileName(archivePath), extractedFiles.ToList()));
+
+                var shouldDelete = (bool)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.AutoDelete);
+                if (shouldDelete)
+                {
+                    await Task.Delay(500, cancellationToken);
+                    DeleteFileWithRetry(archivePath);
+                    _logger.Info("Archive deleted after selective extraction: {ArchiveFileName}",
+                        Path.GetFileName(archivePath));
+                }
+            }
+        }
+        catch (Exception ex) when (ex.Message.Contains("not a known archive type"))
+        {
+            _logger.Warn("Unrecognized archive format: {ArchiveFilePath}", archivePath);
+            DeleteFileWithRetry(archivePath);
+            _logger.Info("Deleted invalid archive: {ArchiveFileName}", Path.GetFileName(archivePath));
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Info("Canceled selective extraction of archive: {ArchiveFileName}", Path.GetFileName(archivePath));
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error during selective extraction of archive: {ArchiveFileName}", Path.GetFileName(archivePath));
         }
     }
 
@@ -170,164 +364,19 @@ public sealed class FileProcessor : IFileProcessor
         return destinationPath;
     }
 
-    // Receives the upstream taskId and re-uses it for all progress events
-    private async Task ProcessArchiveFileAsync(
-        string archivePath,
-        CancellationToken cancellationToken,
-        string taskId)
+    private void DeleteFileWithRetry(string filePath, int maxAttempts = 5, int delayMs = 1000)
     {
-        var extractedFiles = new ConcurrentBag<string>();
-        var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-
-        try
-        {
-            using (var archiveFile = new ArchiveFile(archivePath))
-            {
-                var skipPreDt = (bool)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.SkipPreDt);
-                var archiveDirectory = Path.GetDirectoryName(archivePath) ?? string.Empty;
-                var modEntries = GetModEntries(archiveFile, skipPreDt);
-
-                if (!modEntries.Any())
-                {
-                    _logger.Info("No mod files found in the archive: {ArchiveFileName}", Path.GetFileName(archivePath));
-                    ExtractionProgressChanged?.Invoke(
-                        this,
-                        new ExtractionProgressChangedEventArgs(
-                            taskId,
-                            "No mod files found to extract.",
-                            100)
-                    );
-                    return;
-                }
-
-                ExtractionProgressChanged?.Invoke(
-                    this,
-                    new ExtractionProgressChangedEventArgs(
-                        taskId,
-                        $"Starting extraction of {modEntries.Count} file(s)...", 0)
-                );
-
-                var totalFiles = modEntries.Count;
-                int extractedCount = 0;
-                var semaphore = new SemaphoreSlim(Environment.ProcessorCount * 2);
-                var extractionStartTime = DateTime.Now;
-
-                await Parallel.ForEachAsync(modEntries, options, async (entry, token) =>
-                {
-                    await semaphore.WaitAsync(token);
-                    try
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        var destinationPath = Path.Combine(archiveDirectory, entry.FileName);
-                        var destinationDirectory = Path.GetDirectoryName(destinationPath);
-                        if (destinationDirectory != null)
-                            _fileStorage.CreateDirectory(destinationDirectory);
-
-                        var stopwatch = Stopwatch.StartNew();
-                        _logger.Info("Starting extraction of {FileName}", entry.FileName);
-
-                        try
-                        {
-                            lock (_extractionLock)
-                            {
-                                entry.Extract(destinationPath);
-                            }
-                            stopwatch.Stop();
-                            _logger.Info(
-                                "Completed extraction of {FileName} in {Elapsed:0.000} seconds to {DestPath}",
-                                entry.FileName,
-                                stopwatch.Elapsed.TotalSeconds,
-                                destinationPath
-                            );
-                            extractedFiles.Add(destinationPath);
-                        }
-                        catch (Exception ex)
-                        {
-                            stopwatch.Stop();
-                            _logger.Error(ex, 
-                                "Failed to extract {FileName} after {Elapsed:0.000} seconds",
-                                entry.FileName,
-                                stopwatch.Elapsed.TotalSeconds
-                            );
-                            throw;
-                        }
-
-                        var done = Interlocked.Increment(ref extractedCount);
-                        int percent = (int)((double)done / totalFiles * 100);
-                        ExtractionProgressChanged?.Invoke(
-                            this,
-                            new ExtractionProgressChangedEventArgs(
-                                taskId, // Use same taskId for every update
-                                $"Extracted {done} of {totalFiles} file(s)...",
-                                percent)
-                        );
-                    }
-                    finally
-                    {
-                        semaphore.Release();
-                    }
-                });
-
-                var extractionEndTime = DateTime.Now;
-                var totalExtractionTime = extractionEndTime - extractionStartTime;
-
-                _logger.Info(
-                    "All files extracted from {ArchiveFileName} in {TotalTime:0.000} seconds",
-                    Path.GetFileName(archivePath),
-                    totalExtractionTime.TotalSeconds
-                );
-
-                ExtractionProgressChanged?.Invoke(
-                    this,
-                    new ExtractionProgressChangedEventArgs(
-                        taskId,
-                        "Extraction complete.",
-                        100)
-                );
-            }
-
-            await Task.Delay(100, cancellationToken);
-
-            if (extractedFiles.Any())
-            {
-                FilesExtracted?.Invoke(
-                    this,
-                    new FilesExtractedEventArgs(Path.GetFileName(archivePath), extractedFiles.ToList())
-                );
-
-                var shouldDelete = (bool)_configurationService.ReturnConfigValue(c => c.BackgroundWorker.AutoDelete);
-                if (shouldDelete)
-                {
-                    DeleteFileWithRetry(archivePath);
-                    _logger.Info(
-                        "Archive deleted after extraction: {ArchiveFileName}",
-                        Path.GetFileName(archivePath)
-                    );
-                }
-            }
-        }
-        catch (Exception ex) when (ex.Message.Contains("not a known archive type"))
-        {
-            _logger.Warn("Unrecognized archive format: {ArchiveFilePath}", archivePath);
-            DeleteFileWithRetry(archivePath);
-            _logger.Info("Deleted invalid archive: {ArchiveFileName}", Path.GetFileName(archivePath));
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.Info("Canceled processing of archive: {ArchiveFileName}", Path.GetFileName(archivePath));
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Error processing archive: {ArchiveFileName}", Path.GetFileName(archivePath));
-        }
-    }
-
-    private void DeleteFileWithRetry(string filePath, int maxAttempts = 3, int delayMs = 500)
-    {
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
             {
+                if (attempt > 1)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    Thread.Sleep(delayMs);
+                }
+            
                 _fileStorage.Delete(filePath);
                 _logger.Info("Deleted file on attempt {Attempt}: {FilePath}", attempt, filePath);
                 return;
@@ -335,19 +384,22 @@ public sealed class FileProcessor : IFileProcessor
             catch (IOException) when (attempt < maxAttempts)
             {
                 _logger.Warn(
+                    "Attempt {Attempt} to delete file failed: {FilePath}. Retrying in {Delay}ms...",
+                    attempt,
+                    filePath,
+                    delayMs
+                );
+            }
+            catch (Exception ex) when (attempt < maxAttempts)
+            {
+                _logger.Warn(ex, 
                     "Attempt {Attempt} to delete file failed: {FilePath}. Retrying...",
                     attempt,
                     filePath
                 );
-                Thread.Sleep(delayMs);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Failed to delete file: {FilePath}", filePath);
-                throw;
             }
         }
-
+        
         try
         {
             _fileStorage.Delete(filePath);
@@ -355,8 +407,7 @@ public sealed class FileProcessor : IFileProcessor
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to delete file after multiple attempts: {FilePath}", filePath);
-            throw;
+            _logger.Error(ex, "Failed to delete file after {MaxAttempts} attempts: {FilePath}", maxAttempts, filePath);
         }
     }
 

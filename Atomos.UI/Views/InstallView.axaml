@@ -13,7 +13,7 @@
                 <!-- Title with Icon -->
                 <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
                     <TextBlock Text="📦" FontSize="24" VerticalAlignment="Center"/>
-                    <TextBlock Text="Select Files to Install"
+                    <TextBlock Text="Select Files to Extract &amp; Install"
                                FontSize="22"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextBrush}"
@@ -21,7 +21,11 @@
                 </StackPanel>
 
                 <!-- Select All Section -->
-                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Left" Margin="10,0">
+                <StackPanel Orientation="Horizontal" 
+                            Spacing="12" 
+                            HorizontalAlignment="Left" 
+                            Margin="10,0"
+                            IsVisible="{Binding ShowSelectAll}">
                     <CheckBox Content="Select All"
                               IsChecked="{Binding AreAllSelected}"
                               FontWeight="SemiBold"
@@ -47,9 +51,9 @@
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="12">
-                    <Button Content="Install"
+                    <Button Content="Extract &amp; Install"
                             Command="{Binding InstallCommand}"
-                            Width="100"
+                            Width="160"
                             Classes="installButton"/>
                     <Button Content="Cancel"
                             Command="{Binding CancelCommand}"

@@ -32,6 +32,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
     private string _currentTaskId;
     private bool _isSelectionVisible;
     private bool _areAllSelected;
+    private bool _showSelectAll;
 
     private StandaloneInstallWindow _standaloneWindow;
 
@@ -47,7 +48,6 @@ public class InstallViewModel : ViewModelBase, IDisposable
         {
             this.RaiseAndSetIfChanged(ref _isSelectionVisible, value);
 
-            // If the user interface is no longer visible, close the standalone window
             if (!value && _standaloneWindow != null)
             {
                 _standaloneWindow.Close();
@@ -69,6 +69,15 @@ public class InstallViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Whether to show the Select All checkbox. Only shown when there are 3 or more files.
+    /// </summary>
+    public bool ShowSelectAll
+    {
+        get => _showSelectAll;
+        set => this.RaiseAndSetIfChanged(ref _showSelectAll, value);
+    }
+
     public ReactiveCommand<Unit, Unit> InstallCommand { get; }
     public ReactiveCommand<Unit, Unit> CancelCommand { get; }
     public ReactiveCommand<Unit, Unit> SelectAllCommand { get; }
@@ -88,7 +97,11 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
         _webSocketClient.FileSelectionRequested += OnFileSelectionRequested;
         
-        Files.CollectionChanged += (sender, args) => UpdateAreAllSelectedProperty();
+        Files.CollectionChanged += (sender, args) => 
+        {
+            UpdateAreAllSelectedProperty();
+            UpdateShowSelectAllProperty();
+        };
     }
 
     private void OnFileSelectionRequested(object sender, FileSelectionRequestedEventArgs e)
@@ -108,7 +121,6 @@ public class InstallViewModel : ViewModelBase, IDisposable
                     IsSelected = false
                 };
 
-                // Subscribe to PropertyChanged to update AreAllSelected when individual files change
                 fileItem.PropertyChanged += (s, args) =>
                 {
                     if (args.PropertyName == nameof(FileItemViewModel.IsSelected))
@@ -123,9 +135,9 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
             _logger.Info("Selected {FileCount} files", Files.Count);
             UpdateAreAllSelectedProperty();
+            UpdateShowSelectAllProperty();
             IsSelectionVisible = true;
 
-            // Flash the taskbar to get user attention
             _taskbarFlashService.FlashTaskbar();
 
             await _soundManagerService.PlaySoundAsync(
@@ -168,57 +180,58 @@ public class InstallViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void UpdateShowSelectAllProperty()
+    {
+        ShowSelectAll = Files.Count >= 3;
+    }
+
     private async Task ExecuteInstallCommand()
     {
         var selectedFiles = Files
             .Where(f => f.IsSelected)
             .Select(f => f.FilePath)
             .ToList();
-
+        
         var responseMessage = new WebSocketMessage
         {
             Type = WebSocketMessageType.Status,
             TaskId = _currentTaskId,
-            Status = "user_selection",
+            Status = "user_archive_selection",
             Progress = 0,
             Message = JsonConvert.SerializeObject(selectedFiles)
         };
 
-        await _webSocketClient.SendMessageAsync(responseMessage, "/install");
+        await _webSocketClient.SendMessageAsync(responseMessage, "/extract");
         IsSelectionVisible = false;
-
-        // Stop flashing when user makes a choice
+        
         _taskbarFlashService.StopFlashing();
 
-        _logger.Info("User selected files sent: {SelectedFiles}", selectedFiles);
+        _logger.Info("User selected archive files sent: {SelectedFiles}", selectedFiles);
     }
 
     private async Task ExecuteCancelCommand()
     {
         IsSelectionVisible = false;
-        _logger.Info("User canceled the file selection.");
-
-        // Stop flashing when user cancels
+        _logger.Info("User canceled the archive file selection.");
+        
         _taskbarFlashService.StopFlashing();
-
+        
         var responseMessage = new WebSocketMessage
         {
             Type = WebSocketMessageType.Status,
             TaskId = _currentTaskId,
-            Status = "user_selection",
+            Status = "user_archive_selection",
             Progress = 0,
             Message = JsonConvert.SerializeObject(new List<string>())
         };
 
-        await _webSocketClient.SendMessageAsync(responseMessage, "/install");
+        await _webSocketClient.SendMessageAsync(responseMessage, "/extract");
     }
 
     public void Dispose()
     {
-        // Unsubscribe from the event to avoid memory leaks
         _webSocketClient.FileSelectionRequested -= OnFileSelectionRequested;
-
-        // Close the standalone window if it exists
+        
         if (_standaloneWindow != null)
         {
             _standaloneWindow.Close();

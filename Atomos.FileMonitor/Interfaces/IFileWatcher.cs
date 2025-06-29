@@ -9,4 +9,5 @@ public interface IFileWatcher : IDisposable
     event EventHandler<FileMovedEvent> FileMoved;
     event EventHandler<FilesExtractedEventArgs> FilesExtracted;
     event EventHandler<ExtractionProgressChangedEventArgs> ExtractionProgressChanged;
+    event EventHandler<ArchiveContentsInspectedEventArgs> ArchiveContentsInspected;
 }

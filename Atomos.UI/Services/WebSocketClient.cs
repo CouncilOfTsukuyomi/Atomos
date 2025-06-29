@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.WebSockets;
@@ -28,7 +29,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
     private static readonly ConcurrentDictionary<ClientWebSocket, SemaphoreSlim> SocketLockMap = new();
 
     private readonly CancellationTokenSource _cts = new();
-    private readonly string[] _endpoints = { "/status", "/currentTask", "/config", "/install", "/error" };
+    private readonly string[] _endpoints = { "/status", "/currentTask", "/config", "/install", "/extract", "/error" };
 
     private bool _isReconnecting;
     private int _retryCount;
@@ -68,7 +69,6 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                 _retryCount++;
                 _logger.Error(ex, "Connection loop error. Retry attempt: {RetryCount}", _retryCount);
 
-                // Fixed: Argument order
                 await _notificationService.ShowNotification(
                     "Connection Failed", 
                     $"Retrying in 5 seconds... (Attempt {_retryCount})",
@@ -250,6 +250,10 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                             await HandleInstallMessageAsync(message);
                             break;
 
+                        case "/extract":
+                            await HandleExtractMessageAsync(message);
+                            break;
+
                         case "/config":
                             await HandleConfigMessageAsync(message);
                             break;
@@ -288,17 +292,67 @@ public class WebSocketClient : IWebSocketClient, IDisposable
     private async Task HandleInstallMessageAsync(WebSocketMessage message)
     {
         if (message.Type == CustomWebSocketMessageType.Status &&
-            message.Status == "select_files")
+            message.Status == "select_archive_files")
         {
-            _logger.Info("Received 'select_files' message: {Message}", message.Message);
+            _logger.Info("Received archive file selection request: {Message}", message.Message);
+            
+            var archiveFiles = JsonConvert.DeserializeObject<List<dynamic>>(message.Message);
+            var fileList = new List<string>();
+            
+            foreach (var file in archiveFiles)
+            {
+                if (file.RelativePath != null)
+                {
+                    fileList.Add(file.RelativePath.ToString());
+                }
+            }
 
-            var fileList = JsonConvert.DeserializeObject<List<string>>(message.Message);
-            FileSelectionRequested?.Invoke(this, new FileSelectionRequestedEventArgs(fileList, message.TaskId));
+            var eventArgs = new FileSelectionRequestedEventArgs(fileList, message.TaskId)
+            {
+                IsArchiveSelection = true
+            };
+
+            FileSelectionRequested?.Invoke(this, eventArgs);
         }
         else
         {
             _logger.Warn(
                 "Unhandled message on /install endpoint: Type={Type}, Status={Status}",
+                message.Type,
+                message.Status
+            );
+        }
+    }
+
+    private async Task HandleExtractMessageAsync(WebSocketMessage message)
+    {
+        if (message.Type == CustomWebSocketMessageType.Status &&
+            (message.Status?.Equals("Completed", StringComparison.OrdinalIgnoreCase) == true ||
+             message.Status?.Equals("extraction_complete", StringComparison.OrdinalIgnoreCase) == true))
+        {
+            _logger.Info("Archive extraction completed: {Message}", message.Message);
+
+            await _notificationService.ShowNotification(
+                "Extraction Complete",
+                message.Message,
+                SoundType.GeneralChime
+            );
+        }
+        else if (message.Type == CustomWebSocketMessageType.Progress)
+        {
+            _logger.Info("Extraction progress: {Progress}% - {Message}", message.Progress, message.Message);
+
+            await _notificationService.UpdateProgress(
+                message.TaskId,
+                message.Title,
+                message.Message,
+                message.Progress
+            );
+        }
+        else
+        {
+            _logger.Warn(
+                "Unhandled message on /extract endpoint: Type={Type}, Status={Status}",
                 message.Type,
                 message.Status
             );

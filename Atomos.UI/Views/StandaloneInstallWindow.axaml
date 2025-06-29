@@ -1,5 +1,4 @@
-﻿
-<Window
+﻿<Window
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,7 +12,7 @@
     Width="520"
     Height="650"
     x:CompileBindings="True"
-    Title="Select Files to Install"
+    Title="Select Files to Extract &amp; Install"
     TransparencyLevelHint="AcrylicBlur"
     Background="#262626"
     ExtendClientAreaToDecorationsHint="True"
@@ -33,7 +32,7 @@
 
                 <!-- Title Text -->
                 <TextBlock
-                    Text="Select Files to Install"
+                    Text="Select Files to Extract &amp; Install"
                     Margin="10,0"
                     VerticalAlignment="Center"
                     Classes="titleText"

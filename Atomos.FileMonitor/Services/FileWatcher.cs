@@ -33,6 +33,12 @@ public sealed class FileWatcher : IFileWatcher, IDisposable
         remove => _fileQueueProcessor.FilesExtracted -= value;
     }
 
+    public event EventHandler<ArchiveContentsInspectedEventArgs> ArchiveContentsInspected
+    {
+        add => _fileProcessor.ArchiveContentsInspected += value;
+        remove => _fileProcessor.ArchiveContentsInspected -= value;
+    }
+
     public FileWatcher(IFileQueueProcessor fileQueueProcessor, IFileProcessor fileProcessor)
     {
         _watchers = new List<FileSystemWatcher>();
