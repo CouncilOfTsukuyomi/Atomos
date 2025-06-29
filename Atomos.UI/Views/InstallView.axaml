@@ -20,6 +20,14 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
+                <!-- Select All Section -->
+                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Left" Margin="10,0">
+                    <CheckBox Content="Select All"
+                              IsChecked="{Binding AreAllSelected}"
+                              FontWeight="SemiBold"
+                              Classes="selectAllCheckBox"/>
+                </StackPanel>
+
                 <!-- Files List -->
                 <Border Classes="fileListContainer">
                     <ScrollViewer MaxHeight="380">

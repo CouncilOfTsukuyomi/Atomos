@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -30,6 +31,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
     private string _currentTaskId;
     private bool _isSelectionVisible;
+    private bool _areAllSelected;
 
     private StandaloneInstallWindow _standaloneWindow;
 
@@ -54,8 +56,22 @@ public class InstallViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether all files are selected. This is used for the Select All functionality.
+    /// </summary>
+    public bool AreAllSelected
+    {
+        get => _areAllSelected;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _areAllSelected, value);
+            UpdateAllFilesSelection(value);
+        }
+    }
+
     public ReactiveCommand<Unit, Unit> InstallCommand { get; }
     public ReactiveCommand<Unit, Unit> CancelCommand { get; }
+    public ReactiveCommand<Unit, Unit> SelectAllCommand { get; }
 
     public InstallViewModel(
         IWebSocketClient webSocketClient,
@@ -68,8 +84,11 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
         InstallCommand = ReactiveCommand.CreateFromTask(ExecuteInstallCommand);
         CancelCommand = ReactiveCommand.CreateFromTask(ExecuteCancelCommand);
+        SelectAllCommand = ReactiveCommand.Create(ExecuteSelectAllCommand);
 
         _webSocketClient.FileSelectionRequested += OnFileSelectionRequested;
+        
+        Files.CollectionChanged += (sender, args) => UpdateAreAllSelectedProperty();
     }
 
     private void OnFileSelectionRequested(object sender, FileSelectionRequestedEventArgs e)
@@ -82,17 +101,28 @@ public class InstallViewModel : ViewModelBase, IDisposable
             foreach (var file in e.AvailableFiles)
             {
                 var fileName = Path.GetFileName(file);
-                Files.Add(new FileItemViewModel
+                var fileItem = new FileItemViewModel
                 {
                     FileName = fileName,
                     FilePath = file,
                     IsSelected = false
-                });
+                };
 
+                // Subscribe to PropertyChanged to update AreAllSelected when individual files change
+                fileItem.PropertyChanged += (s, args) =>
+                {
+                    if (args.PropertyName == nameof(FileItemViewModel.IsSelected))
+                    {
+                        UpdateAreAllSelectedProperty();
+                    }
+                };
+
+                Files.Add(fileItem);
                 _logger.Info("Added file {FileName}", fileName);
             }
 
             _logger.Info("Selected {FileCount} files", Files.Count);
+            UpdateAreAllSelectedProperty();
             IsSelectionVisible = true;
 
             // Flash the taskbar to get user attention
@@ -114,6 +144,30 @@ public class InstallViewModel : ViewModelBase, IDisposable
         });
     }
 
+    private void ExecuteSelectAllCommand()
+    {
+        AreAllSelected = !AreAllSelected;
+        _logger.Info("Select all toggled: {AreAllSelected}", AreAllSelected);
+    }
+
+    private void UpdateAllFilesSelection(bool isSelected)
+    {
+        foreach (var file in Files)
+        {
+            file.IsSelected = isSelected;
+        }
+    }
+
+    private void UpdateAreAllSelectedProperty()
+    {
+        var newAreAllSelected = Files.Count > 0 && Files.All(f => f.IsSelected);
+        if (_areAllSelected != newAreAllSelected)
+        {
+            _areAllSelected = newAreAllSelected;
+            this.RaisePropertyChanged(nameof(AreAllSelected));
+        }
+    }
+
     private async Task ExecuteInstallCommand()
     {
         var selectedFiles = Files
@@ -133,7 +187,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
         await _webSocketClient.SendMessageAsync(responseMessage, "/install");
         IsSelectionVisible = false;
 
-        // Stop flashing when user makes a selection
+        // Stop flashing when user makes a choice
         _taskbarFlashService.StopFlashing();
 
         _logger.Info("User selected files sent: {SelectedFiles}", selectedFiles);
