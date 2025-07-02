@@ -1,0 +1,414 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Update Prompt Overlay -->
+  <Style Selector="Grid.updatePromptOverlay">
+    <Setter Property="Background" Value="#B0000000" />
+  </Style>
+
+  <!-- Main Dialog -->
+  <Style Selector="Border.updatePromptDialog">
+    <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MaxWidth" Value="700" />
+    <Setter Property="MaxHeight" Value="700" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="BoxShadow" Value="0 8 32 4 #40000000" />
+  </Style>
+
+  <!-- Header -->
+  <Style Selector="Border.updatePromptHeader">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="CornerRadius" Value="16,16,0,0" />
+    <Setter Property="Padding" Value="24,20" />
+  </Style>
+
+  <Style Selector="Border.updateIcon">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="CornerRadius" Value="20" />
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+  </Style>
+
+  <Style Selector="TextBlock.updateIconText">
+    <Setter Property="Text" Value="⬆" />
+    <Setter Property="FontSize" Value="20" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <Style Selector="TextBlock.updateTitle">
+    <Setter Property="FontSize" Value="24" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.updateSubtitle">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Opacity" Value="0.8" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Content Area -->
+  <Style Selector="ScrollViewer.updatePromptContent">
+    <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+    <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+  </Style>
+
+  <Style Selector="StackPanel.updatePromptContentStack">
+    <Setter Property="Spacing" Value="20" />
+    <Setter Property="Margin" Value="24,24,24,16" />
+  </Style>
+
+  <!-- Version Comparison Card -->
+  <Style Selector="Border.versionComparisonCard">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="20" />
+  </Style>
+
+  <Style Selector="TextBlock.versionLabel">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="LetterSpacing" Value="0.5" />
+  </Style>
+
+  <Style Selector="TextBlock.currentVersionLabel">
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Opacity" Value="0.7" />
+  </Style>
+
+  <Style Selector="TextBlock.newVersionLabel">
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.versionText">
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.currentVersionText">
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.newVersionText">
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="Border.versionArrow">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Width" Value="32" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Margin" Value="16,0" />
+  </Style>
+
+  <Style Selector="TextBlock.versionArrowText">
+    <Setter Property="Text" Value="→" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <!-- Version Count Indicator -->
+  <Style Selector="Border.versionCountIndicator">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Margin" Value="0,12,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.versionCountIcon">
+    <Setter Property="Text" Value="📋" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.versionCountText">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Changelog Section -->
+  <Style Selector="Border.changelogCard">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <!-- Tab Headers -->
+  <Style Selector="Border.changelogTabs">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="12,12,0,0" />
+    <Setter Property="Padding" Value="20,16,20,0" />
+  </Style>
+
+  <Style Selector="Button.changelogTab">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,8" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.changelogTab.active">
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+  </Style>
+
+  <Style Selector="Button.changelogTab.inactive">
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Opacity" Value="0.7" />
+  </Style>
+
+  <Style Selector="Button.changelogTab:pointerover">
+    <Setter Property="Opacity" Value="1.0" />
+  </Style>
+
+  <!-- Tab Content -->
+  <Style Selector="StackPanel.changelogContent">
+    <Setter Property="Spacing" Value="12" />
+    <Setter Property="Margin" Value="20" />
+  </Style>
+
+  <Style Selector="TextBlock.changelogTitle">
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Margin" Value="0,0,0,12" />
+  </Style>
+
+  <!-- Change Entry -->
+  <Style Selector="Border.changeEntry">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Margin" Value="0,4" />
+  </Style>
+
+  <Style Selector="Border.changeBullet">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="Width" Value="6" />
+    <Setter Property="Height" Value="6" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="0,6,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.changeDescription">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="LineHeight" Value="18" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <!-- Author Avatar -->
+  <Style Selector="Button.authorButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.authorButton:pointerover">
+    <Setter Property="Opacity" Value="0.8" />
+  </Style>
+
+  <Style Selector="Button.authorButton:pressed">
+    <Setter Property="Opacity" Value="0.6" />
+  </Style>
+
+  <Style Selector="Border.authorAvatar">
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
+  <Style Selector="TextBlock.authorName">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Badge Buttons -->
+  <Style Selector="Button.prBadge">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="6,3" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.prBadge:pointerover">
+    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+  </Style>
+
+  <Style Selector="Button.commitBadge">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="6,3" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontFamily" Value="Consolas" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+
+  <Style Selector="Button.commitBadge:pointerover">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+  </Style>
+
+  <!-- Version List -->
+  <Style Selector="Border.versionItem">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="16" />
+    <Setter Property="Margin" Value="0,8" />
+  </Style>
+
+  <Style Selector="Border.versionBadge">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+
+  <Style Selector="TextBlock.versionBadgeText">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <Style Selector="TextBlock.versionDate">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Opacity" Value="0.7" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.versionChangeBullet">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="CornerRadius" Value="2" />
+    <Setter Property="Width" Value="4" />
+    <Setter Property="Height" Value="4" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="0,6,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.versionChangeText">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="LineHeight" Value="16" />
+  </Style>
+
+  <!-- Info Message -->
+  <Style Selector="Border.updateInfoMessage">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="18,14" />
+  </Style>
+
+  <Style Selector="TextBlock.updateInfoText">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Opacity" Value="0.9" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="LineHeight" Value="18" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <!-- Progress Section -->
+  <Style Selector="StackPanel.updateProgress">
+    <Setter Property="Spacing" Value="16" />
+  </Style>
+
+  <Style Selector="TextBlock.updateStatus">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.progressBarContainer">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Height" Value="12" />
+  </Style>
+
+  <Style Selector="ProgressBar.updateProgressBar">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Height" Value="10" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Margin" Value="1" />
+  </Style>
+
+  <Style Selector="TextBlock.progressPercentage">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="Opacity" Value="0.8" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Footer -->
+  <Style Selector="Border.updatePromptFooter">
+    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+    <Setter Property="CornerRadius" Value="0,0,16,16" />
+    <Setter Property="Padding" Value="24,20" />
+  </Style>
+
+  <Style Selector="Button.updateButton">
+    <Setter Property="Width" Value="160" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.updateButton:pointerover">
+    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+  </Style>
+
+  <Style Selector="Button.updateButton:pressed">
+    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+    <Setter Property="RenderTransform" Value="scale(0.98)" />
+  </Style>
+
+</Styles>

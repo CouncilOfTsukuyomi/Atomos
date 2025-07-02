@@ -1,4 +1,5 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+﻿
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -10,300 +11,253 @@
 
     <!-- Semi-transparent backdrop -->
     <Grid IsVisible="{Binding IsVisible}"
-          Background="#B0000000">
+          Classes="updatePromptOverlay">
         
-        <Border Background="{StaticResource CardBackgroundBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="16"
-                Padding="0"
-                MaxWidth="600"
-                MaxHeight="600"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                BoxShadow="0 8 32 4 #40000000">
+        <Border Classes="updatePromptDialog">
 
             <Grid RowDefinitions="Auto,*,Auto">
-                <Border Grid.Row="0"
-                        Background="{StaticResource SurfaceBrush}"
-                        CornerRadius="16,16,0,0"
-                        Padding="24,20">
+                
+                <!-- Header -->
+                <Border Grid.Row="0" Classes="updatePromptHeader">
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" 
                                     HorizontalAlignment="Center"
                                     Spacing="12">
-                            <Border Background="{StaticResource AccentBrush}"
-                                    CornerRadius="20"
-                                    Width="40"
-                                    Height="40">
-                                <TextBlock Text="⬆"
-                                           FontSize="20"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontWeight="Bold" />
+                            <Border Classes="updateIcon">
+                                <TextBlock Classes="updateIconText" />
                             </Border>
                             
                             <TextBlock Text="Update Available"
-                                       FontSize="24"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextBrush}"
-                                       VerticalAlignment="Center" />
+                                       Classes="updateTitle" />
                         </StackPanel>
                         
-                        <TextBlock Text="A new version of Atomos is ready to install"
-                                   FontSize="14"
-                                   Foreground="{StaticResource TextBrush}"
-                                   Opacity="0.8"
-                                   HorizontalAlignment="Center"
-                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding UpdateSubtitle}"
+                                   Classes="updateSubtitle" />
                     </StackPanel>
                 </Border>
 
                 <!-- Content area -->
-                <ScrollViewer Grid.Row="1" 
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="20" 
-                                Margin="24,24,24,16">
+                <ScrollViewer Grid.Row="1" Classes="updatePromptContent">
+                    <StackPanel Classes="updatePromptContentStack">
                         
                         <!-- Version comparison card -->
-                        <Border Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="20">
-                            <Grid ColumnDefinitions="*,Auto,*">
+                        <Border Classes="versionComparisonCard">
+                            <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,Auto">
                                 
                                 <!-- Current version -->
-                                <StackPanel Grid.Column="0" 
-                                            Spacing="4">
+                                <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4">
                                     <TextBlock Text="CURRENT"
-                                               FontSize="11"
-                                               FontWeight="Medium"
-                                               Foreground="{StaticResource TextBrush}"
-                                               Opacity="0.7"
-                                               HorizontalAlignment="Center"
-                                               LetterSpacing="0.5" />
+                                               Classes="versionLabel currentVersionLabel" />
                                     <TextBlock Text="{Binding CurrentVersion}"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"
-                                               HorizontalAlignment="Center" />
+                                               Classes="versionText currentVersionText" />
                                 </StackPanel>
                                 
                                 <!-- Arrow -->
-                                <Border Grid.Column="1"
-                                        Background="{StaticResource AccentBrush}"
-                                        CornerRadius="16"
-                                        Width="32"
-                                        Height="32"
-                                        Margin="16,0">
-                                    <TextBlock Text="→"
-                                               FontSize="16"
-                                               Foreground="White"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold" />
+                                <Border Grid.Column="1" Grid.Row="0" Classes="versionArrow">
+                                    <TextBlock Classes="versionArrowText" />
                                 </Border>
                                 
                                 <!-- Target version -->
-                                <StackPanel Grid.Column="2" 
-                                            Spacing="4">
-                                    <TextBlock Text="NEW"
-                                               FontSize="11"
-                                               FontWeight="Medium"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               HorizontalAlignment="Center"
-                                               LetterSpacing="0.5" />
+                                <StackPanel Grid.Column="2" Grid.Row="0" Spacing="4">
+                                    <TextBlock Text="LATEST"
+                                               Classes="versionLabel newVersionLabel" />
                                     <TextBlock Text="{Binding TargetVersion}"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               HorizontalAlignment="Center" />
+                                               Classes="versionText newVersionText" />
                                 </StackPanel>
+                                
+                                <!-- Version count indicator -->
+                                <Border Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="1"
+                                        Classes="versionCountIndicator"
+                                        IsVisible="{Binding HasMultipleVersions}">
+                                    <StackPanel Orientation="Horizontal" 
+                                                HorizontalAlignment="Center"
+                                                Spacing="8">
+                                        <TextBlock Classes="versionCountIcon" />
+                                        <TextBlock Text="{Binding VersionCountText}"
+                                                   Classes="versionCountText" />
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </Border>
 
                         <!-- Changelog section -->
-                        <Border Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="20"
+                        <Border Classes="changelogCard"
                                 IsVisible="{Binding HasChanges}">
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="What's New:"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextBrush}" />
+                            
+                            <Grid RowDefinitions="Auto,*">
+                                <!-- Tab headers (only show when multiple versions) -->
+                                <Border Grid.Row="0"
+                                        Classes="changelogTabs"
+                                        IsVisible="{Binding HasMultipleVersions}">
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                        <Button Content="Latest Changes"
+                                                Classes="changelogTab"
+                                                Classes.active="{Binding !ShowAllVersions}"
+                                                Classes.inactive="{Binding ShowAllVersions}"
+                                                Command="{Binding ToggleVersionViewCommand}"
+                                                IsVisible="{Binding ShowAllVersions}" />
+                                        
+                                        <Button Content="Latest Changes"
+                                                Classes="changelogTab active"
+                                                IsVisible="{Binding !ShowAllVersions}" />
+                                        
+                                        <Button Content="All Changes"
+                                                Classes="changelogTab"
+                                                Classes.active="{Binding ShowAllVersions}"
+                                                Classes.inactive="{Binding !ShowAllVersions}"
+                                                Command="{Binding ToggleVersionViewCommand}"
+                                                IsVisible="{Binding !ShowAllVersions}" />
+                                        
+                                        <Button Content="All Changes"
+                                                Classes="changelogTab active"
+                                                IsVisible="{Binding ShowAllVersions}" />
+                                    </StackPanel>
+                                </Border>
                                 
-                                <ItemsControl ItemsSource="{Binding Changes}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource BackgroundBrush}"
-                                                    CornerRadius="6"
-                                                    Padding="12,10"
-                                                    Margin="0,4">
-                                                <StackPanel Spacing="10">
-                                                    <!-- Main change description -->
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <Border Background="{StaticResource AccentBrush}"
-                                                                CornerRadius="3"
-                                                                Width="6"
-                                                                Height="6"
-                                                                VerticalAlignment="Top"
-                                                                Margin="0,6,0,0" />
-                                                        <TextBlock Text="{Binding CleanDescription}"
-                                                                   FontSize="13"
-                                                                   Foreground="{StaticResource TextBrush}"
-                                                                   TextWrapping="Wrap"
-                                                                   LineHeight="18"
-                                                                   VerticalAlignment="Top" />
-                                                    </StackPanel>
-                                                    
-                                                    <!-- Author and technical details section -->
-                                                    <StackPanel Orientation="Horizontal" 
-                                                                Spacing="12" 
-                                                                Margin="14,0,0,0">
-                                                        
-                                                        <!-- Author with Avatar -->
-                                                        <Button Background="Transparent"
-                                                                BorderThickness="0"
-                                                                Padding="0"
-                                                                Cursor="Hand"
-                                                                IsVisible="{Binding HasAuthor}"
-                                                                Command="{Binding $parent[UserControl].((viewModels:UpdatePromptViewModel)DataContext).OpenAuthorProfileCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                <Border CornerRadius="12"
-                                                                        Width="24"
-                                                                        Height="24"
-                                                                        ClipToBounds="True">
-                                                                    <asyncImageLoader:AdvancedImage Source="{Binding AuthorAvatarUrl}"
-                                                                           Stretch="UniformToFill"
-                                                                           Width="24"
-                                                                           Height="24" />
-                                                                </Border>
-                                                                <TextBlock Text="{Binding AuthorDisplayName}"
-                                                                           FontSize="12"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{StaticResource AccentBrush}"
-                                                                           VerticalAlignment="Center" />
+                                <!-- Tab content -->
+                                <StackPanel Grid.Row="1" Classes="changelogContent">
+                                    
+                                    <!-- Latest version changes (default view) -->
+                                    <StackPanel IsVisible="{Binding !ShowAllVersions}">
+                                        <TextBlock Classes="changelogTitle">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}What's New in {0}:">
+                                                    <Binding Path="TargetVersion" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        
+                                        <ItemsControl ItemsSource="{Binding Changes}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Classes="changeEntry">
+                                                        <StackPanel Spacing="10">
+                                                            <!-- Main change description -->
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Border Classes="changeBullet" />
+                                                                <TextBlock Text="{Binding CleanDescription}"
+                                                                           Classes="changeDescription" />
                                                             </StackPanel>
-                                                            <Button.Styles>
-                                                                <Style Selector="Button:pointerover">
-                                                                    <Setter Property="Opacity" Value="0.8" />
-                                                                </Style>
-                                                                <Style Selector="Button:pressed">
-                                                                    <Setter Property="Opacity" Value="0.6" />
-                                                                </Style>
-                                                            </Button.Styles>
-                                                        </Button>
-                                                        
-                                                        <!-- Pull Request Badge -->
-                                                        <Button Background="{StaticResource AccentBrush}"
-                                                                Foreground="White"
-                                                                CornerRadius="4"
-                                                                Padding="6,3"
-                                                                FontSize="10"
-                                                                FontWeight="SemiBold"
-                                                                BorderThickness="0"
-                                                                Cursor="Hand"
-                                                                Content="{Binding PullRequestNumber, StringFormat='#{0}'}"
-                                                                IsVisible="{Binding HasPullRequest}"
-                                                                Command="{Binding $parent[UserControl].((viewModels:UpdatePromptViewModel)DataContext).OpenPullRequestCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <Button.Styles>
-                                                                <Style Selector="Button:pointerover">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
-                                                                </Style>
-                                                                <Style Selector="Button:pressed">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
-                                                                </Style>
-                                                            </Button.Styles>
-                                                        </Button>
-                                                        
-                                                        <!-- Commit Hash Badge -->
-                                                        <Button Background="{StaticResource SurfaceBrush}"
-                                                                Foreground="{StaticResource TextBrush}"
-                                                                BorderBrush="{StaticResource BorderBrush}"
-                                                                BorderThickness="1"
-                                                                CornerRadius="4"
-                                                                Padding="6,3"
-                                                                FontSize="10"
-                                                                FontFamily="Consolas"
-                                                                FontWeight="Medium"
-                                                                Cursor="Hand"
-                                                                Content="{Binding CommitHash}"
-                                                                IsVisible="{Binding HasCommitHash}"
-                                                                Command="{Binding $parent[UserControl].((viewModels:UpdatePromptViewModel)DataContext).OpenCommitCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <Button.Styles>
-                                                                <Style Selector="Button:pointerover">
-                                                                    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
-                                                                </Style>
-                                                                <Style Selector="Button:pressed">
-                                                                    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
-                                                                </Style>
-                                                            </Button.Styles>
-                                                        </Button>
-                                                        
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                                            
+                                                            <!-- Author and technical details section -->
+                                                            <StackPanel Orientation="Horizontal" 
+                                                                        Spacing="12" 
+                                                                        Margin="14,0,0,0">
+                                                                
+                                                                <!-- Author with Avatar -->
+                                                                <Button Classes="authorButton"
+                                                                        IsVisible="{Binding HasAuthor}"
+                                                                        Command="{Binding $parent[UserControl].((viewModels:UpdatePromptViewModel)DataContext).OpenAuthorProfileCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                        <Border Classes="authorAvatar">
+                                                                            <asyncImageLoader:AdvancedImage Source="{Binding AuthorAvatarUrl}"
+                                                                                   Stretch="UniformToFill"
+                                                                                   Width="24"
+                                                                                   Height="24" />
+                                                                        </Border>
+                                                                        <TextBlock Text="{Binding AuthorDisplayName}"
+                                                                                   Classes="authorName" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                
+                                                                <!-- Pull Request Badge -->
+                                                                <Button Classes="prBadge"
+                                                                        Content="{Binding PullRequestNumber, StringFormat='#{0}'}"
+                                                                        IsVisible="{Binding HasPullRequest}"
+                                                                        Command="{Binding $parent[UserControl].((viewModels:UpdatePromptViewModel)DataContext).OpenPullRequestCommand}"
+                                                                        CommandParameter="{Binding}" />
+                                                                
+                                                                <!-- Commit Hash Badge -->
+                                                                <Button Classes="commitBadge"
+                                                                        Content="{Binding CommitHash}"
+                                                                        IsVisible="{Binding HasCommitHash}"
+                                                                        Command="{Binding $parent[UserControl].((viewModels:UpdatePromptViewModel)DataContext).OpenCommitCommand}"
+                                                                        CommandParameter="{Binding}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    
+                                    <!-- All versions consolidated changelog -->
+                                    <StackPanel IsVisible="{Binding ShowAllVersions}">
+                                        <TextBlock Text="Complete Changelog:"
+                                                   Classes="changelogTitle" />
+                                        
+                                        <!-- Version list for multiple versions -->
+                                        <ItemsControl ItemsSource="{Binding AllVersions}"
+                                                      IsVisible="{Binding HasMultipleVersions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Classes="versionItem">
+                                                        <StackPanel Spacing="12">
+                                                            <!-- Version header -->
+                                                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                                                <Border Classes="versionBadge">
+                                                                    <TextBlock Text="{Binding Version}"
+                                                                               Classes="versionBadgeText" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding PublishedAt, StringFormat='{}{0:MMM dd, yyyy}'}"
+                                                                           Classes="versionDate" />
+                                                            </StackPanel>
+                                                            
+                                                            <!-- Version changes -->
+                                                            <ItemsControl ItemsSource="{Binding Changes}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel Orientation="Horizontal" 
+                                                                                    Spacing="8" 
+                                                                                    Margin="0,2">
+                                                                            <Border Classes="versionChangeBullet" />
+                                                                            <TextBlock Text="{Binding CleanDescription}"
+                                                                                       Classes="versionChangeText" />
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        
+                                        <!-- Consolidated text changelog as fallback -->
+                                        <Border Classes="versionItem"
+                                                IsVisible="{Binding !HasMultipleVersions}">
+                                            <TextBlock Text="{Binding ConsolidatedChangelog}"
+                                                       Classes="versionChangeText" />
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Border>
 
                         <!-- Info message -->
-                        <Border Background="{StaticResource BackgroundBrush}"
-                                CornerRadius="8"
-                                Padding="18,14">
+                        <Border Classes="updateInfoMessage">
                             <TextBlock Text="The application will restart automatically when the update completes."
-                                       FontSize="13"
-                                       Foreground="{StaticResource TextBrush}"
-                                       Opacity="0.9"
-                                       TextWrapping="Wrap"
-                                       LineHeight="18"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center" />
+                                       Classes="updateInfoText" />
                         </Border>
                         
                         <!-- Progress section -->
-                        <StackPanel Spacing="16" 
+                        <StackPanel Classes="updateProgress"
                                     IsVisible="{Binding IsUpdating}">
                             <TextBlock Text="{Binding UpdateStatus}"
-                                       FontSize="14"
-                                       FontWeight="Medium"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       HorizontalAlignment="Center"
-                                       TextWrapping="Wrap"
-                                       TextAlignment="Center" />
+                                       Classes="updateStatus" />
                             
                             <!-- Progress bar with percentage -->
                             <StackPanel Spacing="8">
-                                <Border Background="{StaticResource BackgroundBrush}"
-                                        CornerRadius="6"
-                                        Height="12">
+                                <Border Classes="progressBarContainer">
                                     <ProgressBar Value="{Binding UpdateProgress}"
                                                  Maximum="100"
-                                                 Background="Transparent"
-                                                 Foreground="{StaticResource AccentBrush}"
-                                                 Height="10"
-                                                 CornerRadius="5"
-                                                 Margin="1" />
+                                                 Classes="updateProgressBar" />
                                 </Border>
                                 
                                 <!-- Progress percentage -->
                                 <TextBlock Text="{Binding UpdateProgress, StringFormat={}{0:F1}%}"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{StaticResource TextBrush}"
-                                           Opacity="0.8"
-                                           HorizontalAlignment="Center" />
+                                           Classes="progressPercentage" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -311,37 +265,15 @@
 
                 <!-- Action buttons -->
                 <Border Grid.Row="2"
-                        Background="{StaticResource SurfaceBrush}"
-                        CornerRadius="0,0,16,16"
-                        Padding="24,20"
+                        Classes="updatePromptFooter"
                         IsVisible="{Binding !IsUpdating}">
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 Spacing="12">
                         
-                        <Button Content="Update Now"
+                        <Button Content="{Binding UpdateButtonText}"
                                 Command="{Binding UpdateCommand}"
-                                Width="140"
-                                Height="40"
-                                Background="{StaticResource AccentBrush}"
-                                Foreground="White"
-                                FontWeight="SemiBold"
-                                FontSize="14"
-                                CornerRadius="8"
-                                BorderThickness="0"
-                                Cursor="Hand"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center">
-                            <Button.Styles>
-                                <Style Selector="Button:pointerover">
-                                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
-                                </Style>
-                                <Style Selector="Button:pressed">
-                                    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
-                                    <Setter Property="RenderTransform" Value="scale(0.98)" />
-                                </Style>
-                            </Button.Styles>
-                        </Button>
+                                Classes="updateButton" />
                     </StackPanel>
                 </Border>
             </Grid>

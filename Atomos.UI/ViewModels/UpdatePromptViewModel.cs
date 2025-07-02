@@ -1,8 +1,8 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -28,6 +28,9 @@ public class UpdatePromptViewModel : ViewModelBase
     private string _updateStatus = "Ready to update";
     private double _updateProgress;
     private VersionInfo? _versionInfo;
+    private List<VersionInfo> _allVersions = new();
+    private string _consolidatedChangelog = string.Empty;
+    private bool _showAllVersions;
 
     public bool IsVisible
     {
@@ -70,16 +73,50 @@ public class UpdatePromptViewModel : ViewModelBase
         get => _versionInfo;
         set => this.RaiseAndSetIfChanged(ref _versionInfo, value);
     }
+
+    public List<VersionInfo> AllVersions
+    {
+        get => _allVersions;
+        set => this.RaiseAndSetIfChanged(ref _allVersions, value);
+    }
+
+    public string ConsolidatedChangelog
+    {
+        get => _consolidatedChangelog;
+        set => this.RaiseAndSetIfChanged(ref _consolidatedChangelog, value);
+    }
+
+    public bool ShowAllVersions
+    {
+        get => _showAllVersions;
+        set => this.RaiseAndSetIfChanged(ref _showAllVersions, value);
+    }
     
     public List<ChangeEntry> Changes => VersionInfo?.Changes ?? new List<ChangeEntry>();
     public bool HasChanges => Changes.Count > 0;
     public List<DownloadInfo> AvailableDownloads => VersionInfo?.AvailableDownloads ?? new List<DownloadInfo>();
+    
+    public bool HasMultipleVersions => AllVersions.Count > 1;
+    public int VersionCount => AllVersions.Count;
+    
+    public string UpdateSubtitle => HasMultipleVersions 
+        ? $"{VersionCount} versions of Atomos are ready to install"
+        : "A new version of Atomos is ready to install";
+        
+    public string UpdateButtonText => HasMultipleVersions 
+        ? $"Install {VersionCount} Updates"
+        : "Update Now";
+        
+    public string VersionCountText => HasMultipleVersions 
+        ? $"Updating through {VersionCount} versions"
+        : string.Empty;
 
     public ReactiveCommand<Unit, Unit> UpdateCommand { get; }
     public ReactiveCommand<string, Unit> OpenUrlCommand { get; }
     public ReactiveCommand<ChangeEntry, Unit> OpenAuthorProfileCommand { get; }
     public ReactiveCommand<ChangeEntry, Unit> OpenCommitCommand { get; }
     public ReactiveCommand<ChangeEntry, Unit> OpenPullRequestCommand { get; }
+    public ReactiveCommand<Unit, Unit> ToggleVersionViewCommand { get; }
 
     public UpdatePromptViewModel(IUpdateService updateService, IRunUpdater runUpdater)
     {
@@ -93,6 +130,12 @@ public class UpdatePromptViewModel : ViewModelBase
         OpenAuthorProfileCommand = ReactiveCommand.Create<ChangeEntry>(OpenAuthorProfile);
         OpenCommitCommand = ReactiveCommand.Create<ChangeEntry>(OpenCommit);
         OpenPullRequestCommand = ReactiveCommand.Create<ChangeEntry>(OpenPullRequest);
+        ToggleVersionViewCommand = ReactiveCommand.Create(ToggleVersionView);
+    }
+
+    private void ToggleVersionView()
+    {
+        ShowAllVersions = !ShowAllVersions;
     }
 
     private void OpenUrl(string url)
@@ -158,45 +201,103 @@ public class UpdatePromptViewModel : ViewModelBase
 
             if (isUpdateNeeded)
             {
-                // Get the latest version info including changelog
-                _logger.Debug("Fetching latest version information with changelog");
-                var versionInfo = await _updateService.GetMostRecentVersionInfoAsync("CouncilOfTsukuyomi/Atomos");
+                _logger.Debug("Fetching all version information since current version");
+                var allVersionsSinceCurrentValue = await _updateService.GetAllVersionInfoSinceCurrentAsync(currentVersion, "CouncilOfTsukuyomi/Atomos");
                 
-                if (versionInfo != null)
+                if (allVersionsSinceCurrentValue?.Any() == true)
                 {
-                    VersionInfo = versionInfo;
-                    var cleanedVersion = CleanVersionString(versionInfo.Version);
+                    AllVersions = allVersionsSinceCurrentValue;
+                    
+                    var latestVersion = allVersionsSinceCurrentValue.Last();
+                    VersionInfo = latestVersion;
+                    
+                    var cleanedVersion = CleanVersionString(latestVersion.Version);
                     TargetVersion = cleanedVersion;
                     
-                    _logger.Debug("Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}, changes: {ChangeCount}", 
-                        versionInfo.Version, cleanedVersion, versionInfo.Changes.Count);
-
-                    _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion} with {ChangeCount} changes", 
-                        CurrentVersion, TargetVersion, versionInfo.Changes.Count);
+                    _logger.Debug("Fetching consolidated changelog");
+                    var consolidatedChangelogValue = await _updateService.GetConsolidatedChangelogSinceCurrentAsync(currentVersion, "CouncilOfTsukuyomi/Atomos");
+                    ConsolidatedChangelog = consolidatedChangelogValue;
                     
-                    UpdateStatus = "Ready to update";
+                    var totalChanges = allVersionsSinceCurrentValue.Sum(v => v.Changes.Count);
+                    
+                    _logger.Debug("Retrieved {VersionCount} versions with {TotalChanges} total changes. Latest version: {LatestVersion}", 
+                        allVersionsSinceCurrentValue.Count, totalChanges, cleanedVersion);
+
+                    _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion} ({VersionCount} versions, {TotalChanges} total changes)", 
+                        CurrentVersion, TargetVersion, allVersionsSinceCurrentValue.Count, totalChanges);
+                    
+                    UpdateStatus = HasMultipleVersions 
+                        ? $"Ready to update ({VersionCount} versions)" 
+                        : "Ready to update";
                     UpdateProgress = 0;
+                    ShowAllVersions = false;
                     IsVisible = true;
                     
-                    // Notify UI that changelog properties have changed
                     this.RaisePropertyChanged(nameof(Changes));
                     this.RaisePropertyChanged(nameof(HasChanges));
                     this.RaisePropertyChanged(nameof(AvailableDownloads));
+                    this.RaisePropertyChanged(nameof(HasMultipleVersions));
+                    this.RaisePropertyChanged(nameof(VersionCount));
+                    this.RaisePropertyChanged(nameof(UpdateSubtitle));
+                    this.RaisePropertyChanged(nameof(UpdateButtonText));
+                    this.RaisePropertyChanged(nameof(VersionCountText));
                 }
                 else
                 {
-                    // Fallback to the old method if VersionInfo is not available
-                    _logger.Debug("Falling back to GetMostRecentVersionAsync");
-                    var latestVersion = await _updateService.GetMostRecentVersionAsync("CouncilOfTsukuyomi/Atomos");
-                    var cleanedVersion = CleanVersionString(latestVersion);
-                    TargetVersion = cleanedVersion;
+                    _logger.Debug("Falling back to single version fetch");
+                    var versionInfo = await _updateService.GetMostRecentVersionInfoAsync("CouncilOfTsukuyomi/Atomos");
                     
-                    _logger.Debug("Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}", latestVersion, cleanedVersion);
-                    _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion}", CurrentVersion, TargetVersion);
-                    
-                    UpdateStatus = "Ready to update";
-                    UpdateProgress = 0;
-                    IsVisible = true;
+                    if (versionInfo != null)
+                    {
+                        VersionInfo = versionInfo;
+                        AllVersions = new List<VersionInfo> { versionInfo };
+                        var cleanedVersion = CleanVersionString(versionInfo.Version);
+                        TargetVersion = cleanedVersion;
+                        ConsolidatedChangelog = versionInfo.Changelog;
+                        
+                        _logger.Debug("Fallback: Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}, changes: {ChangeCount}", 
+                            versionInfo.Version, cleanedVersion, versionInfo.Changes.Count);
+
+                        _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion} with {ChangeCount} changes", 
+                            CurrentVersion, TargetVersion, versionInfo.Changes.Count);
+                        
+                        UpdateStatus = "Ready to update";
+                        UpdateProgress = 0;
+                        ShowAllVersions = false;
+                        IsVisible = true;
+                        
+                        this.RaisePropertyChanged(nameof(Changes));
+                        this.RaisePropertyChanged(nameof(HasChanges));
+                        this.RaisePropertyChanged(nameof(AvailableDownloads));
+                        this.RaisePropertyChanged(nameof(HasMultipleVersions));
+                        this.RaisePropertyChanged(nameof(VersionCount));
+                        this.RaisePropertyChanged(nameof(UpdateSubtitle));
+                        this.RaisePropertyChanged(nameof(UpdateButtonText));
+                        this.RaisePropertyChanged(nameof(VersionCountText));
+                    }
+                    else
+                    {
+                        _logger.Debug("Final fallback to GetMostRecentVersionAsync");
+                        var latestVersion = await _updateService.GetMostRecentVersionAsync("CouncilOfTsukuyomi/Atomos");
+                        var cleanedVersion = CleanVersionString(latestVersion);
+                        TargetVersion = cleanedVersion;
+                        
+                        AllVersions = new List<VersionInfo>();
+                        VersionInfo = null;
+                        ConsolidatedChangelog = string.Empty;
+                        ShowAllVersions = false;
+                        
+                        _logger.Debug("Final fallback: Latest version retrieved: {LatestVersion}, cleaned: {CleanedVersion}", latestVersion, cleanedVersion);
+                        _logger.Info("Update available for version: {CurrentVersion} -> {TargetVersion}", CurrentVersion, TargetVersion);
+                        
+                        UpdateStatus = "Ready to update";
+                        UpdateProgress = 0;
+                        IsVisible = true;
+                        
+                        this.RaisePropertyChanged(nameof(UpdateSubtitle));
+                        this.RaisePropertyChanged(nameof(UpdateButtonText));
+                        this.RaisePropertyChanged(nameof(VersionCountText));
+                    }
                 }
             }
             else
@@ -206,6 +307,15 @@ public class UpdatePromptViewModel : ViewModelBase
                 {
                     IsVisible = false;
                     VersionInfo = null;
+                    AllVersions = new List<VersionInfo>();
+                    ConsolidatedChangelog = string.Empty;
+                    ShowAllVersions = false;
+                    
+                    this.RaisePropertyChanged(nameof(HasMultipleVersions));
+                    this.RaisePropertyChanged(nameof(VersionCount));
+                    this.RaisePropertyChanged(nameof(UpdateSubtitle));
+                    this.RaisePropertyChanged(nameof(UpdateButtonText));
+                    this.RaisePropertyChanged(nameof(VersionCountText));
                 }
             }
         }
@@ -224,8 +334,10 @@ public class UpdatePromptViewModel : ViewModelBase
             IsUpdating = true;
             UpdateProgress = 0;
                 
-            UpdateStatus = "Initializing update process...";
-            _logger.Info("User initiated update process from {CurrentVersion} to {TargetVersion}", CurrentVersion, TargetVersion);
+            var versionText = HasMultipleVersions ? $"{VersionCount} versions" : TargetVersion;
+            UpdateStatus = $"Initializing update process for {versionText}...";
+            _logger.Info("User initiated update process from {CurrentVersion} to {TargetVersion} ({VersionCount} versions)", 
+                CurrentVersion, TargetVersion, VersionCount);
             await Task.Delay(500);
                 
             UpdateStatus = "Preparing update environment...";
@@ -235,8 +347,7 @@ public class UpdatePromptViewModel : ViewModelBase
             var installPath = Path.GetDirectoryName(currentExePath) ?? AppContext.BaseDirectory;
             var programToRunAfterInstallation = "Atomos.Launcher.exe";
             await Task.Delay(500);
-
-            // Create progress reporter for the update process
+            
             var progress = new Progress<DownloadProgress>(OnUpdateProgressChanged);
             
             _logger.Debug("Starting download and update process");

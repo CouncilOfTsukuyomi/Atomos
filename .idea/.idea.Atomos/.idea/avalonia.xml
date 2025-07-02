@@ -19,6 +19,7 @@
         <entry key="Atomos.UI/Styles/Elements/PluginStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/SettingsStyles.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Elements/TitleBar.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Styles/Elements/UpdatePromptStyle.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Styles/Icons.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/AboutView .axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/HomeView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
