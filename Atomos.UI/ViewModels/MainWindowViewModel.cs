@@ -54,6 +54,13 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         get => _appLogoSource;
         private set => this.RaiseAndSetIfChanged(ref _appLogoSource, value);
     }
+    
+    private bool _isCheckingForUpdates;
+    public bool IsCheckingForUpdates
+    {
+        get => _isCheckingForUpdates;
+        set => this.RaiseAndSetIfChanged(ref _isCheckingForUpdates, value);
+    }
 
     public ObservableCollection<MenuItem> MenuItems { get; }
     public ObservableCollection<Notification> Notifications =>
@@ -322,10 +329,10 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         try
         {
             _logger.Debug("CheckForUpdatesAsync started. UpdatePromptViewModel.IsVisible: {IsVisible}", UpdatePromptViewModel.IsVisible);
-        
-            // Only check if the update prompt isn't already visible
+            
             if (!UpdatePromptViewModel.IsVisible)
             {
+                IsCheckingForUpdates = true;
                 _logger.Debug("Checking for updates... Current version: {Version}", _currentVersion);
                 await UpdatePromptViewModel.CheckForUpdatesAsync(_currentVersion);
                 _logger.Debug("Update check call completed. UpdatePromptViewModel.IsVisible: {IsVisible}", UpdatePromptViewModel.IsVisible);
@@ -338,6 +345,10 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to check for updates");
+        }
+        finally
+        {
+            IsCheckingForUpdates = false;
         }
     }
 

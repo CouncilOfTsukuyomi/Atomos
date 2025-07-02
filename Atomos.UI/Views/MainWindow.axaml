@@ -1,4 +1,3 @@
-
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -32,10 +31,21 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
-                <!-- Left side with title -->
+                
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Atomos Mod Forwarder" Classes="titleText"/>
+                    
+                    <!-- Update Check Badge -->
+                    <Border IsVisible="{Binding IsCheckingForUpdates}"
+                            Classes="updateCheckBadge"
+                            Margin="10,0,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Border Classes="updateCheckSpinner">
+                                <Ellipse Classes="updateCheckDot"/>
+                            </Border>
+                            <TextBlock Text="Checking for updates..." Classes="updateCheckText"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- Window Controls -->
