@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using SharedResources;
 
 namespace Atomos.UI.Services;
@@ -63,10 +64,13 @@ public class TrayIconManager : ITrayIconManager, IDisposable
             // This helps prevent timing issues with Windows Shell
             Task.Delay(100).ContinueWith(_ =>
             {
-                if (_trayIcon != null && !_disposed)
+                Dispatcher.UIThread.Post(() =>
                 {
-                    _trayIcon.IsVisible = true;
-                }
+                    if (_trayIcon != null && !_disposed)
+                    {
+                        _trayIcon.IsVisible = true;
+                    }
+                });
             });
             
             _isInitialized = true;
@@ -79,7 +83,14 @@ public class TrayIconManager : ITrayIconManager, IDisposable
         {
             if (_trayIcon != null && !_disposed)
             {
-                _trayIcon.IsVisible = true;
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    _trayIcon.IsVisible = true;
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = true);
+                }
             }
         }
     }
@@ -90,7 +101,14 @@ public class TrayIconManager : ITrayIconManager, IDisposable
         {
             if (_trayIcon != null && !_disposed)
             {
-                _trayIcon.IsVisible = false;
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    _trayIcon.IsVisible = false;
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = false);
+                }
             }
         }
     }
@@ -99,10 +117,21 @@ public class TrayIconManager : ITrayIconManager, IDisposable
     {
         if (_trayIcon != null)
         {
-            _trayIcon.IsVisible = false;
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                _trayIcon.IsVisible = false;
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = false);
+            }
+            
             Task.Delay(50).ContinueWith(_ =>
             {
-                _trayIcon?.Dispose();
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _trayIcon?.Dispose();
+                });
             });
             
             _trayIcon = null;
