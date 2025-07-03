@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Reactive;
-using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using ReactiveUI;
 
@@ -9,7 +7,7 @@ namespace Atomos.UI.Models;
 /// <summary>
 /// Represents a UI notification item with distinct fields for the application's name (Title),
 /// a status/level label (Status), and the core message (Message). It also supports progress,
-/// visibility, and a close command that removes the notification via the INotificationService.
+/// visibility, and animation state.
 /// </summary>
 public class Notification : ReactiveObject
 {
@@ -18,7 +16,6 @@ public class Notification : ReactiveObject
     private string _progressText;
     private bool _showProgress;
     private string _animationState = "fade-in";
-    private readonly INotificationService _notificationService;
     
     public bool IsProgressTextRedundant => !string.IsNullOrEmpty(ProgressText) && ProgressText != Title;
         
@@ -29,8 +26,6 @@ public class Notification : ReactiveObject
     public string Message { get; }
     public string TaskId { get; }
         
-    public ReactiveCommand<Unit, Unit> CloseCommand { get; }
-        
     public Notification(
         string title,
         string status,
@@ -38,23 +33,13 @@ public class Notification : ReactiveObject
         INotificationService notificationService,
         bool showProgress = true,
         string taskId = null
-        )
+    )
     {
         Title = title;
         Status = status;
         Message = message;
         TaskId = taskId;
-
-        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         _showProgress = showProgress;
-            
-        CloseCommand = ReactiveCommand.CreateFromTask(CloseAsync);
-        
-        // Handle errors in the close command
-        CloseCommand.ThrownExceptions.Subscribe(ex =>
-        {
-            System.Diagnostics.Debug.WriteLine($"Error in CloseCommand: {ex.Message}");
-        });
     }
 
     public bool IsVisible
@@ -85,23 +70,5 @@ public class Notification : ReactiveObject
     {
         get => _animationState;
         set => this.RaiseAndSetIfChanged(ref _animationState, value);
-    }
-
-    private async Task CloseAsync()
-    {
-        try
-        {
-            if (_notificationService == null)
-            {
-                throw new InvalidOperationException("Notification service is not available");
-            }
-            
-            await _notificationService.RemoveNotificationAsync(this);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error closing notification: {ex.Message}");
-            throw; // Re-throw so ReactiveCommand can handle it
-        }
     }
 }

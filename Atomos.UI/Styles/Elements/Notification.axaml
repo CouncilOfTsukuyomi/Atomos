@@ -166,27 +166,6 @@
                                                  Height="28"/>
                                 </Border>
                             </StackPanel>
-                            
-                            <!-- Enhanced Close Button -->
-                            <Button Grid.Column="2"
-                                    Command="{Binding CloseCommand}"
-                                    Width="36"
-                                    Height="36"
-                                    Padding="0"
-                                    Margin="0,16,16,0"
-                                    VerticalAlignment="Top"
-                                    ToolTip.Tip="Close"
-                                    Classes="notification-close">
-                                <Border CornerRadius="18"
-                                        Background="#22FFFFFF">
-                                    <Path Data="{StaticResource CloseIcon}"
-                                          Stretch="Uniform"
-                                          Width="12"
-                                          Height="12"
-                                          Stroke="#CCCCCC"
-                                          StrokeThickness="1.5"/>
-                                </Border>
-                            </Button>
                         </Grid>
                     </Border>
                 </ExperimentalAcrylicBorder>
