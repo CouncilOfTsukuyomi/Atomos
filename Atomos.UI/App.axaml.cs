@@ -65,10 +65,6 @@ public partial class App : Avalonia.Application
 
                 desktop.MainWindow = mainWindow;
             }
-            
-            var trayIconManager = _serviceProvider.GetRequiredService<ITrayIconManager>();
-            trayIconManager.InitializeTrayIcon();
-            trayIconManager.ShowTrayIcon();
         }
         
         base.OnFrameworkInitializationCompleted();

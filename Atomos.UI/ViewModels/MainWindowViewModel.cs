@@ -33,6 +33,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IConfigurationListener _configurationListener;
     private readonly IConfigurationService _configurationService;
     private readonly ITaskbarFlashService _taskbarFlashService;
+    private readonly ITrayIconManager _trayIconManager;
     
     private Timer? _updateCheckTimer;
     private string _currentVersion = string.Empty;
@@ -114,7 +115,8 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         IConfigurationService configurationService,
         ITaskbarFlashService taskbarFlashService,
         IUpdateService updateService,
-        IRunUpdater runUpdater)
+        IRunUpdater runUpdater, 
+        ITrayIconManager trayIconManager)
     {
         _serviceProvider = serviceProvider;
         _notificationService = notificationService;
@@ -123,7 +125,8 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _soundManagerService = soundManagerService;
         _configurationService = configurationService;
         _taskbarFlashService = taskbarFlashService;
-        
+        _trayIconManager = trayIconManager;
+
         // Load app logo
         LoadAppLogo();
         
@@ -275,8 +278,28 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             }
         });
         
+        await InitializeTrayIconAsync();
+
         _logger.Debug("InitializeAsync completed");
     }
+    
+    private async Task InitializeTrayIconAsync()
+    {
+        try
+        {
+            _logger.Debug("Initializing tray icon");
+            
+            await Task.Delay(250);
+            
+            _trayIconManager.InitializeTrayIcon();
+            _logger.Info("Tray icon initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to initialize tray icon");
+        }
+    }
+
 
     private async Task InitializeWebSocketConnectionWithTimeout(int port, CancellationToken cancellationToken)
     {
