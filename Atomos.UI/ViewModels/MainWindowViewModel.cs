@@ -139,6 +139,13 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             _logger.Info("Enabling Sentry");
             DependencyInjection.EnableSentryLogging();
         }
+        
+        // Check if debug logs is enabled
+        if ((bool) _configurationService.ReturnConfigValue(c => c.AdvancedOptions.EnableDebugLogs))
+        {
+            _logger.Info("Enabling debug logs");
+            DependencyInjection.EnableDebugLogging();
+        }
 
         // Create UpdatePromptViewModel
         UpdatePromptViewModel = new UpdatePromptViewModel(updateService, runUpdater);
