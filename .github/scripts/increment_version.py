@@ -9,6 +9,19 @@ def fail(msg: str):
     print(f"Error: {msg}")
     sys.exit(1)
 
+def get_latest_git_tag():
+    """Get the latest git tag to understand what version was last released"""
+    try:
+        latest_tag = subprocess.check_output(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+        # Remove 'v' prefix if present and any beta suffix
+        clean_tag = latest_tag.replace('v', '').replace('-b', '')
+        return clean_tag
+    except subprocess.CalledProcessError:
+        return "0.0.0"  # No tags exist
+
 def main():
     # 1) Check if Directory.Build.props exists
     if not os.path.isfile("Directory.Build.props"):
@@ -44,27 +57,66 @@ def main():
     except ValueError:
         fail("Major/Minor/Patch elements must be valid integers.")
 
-    # 4) Increment based on environment variable RELEASE_TYPE
+    # 4) Get release type and beta flag
     release_type = os.environ.get("RELEASE_TYPE", "patch")
+    is_beta = os.environ.get("IS_BETA", "false").lower() == "true"
+
+    # 5) Get the latest released version from git tags
+    latest_released = get_latest_git_tag()
+    latest_parts = latest_released.split('.')
+
+    try:
+        latest_major = int(latest_parts[0]) if len(latest_parts) > 0 else 0
+        latest_minor = int(latest_parts[1]) if len(latest_parts) > 1 else 0
+        latest_patch = int(latest_parts[2]) if len(latest_parts) > 2 else 0
+    except ValueError:
+        latest_major = latest_minor = latest_patch = 0
+
+    # 6) Calculate what the next version should be based on release type
     if release_type == "patch":
-        current_patch += 1
+        target_major = latest_major
+        target_minor = latest_minor
+        target_patch = latest_patch + 1
     elif release_type == "minor":
-        current_minor += 1
-        current_patch = 0
+        target_major = latest_major
+        target_minor = latest_minor + 1
+        target_patch = 0
     elif release_type == "major":
-        current_major += 1
-        current_minor = 0
-        current_patch = 0
+        target_major = latest_major + 1
+        target_minor = 0
+        target_patch = 0
+    else:
+        fail(f"Unknown release type: {release_type}")
 
-    new_version = f"{current_major}.{current_minor}.{current_patch}"
+    # 7) Check if current version is already at target version
+    current_version = f"{current_major}.{current_minor}.{current_patch}"
+    target_version = f"{target_major}.{target_minor}.{target_patch}"
 
-    # 5) Print outputs for subsequent steps
+    if current_version == target_version:
+        # We're already at the target version, don't increment
+        final_major = current_major
+        final_minor = current_minor
+        final_patch = current_patch
+        print(f"Current version {current_version} is already at target for {release_type} release")
+    else:
+        # Set to target version
+        final_major = target_major
+        final_minor = target_minor
+        final_patch = target_patch
+        print(f"Incrementing from {current_version} to {target_version}")
+
+    # 8) Build version string
+    new_version = f"{final_major}.{final_minor}.{final_patch}"
+    if is_beta:
+        new_version += "-b"
+
+    # 9) Print outputs for subsequent steps
     print(f"::set-output name=fullsemver::{new_version}")
-    print(f"::set-output name=major::{current_major}")
-    print(f"::set-output name=minor::{current_minor}")
-    print(f"::set-output name=patch::{current_patch}")
+    print(f"::set-output name=major::{final_major}")
+    print(f"::set-output name=minor::{final_minor}")
+    print(f"::set-output name=patch::{final_patch}")
 
-    # 6) For tag comparison, pick up the latest annotated tag if it exists
+    # 10) For tag comparison, get the previous tag
     try:
         previous_tag = subprocess.check_output(
             ["git", "describe", "--tags", "--abbrev=0"],

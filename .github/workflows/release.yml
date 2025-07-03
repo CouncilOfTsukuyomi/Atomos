@@ -75,9 +75,11 @@ jobs:
               shell: pwsh
               run: |
                   $env:RELEASE_TYPE = "${{ github.event.inputs.releaseType }}"
+                  $env:IS_BETA = "${{ github.event.inputs.isBeta }}"
                   python .github/scripts/increment_version.py
               env:
                   RELEASE_TYPE: ${{ github.event.inputs.releaseType }}
+                  IS_BETA: ${{ github.event.inputs.isBeta }}
 
             - name: Update Directory.Build.props Versions
               shell: pwsh
