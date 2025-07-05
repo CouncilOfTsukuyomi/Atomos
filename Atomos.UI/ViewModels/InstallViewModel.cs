@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -29,7 +30,10 @@ public class InstallViewModel : ViewModelBase, IDisposable
     private readonly ISoundManagerService _soundManagerService;
     private readonly ITaskbarFlashService _taskbarFlashService;
 
-    private string _currentTaskId;
+    private readonly ConcurrentQueue<FileSelectionRequest> _selectionQueue = new();
+    private FileSelectionRequest _currentRequest;
+    private bool _isProcessingQueue;
+    
     private bool _isSelectionVisible;
     private bool _areAllSelected;
     private bool _showSelectAll;
@@ -106,12 +110,49 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
     private void OnFileSelectionRequested(object sender, FileSelectionRequestedEventArgs e)
     {
-        Dispatcher.UIThread.Post(async () =>
+        var request = new FileSelectionRequest
         {
-            _currentTaskId = e.TaskId;
+            TaskId = e.TaskId,
+            AvailableFiles = e.AvailableFiles.ToList()
+        };
+
+        _selectionQueue.Enqueue(request);
+        _logger.Info("Queued file selection request for task {TaskId}. Queue size: {QueueSize}", 
+            e.TaskId, _selectionQueue.Count);
+
+        _ = Task.Run(ProcessQueueAsync);
+    }
+
+    private async Task ProcessQueueAsync()
+    {
+        if (_isProcessingQueue)
+        {
+            return;
+        }
+
+        _isProcessingQueue = true;
+
+        try
+        {
+            while (_selectionQueue.TryDequeue(out var request))
+            {
+                await ProcessFileSelectionRequest(request);
+            }
+        }
+        finally
+        {
+            _isProcessingQueue = false;
+        }
+    }
+
+    private async Task ProcessFileSelectionRequest(FileSelectionRequest request)
+    {
+        await Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            _currentRequest = request;
             Files.Clear();
 
-            foreach (var file in e.AvailableFiles)
+            foreach (var file in request.AvailableFiles)
             {
                 var fileName = Path.GetFileName(file);
                 var fileItem = new FileItemViewModel
@@ -130,10 +171,12 @@ public class InstallViewModel : ViewModelBase, IDisposable
                 };
 
                 Files.Add(fileItem);
-                _logger.Info("Added file {FileName}", fileName);
+                _logger.Info("Added file {FileName} for task {TaskId}", fileName, request.TaskId);
             }
 
-            _logger.Info("Selected {FileCount} files", Files.Count);
+            _logger.Info("Processing file selection for task {TaskId} with {FileCount} files", 
+                request.TaskId, Files.Count);
+            
             UpdateAreAllSelectedProperty();
             UpdateShowSelectAllProperty();
             IsSelectionVisible = true;
@@ -154,6 +197,21 @@ public class InstallViewModel : ViewModelBase, IDisposable
                 }
             }
         });
+        
+        await WaitForUserInteraction();
+    }
+
+    private TaskCompletionSource<bool> _userInteractionTcs;
+
+    private async Task WaitForUserInteraction()
+    {
+        _userInteractionTcs = new TaskCompletionSource<bool>();
+        await _userInteractionTcs.Task;
+    }
+
+    private void CompleteUserInteraction()
+    {
+        _userInteractionTcs?.SetResult(true);
     }
 
     private void ExecuteSelectAllCommand()
@@ -187,6 +245,12 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
     private async Task ExecuteInstallCommand()
     {
+        if (_currentRequest == null)
+        {
+            _logger.Warn("No current request to process");
+            return;
+        }
+
         var selectedFiles = Files
             .Where(f => f.IsSelected)
             .Select(f => f.FilePath)
@@ -195,7 +259,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
         var responseMessage = new WebSocketMessage
         {
             Type = WebSocketMessageType.Status,
-            TaskId = _currentTaskId,
+            TaskId = _currentRequest.TaskId,
             Status = "user_archive_selection",
             Progress = 0,
             Message = JsonConvert.SerializeObject(selectedFiles)
@@ -206,26 +270,37 @@ public class InstallViewModel : ViewModelBase, IDisposable
         
         _taskbarFlashService.StopFlashing();
 
-        _logger.Info("User selected archive files sent: {SelectedFiles}", selectedFiles);
+        _logger.Info("User selected archive files sent for task {TaskId}: {SelectedFiles}", 
+            _currentRequest.TaskId, selectedFiles);
+
+        CompleteUserInteraction();
     }
 
     private async Task ExecuteCancelCommand()
     {
+        if (_currentRequest == null)
+        {
+            _logger.Warn("No current request to cancel");
+            return;
+        }
+
         IsSelectionVisible = false;
-        _logger.Info("User canceled the archive file selection.");
+        _logger.Info("User canceled the archive file selection for task {TaskId}", _currentRequest.TaskId);
         
         _taskbarFlashService.StopFlashing();
         
         var responseMessage = new WebSocketMessage
         {
             Type = WebSocketMessageType.Status,
-            TaskId = _currentTaskId,
+            TaskId = _currentRequest.TaskId,
             Status = "user_archive_selection",
             Progress = 0,
             Message = JsonConvert.SerializeObject(new List<string>())
         };
 
         await _webSocketClient.SendMessageAsync(responseMessage, "/extract");
+        
+        CompleteUserInteraction();
     }
 
     public void Dispose()
@@ -237,5 +312,11 @@ public class InstallViewModel : ViewModelBase, IDisposable
             _standaloneWindow.Close();
             _standaloneWindow = null;
         }
+    }
+
+    private class FileSelectionRequest
+    {
+        public string TaskId { get; set; }
+        public List<string> AvailableFiles { get; set; }
     }
 }
