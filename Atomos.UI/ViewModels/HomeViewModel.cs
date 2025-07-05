@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
+using System.Diagnostics;
+using System.IO;
+using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
@@ -11,7 +13,6 @@ using Atomos.UI.Models;
 using CommonLib.Consts;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
-using CommonLib.Models;
 using NLog;
 using ReactiveUI;
 
@@ -55,6 +56,8 @@ public class HomeViewModel : ViewModelBase, IDisposable
         get => _isLoading;
         set => this.RaiseAndSetIfChanged(ref _isLoading, value);
     }
+
+    public ReactiveCommand<Unit, Unit> OpenModsFolderCommand { get; }
     
     public HomeViewModel(
         IStatisticService statisticService,
@@ -67,11 +70,64 @@ public class HomeViewModel : ViewModelBase, IDisposable
 
         InfoItems = new ObservableCollection<InfoItem>();
         RegularStats = new ObservableCollection<InfoItem>();
+
+        OpenModsFolderCommand = ReactiveCommand.Create(OpenModsFolder);
         
         _webSocketClient.ModInstalled += OnModInstalled;
 
         _ = LoadStatisticsAsync();
     }
+
+    private void OpenModsFolder()
+    {
+        try
+        {
+            var modsPath = ConfigurationConsts.ModsPath;
+            
+            modsPath = Path.GetFullPath(modsPath);
+        
+            _logger.Info("Opening mods folder: {ModsPath}", modsPath);
+            
+            if (!Directory.Exists(modsPath))
+            {
+                _logger.Warn("Mods directory does not exist, creating: {ModsPath}", modsPath);
+                Directory.CreateDirectory(modsPath);
+            }
+        
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{modsPath}\"",
+                    UseShellExecute = true
+                });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "xdg-open",
+                    Arguments = $"\"{modsPath}\"",
+                    UseShellExecute = true
+                });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "open",
+                    Arguments = $"\"{modsPath}\"",
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to open mods folder");
+        }
+    }
+
 
     private async void OnModInstalled(object sender, EventArgs e)
     {
@@ -99,7 +155,7 @@ public class HomeViewModel : ViewModelBase, IDisposable
             newItems.Add(new InfoItem("Mods Installed Today", modsInstalledToday.ToString()));
 
             var modsFolderSizeLabel = _fileSizeService.GetFolderSizeLabel(ConfigurationConsts.ModsPath);
-            newItems.Add(new InfoItem("Mods Folder Size", modsFolderSizeLabel));
+            newItems.Add(new InfoItem("Mods Folder Size", modsFolderSizeLabel, OpenModsFolderCommand));
 
             // Separate the regular stats from the last mod installed
             RegularStats = newItems;

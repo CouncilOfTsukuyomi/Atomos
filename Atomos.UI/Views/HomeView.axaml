@@ -48,19 +48,26 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="models:InfoItem">
-            <Border Classes="homeCard" Margin="8" MinWidth="220" MaxWidth="280">
-              <StackPanel Spacing="16">
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                  <Border Classes="statIcon" Background="#1B2196F3">
-                    <TextBlock Text="📋" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </Border>
-                  <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Name}" Classes="statLabel"/>
-                    <TextBlock Text="{Binding Value}" Classes="statValue" Foreground="#2196F3"/>
+            <Button Classes="homeCardButton" 
+                    Command="{Binding Command}"
+                    IsEnabled="{Binding Command, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    Margin="8" 
+                    MinWidth="220" 
+                    MaxWidth="280">
+              <Border Classes="homeCard">
+                <StackPanel Spacing="16">
+                  <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Border Classes="statIcon" Background="#1B2196F3">
+                      <TextBlock Text="📋" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Name}" Classes="statLabel"/>
+                      <TextBlock Text="{Binding Value}" Classes="statValue" Foreground="#2196F3"/>
+                    </StackPanel>
                   </StackPanel>
                 </StackPanel>
-              </StackPanel>
-            </Border>
+              </Border>
+            </Button>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
