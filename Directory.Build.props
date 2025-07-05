@@ -3,10 +3,10 @@
         <!-- Version components -->
         <MajorVersion>1</MajorVersion>
         <MinorVersion>1</MinorVersion>
-        <PatchVersion>10</PatchVersion>
+        <PatchVersion>11</PatchVersion>
 
         <!-- Controls whether we're doing a beta build -->
-        <IsBeta>false</IsBeta>
+        <IsBeta>true</IsBeta>
     </PropertyGroup>
 
     <!-- If we're building a beta release, set the prerelease label to 'b' -->
