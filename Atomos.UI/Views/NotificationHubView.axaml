@@ -25,7 +25,6 @@
                 </Transitions>
             </Border.Transitions>
             
-            <!-- Add pointer event handling to the background overlay -->
             <i:Interaction.Behaviors>
                 <behaviours:PointerReleasedBehaviour Command="{Binding CloseNotificationFlyoutCommand}"/>
             </i:Interaction.Behaviors>
@@ -41,7 +40,8 @@
                 Background="{DynamicResource AccentBrush}"
                 CornerRadius="25"
                 Cursor="Hand"
-                Classes="notificationButton">
+                Classes="notificationButton"
+                IsVisible="{Binding ShowNotificationButton}">
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using Atomos.UI.Services;
 using Avalonia;
+using CommonLib.Events;
 using CommonLib.Interfaces;
 using NLog;
 using ReactiveUI;
@@ -22,6 +23,7 @@ public class NotificationHubViewModel : ViewModelBase
     
     private bool _isVisible = true;
     private bool _isNotificationFlyoutOpen;
+    private bool _showNotificationButton = true;
     private double _buttonX;
     private double _buttonY;
     private double _flyoutX = 20;
@@ -50,6 +52,13 @@ public class NotificationHubViewModel : ViewModelBase
         get => _isNotificationFlyoutOpen;
         set => this.RaiseAndSetIfChanged(ref _isNotificationFlyoutOpen, value);
     }
+    
+    public bool ShowNotificationButton
+    {
+        get => _showNotificationButton;
+        set => this.RaiseAndSetIfChanged(ref _showNotificationButton, value);
+    }
+
 
     public double ButtonX
     {
@@ -131,7 +140,11 @@ public class NotificationHubViewModel : ViewModelBase
         _configurationService = configurationService;
         
         _logger.Info($"NotificationHubViewModel initializing with service type: {_notificationService?.GetType().Name ?? "null"}");
-
+        
+        LoadConfiguration();
+        
+        _configurationService.ConfigurationChanged += OnConfigurationChanged;
+        
         // Load saved position
         LoadPosition();
 
@@ -186,6 +199,31 @@ public class NotificationHubViewModel : ViewModelBase
         
         _logger.Info("NotificationHubViewModel initialized");
     }
+    
+    private void LoadConfiguration()
+    {
+        try
+        {
+            var showButton = (bool)_configurationService.ReturnConfigValue(c => c.UI.ShowNotificationButton);
+            ShowNotificationButton = showButton;
+            _logger.Debug($"Loaded ShowNotificationButton setting: {showButton}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn(ex, "Failed to load ShowNotificationButton setting, using default");
+            ShowNotificationButton = true;
+        }
+    }
+
+    private void OnConfigurationChanged(object? sender, ConfigurationChangedEventArgs e)
+    {
+        if (e.PropertyName == "UI.ShowNotificationButton" && e.NewValue is bool showButton)
+        {
+            _logger.Debug($"ShowNotificationButton changed to: {showButton}");
+            ShowNotificationButton = showButton;
+        }
+    }
+
 
     private void LoadPosition()
     {
@@ -423,4 +461,10 @@ public class NotificationHubViewModel : ViewModelBase
         
         return copy;
     }
+    
+    public void Dispose()
+    {
+        _configurationService.ConfigurationChanged -= OnConfigurationChanged;
+    }
+
 }
