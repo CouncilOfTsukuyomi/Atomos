@@ -136,5 +136,47 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
+    
+    <!-- Beta Badge -->
+    <Style Selector="Border.betaBadge">
+        <Setter Property="Background" Value="#FF6B35"/>
+        <Setter Property="BorderBrush" Value="#FF8C42"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #40000000"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.3"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Beta Badge Text -->
+    <Style Selector="TextBlock.betaText">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="LetterSpacing" Value="0.5"/>
+    </Style>
+
+    <!-- Beta Badge Pulse Animation -->
+    <Style Selector="Border.betaBadge">
+        <Style.Animations>
+            <Animation Duration="0:0:2" IterationCount="INFINITE" Easing="SineEaseInOut">
+                <KeyFrame Cue="0%">
+                    <Setter Property="Opacity" Value="1"/>
+                </KeyFrame>
+                <KeyFrame Cue="50%">
+                    <Setter Property="Opacity" Value="0.7"/>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="Opacity" Value="1"/>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
 
 </Styles>

@@ -34,7 +34,14 @@
                 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Atomos Mod Forwarder" Classes="titleText"/>
-                    
+    
+                    <!-- Beta Badge -->
+                    <Border IsVisible="{Binding IsBetaBuild}"
+                            Classes="betaBadge"
+                            Margin="10,0,0,0">
+                        <TextBlock Text="BETA" Classes="betaText"/>
+                    </Border>
+    
                     <!-- Update Check Badge -->
                     <Border IsVisible="{Binding IsCheckingForUpdates}"
                             Classes="updateCheckBadge"

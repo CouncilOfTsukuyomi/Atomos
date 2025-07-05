@@ -112,6 +112,8 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             _logger.Debug("Window size updated to: {Width} x {Height}", value.Width, value.Height);
         }
     }
+    
+    public bool IsBetaBuild { get; private set; }
 
     public ICommand NavigateToSettingsCommand { get; }
     public ICommand NavigateToAboutCommand { get; }
@@ -145,7 +147,17 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         var assembly = Assembly.GetExecutingAssembly();
         var version = assembly.GetName().Version;
         _currentVersion = version == null ? "Local Build" : $"{version.Major}.{version.Minor}.{version.Build}";
-        _logger.Info("Application version determined: {Version}", _currentVersion);
+
+        // Check if this is a beta build by examining the informational version
+        var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var isBetaBuild = !string.IsNullOrEmpty(informationalVersion) && 
+                          (informationalVersion.Contains("-b") || informationalVersion.Contains("beta")) ||
+                          _currentVersion.Contains("Local Build") ||
+                          System.Diagnostics.Debugger.IsAttached;
+
+        IsBetaBuild = isBetaBuild;
+        _logger.Info("Application version determined: {Version} (Beta: {IsBeta})", _currentVersion, isBetaBuild);
+
         
         // Check the configuration to see if Sentry is enabled at startup
         if ((bool)_configurationService.ReturnConfigValue(c => c.Common.EnableSentry))
