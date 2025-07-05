@@ -48,7 +48,7 @@ public static class DependencyInjection
             .AddEnvironmentVariables()
             .Build();
 
-        var sentryDns = configuration["SENTRY_DNS"];
+        var sentryDns = configuration["SENTRY_DSN"];
         if (string.IsNullOrWhiteSpace(sentryDns))
         {
             Console.WriteLine("No SENTRY_DSN provided. Skipping Sentry enablement.");
