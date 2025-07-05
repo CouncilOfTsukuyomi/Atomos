@@ -13,59 +13,77 @@
 
         <ExperimentalAcrylicBorder
             Material="{StaticResource ContentAcrylicMaterial}"
-            Padding="20"
-            MaxWidth="500"
-            MaxHeight="300"
+            Padding="24"
+            MaxWidth="420"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            CornerRadius="10">
+            CornerRadius="12">
 
-            <StackPanel Spacing="15">
+            <StackPanel Spacing="20">
                 <!-- Title -->
-                <TextBlock
-                    Text="Enable Sentry"
-                    FontSize="20"
-                    FontWeight="Bold"
-                    Foreground="{StaticResource TextBrush}"
-                    HorizontalAlignment="Center" />
-
-                <!-- Sentry information -->
-                <StackPanel Spacing="5">
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Center"
+                            Spacing="8">
+                    <TextBlock Text="🛡️" FontSize="18" />
                     <TextBlock
-                        Text="• Sentry helps track crashes and errors to improve your experience."
-                        FontSize="14"
-                        Foreground="{StaticResource TextBrush}"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        Text="• No personal data is collected."
-                        FontSize="14"
-                        Foreground="{StaticResource TextBrush}"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        Text="• You can change this preference at any time on the Settings page."
-                        FontSize="14"
-                        Foreground="{StaticResource TextBrush}"
-                        TextWrapping="Wrap" />
+                        Text="Error Reporting"
+                        FontSize="18"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource TextBrush}" />
                 </StackPanel>
 
-                <!-- Button panel -->
+                <!-- Main message -->
+                <TextBlock
+                    Text="Help improve Atomos by automatically reporting crashes and errors."
+                    FontSize="14"
+                    Foreground="{StaticResource TextBrush}"
+                    TextWrapping="Wrap"
+                    TextAlignment="Center"
+                    LineHeight="20" />
+
+                <!-- Data disclosure -->
+                <Border Background="{StaticResource SurfaceBrush}"
+                        CornerRadius="8"
+                        Padding="12"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            Text="Data collected: Error details, IP address, username, system info"
+                            FontSize="11"
+                            Foreground="{StaticResource TextBrush}"
+                            TextWrapping="Wrap"
+                            TextAlignment="Center" />
+                        <TextBlock
+                            Text="Change anytime in Settings"
+                            FontSize="10"
+                            Foreground="{StaticResource DisabledTextBrush}"
+                            TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Action buttons -->
                 <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Spacing="10">
+                            HorizontalAlignment="Center"
+                            Spacing="12">
 
                     <Button
-                        Content="No"
+                        Content="Not Now"
                         Command="{Binding DeclineCommand}"
-                        Width="100"
-                        Background="{StaticResource SecondaryBrush}"
+                        MinWidth="80"
+                        Padding="12,8"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
                         Foreground="{StaticResource TextBrush}"
                         Classes="ButtonStyle" />
 
                     <Button
-                        Content="Yes"
+                        Content="Enable"
                         Command="{Binding AcceptCommand}"
-                        Width="100"
-                        Background="{StaticResource AccentBrush}"
+                        MinWidth="80"
+                        Padding="12,8"
+                        Background="{StaticResource EnableBrush}"
                         Foreground="{StaticResource TextBrush}"
                         Classes="ButtonStyle" />
                 </StackPanel>
