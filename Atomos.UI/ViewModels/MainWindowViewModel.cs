@@ -12,6 +12,7 @@ using Atomos.UI.Services;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -60,7 +61,17 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     public bool IsCheckingForUpdates
     {
         get => _isCheckingForUpdates;
-        set => this.RaiseAndSetIfChanged(ref _isCheckingForUpdates, value);
+        set
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                this.RaiseAndSetIfChanged(ref _isCheckingForUpdates, value);
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(() => this.RaiseAndSetIfChanged(ref _isCheckingForUpdates, value));
+            }
+        }
     }
 
     public ObservableCollection<MenuItem> MenuItems { get; }
