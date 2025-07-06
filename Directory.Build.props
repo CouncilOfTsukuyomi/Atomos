@@ -3,7 +3,7 @@
         <!-- Version components -->
         <MajorVersion>1</MajorVersion>
         <MinorVersion>1</MinorVersion>
-        <PatchVersion>11</PatchVersion>
+        <PatchVersion>12</PatchVersion>
 
         <!-- Controls whether we're doing a beta build -->
         <IsBeta>false</IsBeta>
