@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -30,7 +29,7 @@ public class TrayIconManager : ITrayIconManager, IDisposable
                 return;
             }
             
-            DisposeTrayIcon();
+            DisposeTrayIconSync();
 
             var iconStream = ResourceLoader.GetResourceStream("Purple_arrow_cat_icon.ico");
             if (iconStream == null)
@@ -60,18 +59,14 @@ public class TrayIconManager : ITrayIconManager, IDisposable
             _trayIcon.Menu.Items.Add(showMenuItem);
             _trayIcon.Menu.Items.Add(exitMenuItem);
             
-            // Add a small delay before making the icon visible
-            // This helps prevent timing issues with Windows Shell
-            Task.Delay(100).ContinueWith(_ =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    if (_trayIcon != null && !_disposed)
-                    {
-                        _trayIcon.IsVisible = true;
-                    }
-                });
-            });
+                _trayIcon.IsVisible = true;
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = true);
+            }
             
             _isInitialized = true;
         }
@@ -113,26 +108,24 @@ public class TrayIconManager : ITrayIconManager, IDisposable
         }
     }
 
-    private void DisposeTrayIcon()
+    private void DisposeTrayIconSync()
     {
         if (_trayIcon != null)
         {
+            // Hide the icon first
             if (Dispatcher.UIThread.CheckAccess())
             {
                 _trayIcon.IsVisible = false;
+                _trayIcon.Dispose();
             }
             else
             {
-                Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = false);
-            }
-            
-            Task.Delay(50).ContinueWith(_ =>
-            {
-                Dispatcher.UIThread.Post(() =>
+                Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    _trayIcon?.Dispose();
-                });
-            });
+                    _trayIcon.IsVisible = false;
+                    _trayIcon.Dispose();
+                }).Wait();
+            }
             
             _trayIcon = null;
         }
@@ -144,7 +137,7 @@ public class TrayIconManager : ITrayIconManager, IDisposable
         {
             if (!_disposed)
             {
-                DisposeTrayIcon();
+                DisposeTrayIconSync();
                 _disposed = true;
                 _isInitialized = false;
             }
