@@ -1,6 +1,6 @@
-﻿using System;
+﻿
+using System;
 using System.IO;
-using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -30,7 +30,7 @@ public class TrayIconManager : ITrayIconManager, IDisposable
                 return;
             }
             
-            DisposeTrayIcon();
+            DisposeTrayIconSync();
 
             var iconStream = ResourceLoader.GetResourceStream("Purple_arrow_cat_icon.ico");
             if (iconStream == null)
@@ -41,42 +41,154 @@ public class TrayIconManager : ITrayIconManager, IDisposable
             _trayIcon = new TrayIcon
             {
                 Icon = new WindowIcon(iconStream),
-                ToolTipText = "Atomos",
-                Menu = new NativeMenu()
+                ToolTipText = GetMinimalTooltipText(),
+                Menu = CreateMinimalTrayMenu()
             };
             
-            var showMenuItem = new NativeMenuItem("Show");
-            showMenuItem.Click += (sender, args) =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                _trayIconController.ShowCommand.Execute().Subscribe();
-            };
-            
-            var exitMenuItem = new NativeMenuItem("Exit");
-            exitMenuItem.Click += (sender, args) =>
+                _trayIcon.IsVisible = true;
+            }
+            else
             {
-                _trayIconController.ExitCommand.Execute().Subscribe();
-            };
-            
-            _trayIcon.Menu.Items.Add(showMenuItem);
-            _trayIcon.Menu.Items.Add(exitMenuItem);
-            
-            // Add a small delay before making the icon visible
-            // This helps prevent timing issues with Windows Shell
-            Task.Delay(100).ContinueWith(_ =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    if (_trayIcon != null && !_disposed)
-                    {
-                        _trayIcon.IsVisible = true;
-                    }
-                });
-            });
+                Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = true);
+            }
             
             _isInitialized = true;
         }
     }
+
+    private string GetMinimalTooltipText()
+    {
+        var connectionStatus = _trayIconController.GetConnectionStatus();
+        var notificationCount = _trayIconController.GetActiveNotificationsCount();
+        
+        var statusIndicator = connectionStatus switch
+        {
+            "Connected" => "🟢",
+            "Disconnected" => "🔴", 
+            "Partial" when connectionStatus.Contains("/") => "🟡",
+            _ => "⚪"
+        };
+
+        var tooltip = $"Atomos {statusIndicator}";
+        
+        if (notificationCount > 0)
+        {
+            tooltip += $" ({notificationCount})";
+        }
+
+        return tooltip;
+    }
+
+    private NativeMenu CreateMinimalTrayMenu()
+    {
+        var menu = new NativeMenu();
+        var connectionStatus = _trayIconController.GetConnectionStatus();
+        var notificationCount = _trayIconController.GetActiveNotificationsCount();
+        
+        var showMenuItem = new NativeMenuItem("Open Atomos");
+        showMenuItem.Click += (sender, args) => _trayIconController.ShowCommand.Execute().Subscribe();
+        
+        var statusIcon = connectionStatus switch
+        {
+            "Connected" => "🟢",
+            "Disconnected" => "🔴",
+            "Partial" when connectionStatus.Contains("/") => "🟡", 
+            _ => "⚪"
+        };
+        
+        var statusMenuItem = new NativeMenuItem($"{statusIcon} {connectionStatus}")
+        {
+            IsEnabled = false
+        };
+        
+        if (notificationCount > 0)
+        {
+            var notificationMenuItem = new NativeMenuItem($"🔔 {notificationCount} notification{(notificationCount == 1 ? "" : "s")}")
+            {
+                IsEnabled = false
+            };
+            menu.Items.Add(notificationMenuItem);
+        }
+        
+        var actionsMenu = new NativeMenuItem("Actions");
+        var actionsSubMenu = new NativeMenu();
+        
+        var checkUpdatesMenuItem = new NativeMenuItem("🔄 Check Updates");
+        checkUpdatesMenuItem.Click += (sender, args) => _trayIconController.CheckUpdatesCommand.Execute().Subscribe();
+
+        var refreshPluginsMenuItem = new NativeMenuItem("🔌 Refresh Plugins");
+        refreshPluginsMenuItem.Click += (sender, args) => _trayIconController.RefreshPluginsCommand.Execute().Subscribe();
+
+        actionsSubMenu.Items.Add(checkUpdatesMenuItem);
+        actionsSubMenu.Items.Add(refreshPluginsMenuItem);
+        actionsMenu.Menu = actionsSubMenu;
+        
+        menu.Items.Add(showMenuItem);
+        menu.Items.Add(new NativeMenuItemSeparator());
+        menu.Items.Add(statusMenuItem);
+        
+        if (notificationCount > 0)
+        {
+            menu.Items.Add(new NativeMenuItemSeparator());
+        }
+        
+        menu.Items.Add(actionsMenu);
+        menu.Items.Add(new NativeMenuItemSeparator());
+        
+        var exitMenuItem = new NativeMenuItem("❌ Exit");
+        exitMenuItem.Click += (sender, args) => _trayIconController.ExitCommand.Execute().Subscribe();
+        menu.Items.Add(exitMenuItem);
+
+        return menu;
+    }
     
+    private NativeMenu CreateUltraMinimalTrayMenu()
+    {
+        var menu = new NativeMenu();
+
+        // Just the essentials
+        var showMenuItem = new NativeMenuItem("Open");
+        showMenuItem.Click += (sender, args) => _trayIconController.ShowCommand.Execute().Subscribe();
+
+        var refreshMenuItem = new NativeMenuItem("Refresh");
+        refreshMenuItem.Click += (sender, args) => _trayIconController.RefreshPluginsCommand.Execute().Subscribe();
+
+        var exitMenuItem = new NativeMenuItem("Exit");
+        exitMenuItem.Click += (sender, args) => _trayIconController.ExitCommand.Execute().Subscribe();
+
+        menu.Items.Add(showMenuItem);
+        menu.Items.Add(refreshMenuItem);
+        menu.Items.Add(new NativeMenuItemSeparator());
+        menu.Items.Add(exitMenuItem);
+
+        return menu;
+    }
+
+    public void RefreshMenu()
+    {
+        lock (_lock)
+        {
+            if (_trayIcon != null && !_disposed)
+            {
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    _trayIcon.Menu = CreateMinimalTrayMenu();
+                    _trayIcon.ToolTipText = GetMinimalTooltipText();
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        _trayIcon.Menu = CreateMinimalTrayMenu();
+                        _trayIcon.ToolTipText = GetMinimalTooltipText();
+                    });
+                }
+            }
+        }
+    }
+
     public void ShowTrayIcon()
     {
         lock (_lock)
@@ -113,26 +225,23 @@ public class TrayIconManager : ITrayIconManager, IDisposable
         }
     }
 
-    private void DisposeTrayIcon()
+    private void DisposeTrayIconSync()
     {
         if (_trayIcon != null)
         {
             if (Dispatcher.UIThread.CheckAccess())
             {
                 _trayIcon.IsVisible = false;
+                _trayIcon.Dispose();
             }
             else
             {
-                Dispatcher.UIThread.Post(() => _trayIcon.IsVisible = false);
-            }
-            
-            Task.Delay(50).ContinueWith(_ =>
-            {
-                Dispatcher.UIThread.Post(() =>
+                Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    _trayIcon?.Dispose();
-                });
-            });
+                    _trayIcon.IsVisible = false;
+                    _trayIcon.Dispose();
+                }).Wait();
+            }
             
             _trayIcon = null;
         }
@@ -144,7 +253,7 @@ public class TrayIconManager : ITrayIconManager, IDisposable
         {
             if (!_disposed)
             {
-                DisposeTrayIcon();
+                DisposeTrayIconSync();
                 _disposed = true;
                 _isInitialized = false;
             }

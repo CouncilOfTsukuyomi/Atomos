@@ -98,19 +98,17 @@ public class NotificationService : ReactiveObject, INotificationService
 
     private bool IsNotificationEnabled() =>
         (bool)_configurationService.ReturnConfigValue(config => config.UI.NotificationEnabled);
-
-    // FIXED: Pass 'this' as the notification service parameter
+    
     private Notification CreateNotification(string title, string status, string message, bool showProgress = false, string taskId = null) =>
-        new(title, status, message, this, showProgress, taskId) // Added 'this' parameter
+        new(title, status, message, this, showProgress, taskId)
         {
             IsVisible = true,
             Progress = 0,
             AnimationState = "fade-in" // Set initial animation state
         };
-
-    // FIXED: Pass 'this' as the notification service parameter
+    
     private Notification CreateProgressNotification(string title, string status, int progress, string taskId) =>
-        new(title, "In Progress", "Task in progress...", this, true, taskId) // Added 'this' parameter
+        new(title, "In Progress", "Task in progress...", this, true, taskId)
         {
             IsVisible = true,
             Progress = progress,
