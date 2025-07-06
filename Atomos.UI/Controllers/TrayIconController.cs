@@ -1,78 +1,202 @@
-﻿using System.Reactive;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reactive;
+using System.Reflection;
+using System.Threading.Tasks;
+using Atomos.UI.Extensions;
 using Atomos.UI.Interfaces;
-using Atomos.UI.Views;
-using Avalonia.Controls;
+using Atomos.UI.Services;
+using Atomos.UI.ViewModels;
+using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommonLib.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using PluginManager.Core.Extensions;
 using ReactiveUI;
 
-namespace Atomos.UI.Controllers;
-
-public class TrayIconController : ITrayIconController
+namespace Atomos.UI.Controllers
 {
-    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    
-    private readonly IConfigurationService _configurationService;
-    
-    public ReactiveCommand<Unit, Unit> ShowCommand { get; }
-    public ReactiveCommand<Unit, Unit> ExitCommand { get; }
-    
-
-    /// <summary>
-    /// Constructor.
-    /// </summary>
-    public TrayIconController(IConfigurationService configurationService)
+    public class TrayIconController : ITrayIconController
     {
-        _configurationService = configurationService;
-        _logger.Info("Initializing TrayIconController.");
-        ShowCommand = ReactiveCommand.Create(ShowMainWindow);
-        ExitCommand = ReactiveCommand.Create(ExitApplication);
-    }
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    /// <summary>
-    /// Shows the main window if it doesn't exist, or is hidden/minimized.
-    /// </summary>
-    public void ShowMainWindow()
-    {
-        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        private readonly IServiceProvider _serviceProvider;
+        private readonly INotificationService _notificationService;
+        private readonly WebSocketClient _webSocketClient;
+        private readonly IUpdateCheckService _updateCheckService;
+
+        public ReactiveCommand<Unit, Unit> ShowCommand { get; }
+        public ReactiveCommand<Unit, Unit> ExitCommand { get; }
+        public ReactiveCommand<Unit, Unit> CheckUpdatesCommand { get; }
+        public ReactiveCommand<Unit, Unit> RefreshPluginsCommand { get; }
+
+        public TrayIconController(
+            IServiceProvider serviceProvider,
+            INotificationService notificationService,
+            IWebSocketClient webSocketClient,
+            IUpdateCheckService updateCheckService)
         {
-            _logger.Info("Request to show MainWindow.");
+            _serviceProvider = serviceProvider;
+            _notificationService = notificationService;
+            _webSocketClient = webSocketClient as WebSocketClient;
+            _updateCheckService = updateCheckService;
 
-            if (desktop.MainWindow == null)
+            ShowCommand = ReactiveCommand.CreateFromTask(ShowWindow);
+            ExitCommand = ReactiveCommand.CreateFromTask(ExitApplication);
+            CheckUpdatesCommand = ReactiveCommand.CreateFromTask(CheckForUpdates);
+            RefreshPluginsCommand = ReactiveCommand.CreateFromTask(RefreshPlugins);
+        }
+
+        private async Task ShowWindow()
+        {
+            try
             {
-                _logger.Info("MainWindow is null, creating new instance.");
-                desktop.MainWindow = new MainWindow(_configurationService);
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    var mainWindow = desktop.MainWindow;
+                    if (mainWindow != null)
+                    {
+                        mainWindow.Show();
+                        mainWindow.WindowState = Avalonia.Controls.WindowState.Normal;
+                        mainWindow.Activate();
+                        mainWindow.Topmost = true;
+                        mainWindow.Topmost = false;
+                    }
+                }
             }
-
-            desktop.MainWindow.ShowInTaskbar = true;
-            desktop.MainWindow.Show();
-            desktop.MainWindow.WindowState = WindowState.Normal;
-            desktop.MainWindow.Activate();
-            desktop.MainWindow.Focus();
-            _logger.Info("MainWindow shown or restored to normal state.");
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to show main window");
+            }
         }
-        else
-        {
-            _logger.Warn("Could not show MainWindow because ApplicationLifetime is not a IClassicDesktopStyleApplicationLifetime.");
-        }
-    }
 
-    /// <summary>
-    /// Shuts down the application.
-    /// </summary>
-    private void ExitApplication()
-    {
-        _logger.Info("Request to exit application.");
-
-        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        private async Task ExitApplication()
         {
-            _logger.Info("Shutting down application via desktop lifetime.");
-            desktop.Shutdown();
+            try
+            {
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    desktop.Shutdown();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to exit application");
+            }
         }
-        else
+
+        private async Task CheckForUpdates()
         {
-            _logger.Warn("Could not shut down application; no classic desktop lifetime found.");
+            try
+            {
+                await _notificationService.ShowNotification(
+                    "Update Check", 
+                    "Checking for updates...");
+
+                var hasUpdate = await _updateCheckService.CheckForUpdatesAsync();
+                
+                if (!hasUpdate)
+                {
+                    await _notificationService.ShowNotification(
+                        "Update Check", 
+                        "You are running the latest version!");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to check for updates");
+                await _notificationService.ShowErrorNotification(
+                    "Update Check Failed", 
+                    "Could not check for updates");
+            }
+        }
+
+        private async Task RefreshPlugins()
+        {
+            try
+            {
+                _logger.Info("Starting plugin refresh from TrayIconController");
+                
+                await _notificationService.ShowNotification(
+                    "Plugins", 
+                    "Refreshing plugins...");
+                
+                await _serviceProvider.InitializePluginServicesAsync();
+                
+                var pluginViewModel = _serviceProvider.GetService<PluginViewModel>();
+                if (pluginViewModel != null)
+                {
+                    _logger.Debug("Found PluginViewModel, calling RefreshAsync");
+                    await pluginViewModel.RefreshAsync();
+                }
+                else
+                {
+                    _logger.Warn("PluginViewModel not found in service provider");
+                }
+
+                await _notificationService.ShowNotification(
+                    "Plugins", 
+                    "Plugins refreshed successfully!");
+                    
+                _logger.Info("Plugin refresh completed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to refresh plugins");
+                await _notificationService.ShowErrorNotification(
+                    "Plugin Refresh Failed", 
+                    "Could not refresh plugins");
+            }
+        }
+
+        public string GetConnectionStatus()
+        {
+            try
+            {
+                if (_webSocketClient == null)
+                    return "Unknown";
+                
+                var webSocketsField = typeof(WebSocketClient).GetField("_webSockets", 
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+                
+                if (webSocketsField?.GetValue(_webSocketClient) is Dictionary<string, System.Net.WebSockets.ClientWebSocket> webSockets)
+                {
+                    var connectedCount = webSockets.Values.Count(ws => ws?.State == System.Net.WebSockets.WebSocketState.Open);
+                    var totalCount = webSockets.Count;
+                    
+                    if (connectedCount == 0)
+                        return "Disconnected";
+                    else if (connectedCount == totalCount)
+                        return "Connected";
+                    else
+                        return $"Partial ({connectedCount}/{totalCount})";
+                }
+                
+                return "Unknown";
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug(ex, "Error checking connection status");
+                return "Unknown";
+            }
+        }
+
+        public string GetVersionInfo()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var version = assembly.GetName().Version;
+            return version == null ? "Local Build" : $"v{version.Major}.{version.Minor}.{version.Build}";
+        }
+
+        public int GetActiveNotificationsCount()
+        {
+            if (_notificationService is NotificationService notService)
+            {
+                return notService.Notifications.Count;
+            }
+            return 0;
         }
     }
 }

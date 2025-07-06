@@ -35,6 +35,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IConfigurationService _configurationService;
     private readonly ITaskbarFlashService _taskbarFlashService;
     private readonly ITrayIconManager _trayIconManager;
+    private readonly IUpdateCheckService _updateCheckService;
     
     private Timer? _updateCheckTimer;
     private string _currentVersion = string.Empty;
@@ -129,7 +130,8 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         ITaskbarFlashService taskbarFlashService,
         IUpdateService updateService,
         IRunUpdater runUpdater, 
-        ITrayIconManager trayIconManager)
+        ITrayIconManager trayIconManager,
+        IUpdateCheckService updateCheckService)
     {
         _serviceProvider = serviceProvider;
         _notificationService = notificationService;
@@ -139,6 +141,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         _configurationService = configurationService;
         _taskbarFlashService = taskbarFlashService;
         _trayIconManager = trayIconManager;
+        _updateCheckService = updateCheckService;
 
         // Load app logo
         LoadAppLogo();
@@ -323,7 +326,6 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         }
     }
 
-
     private async Task InitializeWebSocketConnectionWithTimeout(int port, CancellationToken cancellationToken)
     {
         try
@@ -381,18 +383,20 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            _logger.Debug("CheckForUpdatesAsync started. UpdatePromptViewModel.IsVisible: {IsVisible}", UpdatePromptViewModel.IsVisible);
+            _logger.Debug("CheckForUpdatesAsync started. UpdateCheckService.IsUpdateAvailable: {IsAvailable}", _updateCheckService.IsUpdateAvailable);
             
-            if (!UpdatePromptViewModel.IsVisible)
+            if (!_updateCheckService.IsUpdateAvailable)
             {
                 IsCheckingForUpdates = true;
-                _logger.Debug("Checking for updates... Current version: {Version}", _currentVersion);
-                await UpdatePromptViewModel.CheckForUpdatesAsync(_currentVersion);
-                _logger.Debug("Update check call completed. UpdatePromptViewModel.IsVisible: {IsVisible}", UpdatePromptViewModel.IsVisible);
+                _logger.Debug("Checking for updates using UpdateCheckService...");
+                
+                var hasUpdate = await _updateCheckService.CheckForUpdatesAsync();
+                
+                _logger.Debug("Update check call completed. HasUpdate: {HasUpdate}", hasUpdate);
             }
             else
             {
-                _logger.Debug("Skipping update check - update prompt is already visible");
+                _logger.Debug("Skipping update check - update is already available");
             }
         }
         catch (Exception ex)
@@ -404,7 +408,6 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             IsCheckingForUpdates = false;
         }
     }
-
 
     private void OnPluginSettingsRequested(PluginSettingsViewModel settingsViewModel)
     {

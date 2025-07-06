@@ -33,6 +33,7 @@ public static class DependencyInjection
         
         services.AddSingleton<ConfigurationModel>();
         
+        services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
         services.AddSingleton<ISoundManagerService, SoundManagerService>();
         services.AddSingleton<IAria2Service>(_ => new Aria2Service(AppContext.BaseDirectory));
         services.AddSingleton<IRegistryHelper, RegistryHelper>();
