@@ -30,8 +30,6 @@ If you encounter any issues, please report them in the **Penumbra Mod Forwarder*
 
 ## Known Issues
 
-- **Beta Releases**: Do not enable beta releases as this may cause update loops
-- **Large Mod Files**: Large zip files may take time to unpack (optimisation in progress)
 - **TexTools Conversion**: Occasional TexTools conversion failures may occur (program continues to function)
 
 ## Error Reporting (Sentry)
