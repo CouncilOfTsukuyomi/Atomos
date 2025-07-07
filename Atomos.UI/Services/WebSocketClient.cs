@@ -10,6 +10,7 @@ using Atomos.UI.Events;
 using Atomos.UI.Interfaces;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
+using System.Linq;
 using CommonLib.Models;
 using Newtonsoft.Json;
 using NLog;
@@ -48,6 +49,22 @@ public class WebSocketClient : IWebSocketClient, IDisposable
             
         _logger.Debug("WebSocketClient instance created using NLog.");
         _clientId = Guid.NewGuid().ToString("N");
+    }
+    
+    public string GetConnectionStatus()
+    {
+        if (_webSockets.Count == 0)
+            return "Disconnected";
+        
+        var connectedCount = _webSockets.Values.Count(ws => ws?.State == WebSocketState.Open);
+        var totalCount = _webSockets.Count;
+        
+        if (connectedCount == 0)
+            return "Disconnected";
+        else if (connectedCount == totalCount)
+            return "Connected";
+        else
+            return $"Partial ({connectedCount}/{totalCount})";
     }
 
     public async Task ConnectAsync(int port)
