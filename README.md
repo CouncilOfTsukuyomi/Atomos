@@ -38,8 +38,6 @@ If you encounter any issues, please report them in the **Penumbra Mod Forwarder*
 
 When Sentry logging is enabled, the following information is automatically sent when errors occur:
 - Error message and stack trace
-- IP address
-- Computer account username
 - Windows version
 - .NET runtime version
 
