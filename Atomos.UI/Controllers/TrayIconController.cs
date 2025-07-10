@@ -156,29 +156,16 @@ namespace Atomos.UI.Controllers
             try
             {
                 if (_webSocketClient == null)
-                    return "Unknown";
-                
-                var webSocketsField = typeof(WebSocketClient).GetField("_webSockets", 
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                
-                if (webSocketsField?.GetValue(_webSocketClient) is Dictionary<string, System.Net.WebSockets.ClientWebSocket> webSockets)
                 {
-                    var connectedCount = webSockets.Values.Count(ws => ws?.State == System.Net.WebSockets.WebSocketState.Open);
-                    var totalCount = webSockets.Count;
-                    
-                    if (connectedCount == 0)
-                        return "Disconnected";
-                    else if (connectedCount == totalCount)
-                        return "Connected";
-                    else
-                        return $"Partial ({connectedCount}/{totalCount})";
+                    _logger.Debug("WebSocketClient is null");
+                    return "Unknown";
                 }
                 
-                return "Unknown";
+                return _webSocketClient.GetConnectionStatus();
             }
             catch (Exception ex)
             {
-                _logger.Debug(ex, "Error checking connection status");
+                _logger.Error(ex, "Error checking connection status");
                 return "Unknown";
             }
         }

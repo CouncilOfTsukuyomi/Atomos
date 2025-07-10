@@ -384,19 +384,30 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         try
         {
             _logger.Debug("CheckForUpdatesAsync started. UpdateCheckService.IsUpdateAvailable: {IsAvailable}", _updateCheckService.IsUpdateAvailable);
-            
+        
             if (!_updateCheckService.IsUpdateAvailable)
             {
                 IsCheckingForUpdates = true;
                 _logger.Debug("Checking for updates using UpdateCheckService...");
-                
+            
                 var hasUpdate = await _updateCheckService.CheckForUpdatesAsync();
-                
+            
                 _logger.Debug("Update check call completed. HasUpdate: {HasUpdate}", hasUpdate);
+                
+                if (hasUpdate)
+                {
+                    _logger.Debug("Update detected, triggering UpdatePromptViewModel.CheckForUpdatesAsync");
+                    await UpdatePromptViewModel.CheckForUpdatesAsync(_currentVersion);
+                }
             }
             else
             {
                 _logger.Debug("Skipping update check - update is already available");
+                if (!UpdatePromptViewModel.IsVisible)
+                {
+                    _logger.Debug("Update is available but prompt not visible, triggering UpdatePromptViewModel.CheckForUpdatesAsync");
+                    await UpdatePromptViewModel.CheckForUpdatesAsync(_currentVersion);
+                }
             }
         }
         catch (Exception ex)

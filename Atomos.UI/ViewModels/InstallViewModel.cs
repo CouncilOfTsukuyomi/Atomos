@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -41,10 +40,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
     private StandaloneInstallWindow _standaloneWindow;
 
     public ObservableCollection<FileItemViewModel> Files { get; } = new();
-
-    /// <summary>
-    /// Whether the file selection UI is visible. If set to false, closes the standalone window if it's open.
-    /// </summary>
+    
     public bool IsSelectionVisible
     {
         get => _isSelectionVisible;
@@ -59,10 +55,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
             }
         }
     }
-
-    /// <summary>
-    /// Gets or sets whether all files are selected. This is used for the Select All functionality.
-    /// </summary>
+    
     public bool AreAllSelected
     {
         get => _areAllSelected;
@@ -72,15 +65,14 @@ public class InstallViewModel : ViewModelBase, IDisposable
             UpdateAllFilesSelection(value);
         }
     }
-
-    /// <summary>
-    /// Whether to show the Select All checkbox. Only shown when there are 3 or more files.
-    /// </summary>
+    
     public bool ShowSelectAll
     {
         get => _showSelectAll;
         set => this.RaiseAndSetIfChanged(ref _showSelectAll, value);
     }
+    
+    public bool HasSelectedFiles => Files.Any(f => f.IsSelected);
 
     public ReactiveCommand<Unit, Unit> InstallCommand { get; }
     public ReactiveCommand<Unit, Unit> CancelCommand { get; }
@@ -94,8 +86,9 @@ public class InstallViewModel : ViewModelBase, IDisposable
         _webSocketClient = webSocketClient;
         _soundManagerService = soundManagerService;
         _taskbarFlashService = taskbarFlashService;
-
-        InstallCommand = ReactiveCommand.CreateFromTask(ExecuteInstallCommand);
+        
+        var canInstall = this.WhenAnyValue(x => x.HasSelectedFiles);
+        InstallCommand = ReactiveCommand.CreateFromTask(ExecuteInstallCommand, canInstall);
         CancelCommand = ReactiveCommand.CreateFromTask(ExecuteCancelCommand);
         SelectAllCommand = ReactiveCommand.Create(ExecuteSelectAllCommand);
 
@@ -105,6 +98,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
         {
             UpdateAreAllSelectedProperty();
             UpdateShowSelectAllProperty();
+            UpdateHasSelectedFilesProperty();
         };
     }
 
@@ -167,6 +161,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
                     if (args.PropertyName == nameof(FileItemViewModel.IsSelected))
                     {
                         UpdateAreAllSelectedProperty();
+                        UpdateHasSelectedFilesProperty();
                     }
                 };
 
@@ -179,6 +174,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
             
             UpdateAreAllSelectedProperty();
             UpdateShowSelectAllProperty();
+            UpdateHasSelectedFilesProperty();
             IsSelectionVisible = true;
 
             _taskbarFlashService.FlashTaskbar();
@@ -241,6 +237,11 @@ public class InstallViewModel : ViewModelBase, IDisposable
     private void UpdateShowSelectAllProperty()
     {
         ShowSelectAll = Files.Count >= 3;
+    }
+
+    private void UpdateHasSelectedFilesProperty()
+    {
+        this.RaisePropertyChanged(nameof(HasSelectedFiles));
     }
 
     private async Task ExecuteInstallCommand()

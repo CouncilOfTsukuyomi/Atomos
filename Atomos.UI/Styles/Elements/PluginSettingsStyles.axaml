@@ -12,8 +12,8 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="MinWidth" Value="500"/>
-        <Setter Property="MaxWidth" Value="800"/>
+        <Setter Property="MinWidth" Value="520"/>
+        <Setter Property="MaxWidth" Value="820"/>
         <Setter Property="MinHeight" Value="400"/>
         <Setter Property="MaxHeight" Value="700"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
@@ -70,7 +70,7 @@
 
     <!-- Plugin Settings Content -->
     <Style Selector="ScrollViewer.pluginSettingsContent">
-        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Padding" Value="20,20,30,20"/>
         <Setter Property="MinHeight" Value="200"/>
     </Style>
 
@@ -130,8 +130,9 @@
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="LineHeight" Value="14"/>
+        <Setter Property="LineHeight" Value="16"/>
         <Setter Property="Margin" Value="0,2,0,0"/>
+        <Setter Property="MaxWidth" Value="450"/>
     </Style>
 
     <!-- Configuration Item Input Grid -->
