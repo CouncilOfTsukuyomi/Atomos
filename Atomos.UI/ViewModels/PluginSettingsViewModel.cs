@@ -135,8 +135,7 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             IsLoading = true;
             ConfigurationItems.Clear();
             _originalValues.Clear();
-            
-            // Load plugin schema to get descriptions and display names
+
             var schema = await GetPluginSchemaAsync();
             
             var settings = await _pluginDiscoveryService.GetPluginSettingsAsync(Plugin.PluginDirectory);
@@ -149,8 +148,7 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                 {
                     var configType = DetermineConfigurationType(kvp.Value);
                     var formattedValue = FormatValueForDisplay(kvp.Value, configType);
-                    
-                    // Get metadata from schema
+
                     var (displayName, description) = GetSchemaMetadata(kvp.Key, schema);
                 
                     var item = new PluginConfigurationItem
@@ -176,7 +174,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                     var configType = DetermineConfigurationType(kvp.Value);
                     var formattedValue = FormatValueForDisplay(kvp.Value, configType);
                     
-                    // Get metadata from schema
                     var (displayName, description) = GetSchemaMetadata(kvp.Key, schema);
                 
                     var item = new PluginConfigurationItem
@@ -227,7 +224,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            // Read directly from plugin.json file which contains the schema
             var pluginJsonPath = Path.Combine(Plugin.PluginDirectory, "plugin.json");
             if (File.Exists(pluginJsonPath))
             {
@@ -240,8 +236,7 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                     if (configElement.TryGetProperty("schema", out var schemaElement))
                     {
                         _logger.Debug("Found schema in plugin.json for plugin {PluginId}", Plugin.PluginId);
-                    
-                        // The schema is already a JsonElement, we can return it directly
+                        
                         var schemaJson = schemaElement.GetRawText();
                         _logger.Debug("Schema JSON: {SchemaJson}", schemaJson);
                         return JsonDocument.Parse(schemaJson);
@@ -280,7 +275,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
         {
             if (properties.TryGetProperty(key, out var propertySchema))
             {
-                // Get display name from "title" property
                 if (propertySchema.TryGetProperty("title", out var titleElement))
                 {
                     var title = titleElement.GetString();
@@ -290,7 +284,6 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                     }
                 }
 
-                // Get description from "description" property
                 if (propertySchema.TryGetProperty("description", out var descriptionElement))
                 {
                     var desc = descriptionElement.GetString();
