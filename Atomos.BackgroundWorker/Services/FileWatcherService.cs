@@ -23,11 +23,10 @@ public class FileWatcherService : IFileWatcherService, IDisposable
 
     private IFileWatcher? _fileWatcher;
     private bool _eventsSubscribed;
-
-    // Dictionary to track pending user selections for archive files
+    
     private readonly ConcurrentDictionary<string, TaskCompletionSource<List<string>>> _pendingArchiveSelections = new();
-    // Dictionary to track archive paths for tasks
     private readonly ConcurrentDictionary<string, string> _taskArchivePaths = new();
+    private readonly ConcurrentDictionary<string, DateTime> _recentlyExtractedFiles = new();
 
     public FileWatcherService(
         IConfigurationService configurationService,
@@ -131,8 +130,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
         try
         {
             _logger.Debug("Configuration: {PropertyName} changed to: {NewValue}", e.PropertyName, e.NewValue);
-
-            // If the download path is changed, restart the file watcher
+            
             if (e.PropertyName == "BackgroundWorker.DownloadPath")
             {
                 _logger.Info("Configuration changed. Restarting FileWatcher");
@@ -252,6 +250,14 @@ public class FileWatcherService : IFileWatcherService, IDisposable
     private void OnFileMoved(object? sender, FileMovedEvent e)
     {
         _logger.Info("File moved: {DestinationPath}", e.DestinationPath);
+        
+        var normalizedPath = Path.GetFullPath(e.DestinationPath);
+        if (_recentlyExtractedFiles.ContainsKey(normalizedPath))
+        {
+            _logger.Debug("Skipping file {Path} as it was recently extracted and already processed", e.DestinationPath);
+            return;
+        }
+        
         _modHandlerService.HandleFileAsync(e.DestinationPath).GetAwaiter().GetResult();
     }
 
@@ -270,8 +276,13 @@ public class FileWatcherService : IFileWatcherService, IDisposable
 
         foreach (var extractedFilePath in e.ExtractedFilePaths)
         {
+            var normalizedPath = Path.GetFullPath(extractedFilePath);
+            _recentlyExtractedFiles[normalizedPath] = DateTime.UtcNow;
+            
             _modHandlerService.HandleFileAsync(extractedFilePath).GetAwaiter().GetResult();
         }
+        
+        CleanupOldExtractedFileEntries();
 
         var completionMessage = WebSocketMessage.CreateStatus(
             taskId,
@@ -279,6 +290,25 @@ public class FileWatcherService : IFileWatcherService, IDisposable
             $"All extracted files from {e.ArchiveFileName} have been installed."
         );
         _webSocketServer.BroadcastToEndpointAsync("/status", completionMessage).GetAwaiter().GetResult();
+    }
+
+    private void CleanupOldExtractedFileEntries()
+    {
+        var cutoff = DateTime.UtcNow.AddSeconds(-30);
+        var keysToRemove = _recentlyExtractedFiles
+            .Where(kvp => kvp.Value < cutoff)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        
+        foreach (var key in keysToRemove)
+        {
+            _recentlyExtractedFiles.TryRemove(key, out _);
+        }
+        
+        if (keysToRemove.Any())
+        {
+            _logger.Debug("Cleaned up {Count} old extracted file entries", keysToRemove.Count);
+        }
     }
 
     private async Task<List<string>> WaitForUserArchiveSelection(string taskId)
@@ -289,7 +319,6 @@ public class FileWatcherService : IFileWatcherService, IDisposable
 
         try
         {
-            // Wait for the user's selection or a timeout
             var timeoutTask = Task.Delay(TimeSpan.FromMinutes(5));
             var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
@@ -333,5 +362,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
 
         _configurationService.ConfigurationChanged -= OnConfigurationChanged;
         _webSocketServer.MessageReceived -= OnWebSocketMessageReceived;
+        
+        _recentlyExtractedFiles.Clear();
     }
 }
