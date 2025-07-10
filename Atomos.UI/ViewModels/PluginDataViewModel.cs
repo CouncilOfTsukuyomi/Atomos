@@ -70,17 +70,13 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         _downloadManagerService = downloadManagerService;
         PluginItems = new ObservableCollection<PluginDisplayItem>();
 
-        // Commands
         RefreshCommand = ReactiveCommand.CreateFromTask(LoadPluginDataAsync);
         RefreshPluginCommand = ReactiveCommand.CreateFromTask<string>(RefreshPluginDataAsync);
-            
-        // Collapse/Expand Commands
         TogglePluginExpandCommand = ReactiveCommand.Create<PluginDisplayItem>(TogglePluginExpand);
         ExpandAllCommand = ReactiveCommand.Create(ExpandAll);
         CollapseAllCommand = ReactiveCommand.Create(CollapseAll);
 
-        // Periodically refresh plugin data
-        Observable.Timer(TimeSpan.Zero, TimeSpan.FromMinutes(5))
+        Observable.Timer(TimeSpan.Zero, TimeSpan.FromMinutes(1))
             .SelectMany(_ => Observable.FromAsync(LoadPluginDataAsync))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe()
@@ -94,11 +90,8 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
             _logger.Info("Starting download for mod: {ModName} from plugin source: {PluginSource}", 
                 pluginMod.Name, pluginMod.PluginSource);
         
-            // Create a progress reporter that provides rich updates like your updater
             var progress = new Progress<DownloadProgress>(OnDownloadProgressChanged);
-        
             await _downloadManagerService.DownloadModAsync(pluginMod, ct, progress);
-        
             _logger.Info("Successfully completed download for mod: {ModName}", pluginMod.Name);
         }
         catch (Exception ex)
@@ -119,10 +112,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         _logger.Info("=== END PLUGIN DOWNLOAD PROGRESS ===");
     }
 
-
-    /// <summary>
-    /// Toggle the expanded state of a specific plugin
-    /// </summary>
     private void TogglePluginExpand(PluginDisplayItem plugin)
     {
         if (plugin != null)
@@ -132,9 +121,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         }
     }
 
-    /// <summary>
-    /// Expand all plugins
-    /// </summary>
     private void ExpandAll()
     {
         foreach (var plugin in PluginItems)
@@ -144,9 +130,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         _logger.Debug("Expanded all {Count} plugins", PluginItems.Count);
     }
 
-    /// <summary>
-    /// Collapse all plugins
-    /// </summary>
     private void CollapseAll()
     {
         foreach (var plugin in PluginItems)
@@ -156,9 +139,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         _logger.Debug("Collapsed all {Count} plugins", PluginItems.Count);
     }
 
-    /// <summary>
-    /// Loads plugin data from all enabled and loaded plugins
-    /// </summary>
     private async Task LoadPluginDataAsync()
     {
         try
@@ -169,24 +149,20 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
 
             _logger.Debug("Loading plugin data...");
 
-            // Check all plugins first
             var allPlugins = _pluginService.GetAllPlugins();
             _logger.Debug("Total plugins registered: {Count}", allPlugins.Count);
 
-            // Get all enabled plugins from the plugin service
             var enabledPlugins = _pluginService.GetEnabledPlugins();
             _logger.Debug("Found {Count} enabled plugins", enabledPlugins.Count);
 
-            // If no plugins are registered at all, show helpful message
             if (allPlugins.Count == 0)
             {
                 _logger.Warn("No plugins are registered in the PluginService");
                 HasError = true;
-                ErrorMessage = "No plugins are registered. Please check that plugins are being loaded and registered properly.";
+                ErrorMessage = "No plugins are registered. Please check that plugins are being loaded and registered properly. Or refresh all";
                 return;
             }
 
-            // If plugins exist but none are enabled
             if (enabledPlugins.Count == 0)
             {
                 _logger.Warn("No plugins are enabled. Total plugins: {Total}", allPlugins.Count);
@@ -195,7 +171,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
                 return;
             }
 
-            // Update existing items or create new ones
             var updatedItems = new List<PluginDisplayItem>();
 
             foreach (var plugin in enabledPlugins)
@@ -205,16 +180,14 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
                     _logger.Debug("Processing plugin: {PluginId} - {DisplayName} (Enabled: {IsEnabled})", 
                         plugin.PluginId, plugin.DisplayName, plugin.IsEnabled);
 
-                    // Find existing item or create new one
                     var existingItem = PluginItems.FirstOrDefault(x => x.PluginId == plugin.PluginId);
                     var displayItem = existingItem ?? new PluginDisplayItem
                     {
                         PluginId = plugin.PluginId,
                         PluginName = plugin.DisplayName,
-                        IsExpanded = false // Default to collapsed for new items
+                        IsExpanded = false
                     };
 
-                    // Load recent mods from this plugin
                     displayItem.IsLoading = true;
                     displayItem.ErrorMessage = null;
                         
@@ -246,7 +219,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
                 }
             }
 
-            // Update the collection
             PluginItems.Clear();
             foreach (var item in updatedItems)
             {
@@ -267,9 +239,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         }
     }
 
-    /// <summary>
-    /// Refreshes data for a specific plugin
-    /// </summary>
     private async Task RefreshPluginDataAsync(string pluginId)
     {
         if (string.IsNullOrEmpty(pluginId)) return;
@@ -284,15 +253,11 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
 
             _logger.Debug("Refreshing data for plugin {PluginId}", pluginId);
 
-            // Get the plugin to ensure it's still available
             var plugin = _pluginService.GetPlugin(pluginId);
                 
             if (plugin != null)
             {
-                // Load recent mods from this specific plugin
                 var recentMods = await _pluginService.GetRecentModsFromPluginAsync(pluginId);
-                    
-                // Update the display item
                 displayItem.Mods = recentMods ?? new List<PluginMod>();
                 displayItem.LastUpdated = DateTime.Now;
 
