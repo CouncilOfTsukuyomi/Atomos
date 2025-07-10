@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -8,12 +7,14 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 using Atomos.UI.Enums;
 using Atomos.UI.Models;
 using NLog;
 using PluginManager.Core.Interfaces;
 using PluginManager.Core.Models;
 using ReactiveUI;
+using System.IO;
 
 namespace Atomos.UI.ViewModels;
 
@@ -135,6 +136,9 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
             ConfigurationItems.Clear();
             _originalValues.Clear();
             
+            // Load plugin schema to get descriptions and display names
+            var schema = await GetPluginSchemaAsync();
+            
             var settings = await _pluginDiscoveryService.GetPluginSettingsAsync(Plugin.PluginDirectory);
         
             if (settings?.Configuration?.Any() == true)
@@ -145,14 +149,17 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                 {
                     var configType = DetermineConfigurationType(kvp.Value);
                     var formattedValue = FormatValueForDisplay(kvp.Value, configType);
+                    
+                    // Get metadata from schema
+                    var (displayName, description) = GetSchemaMetadata(kvp.Key, schema);
                 
                     var item = new PluginConfigurationItem
                     {
                         Key = kvp.Key,
                         Value = formattedValue,
                         Type = configType,
-                        DisplayName = FormatDisplayName(kvp.Key),
-                        Description = $"Configuration setting for {kvp.Key}"
+                        DisplayName = displayName,
+                        Description = description
                     };
                 
                     ConfigurationItems.Add(item);
@@ -168,14 +175,17 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
                 {
                     var configType = DetermineConfigurationType(kvp.Value);
                     var formattedValue = FormatValueForDisplay(kvp.Value, configType);
+                    
+                    // Get metadata from schema
+                    var (displayName, description) = GetSchemaMetadata(kvp.Key, schema);
                 
                     var item = new PluginConfigurationItem
                     {
                         Key = kvp.Key,
                         Value = formattedValue,
                         Type = configType,
-                        DisplayName = FormatDisplayName(kvp.Key),
-                        Description = $"Configuration setting for {kvp.Key}"
+                        DisplayName = displayName,
+                        Description = description
                     };
                 
                     ConfigurationItems.Add(item);
@@ -213,15 +223,137 @@ public class PluginSettingsViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private async Task<JsonDocument?> GetPluginSchemaAsync()
+    {
+        try
+        {
+            // Read directly from plugin.json file which contains the schema
+            var pluginJsonPath = Path.Combine(Plugin.PluginDirectory, "plugin.json");
+            if (File.Exists(pluginJsonPath))
+            {
+                _logger.Debug("Reading plugin.json directly from {PluginJsonPath}", pluginJsonPath);
+                var json = await File.ReadAllTextAsync(pluginJsonPath);
+                var jsonDoc = JsonDocument.Parse(json);
+            
+                if (jsonDoc.RootElement.TryGetProperty("configuration", out var configElement))
+                {
+                    if (configElement.TryGetProperty("schema", out var schemaElement))
+                    {
+                        _logger.Debug("Found schema in plugin.json for plugin {PluginId}", Plugin.PluginId);
+                    
+                        // The schema is already a JsonElement, we can return it directly
+                        var schemaJson = schemaElement.GetRawText();
+                        _logger.Debug("Schema JSON: {SchemaJson}", schemaJson);
+                        return JsonDocument.Parse(schemaJson);
+                    }
+                    else
+                    {
+                        _logger.Debug("No schema property found in configuration for plugin {PluginId}", Plugin.PluginId);
+                    }
+                }
+                else
+                {
+                    _logger.Debug("No configuration property found in plugin.json for plugin {PluginId}", Plugin.PluginId);
+                }
+            }
+            else
+            {
+                _logger.Debug("plugin.json file not found at {PluginJsonPath}", pluginJsonPath);
+            }
+        
+            _logger.Debug("No schema found for plugin {PluginId}", Plugin.PluginId);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to get plugin schema for {PluginId}", Plugin.PluginId);
+        }
+
+        return null;
+    }
+
+    private (string displayName, string description) GetSchemaMetadata(string key, JsonDocument? schema)
+    {
+        var displayName = FormatDisplayName(key);
+        var description = $"Configuration setting for {key}";
+
+        if (schema?.RootElement.TryGetProperty("properties", out var properties) == true)
+        {
+            if (properties.TryGetProperty(key, out var propertySchema))
+            {
+                // Get display name from "title" property
+                if (propertySchema.TryGetProperty("title", out var titleElement))
+                {
+                    var title = titleElement.GetString();
+                    if (!string.IsNullOrEmpty(title))
+                    {
+                        displayName = title;
+                    }
+                }
+
+                // Get description from "description" property
+                if (propertySchema.TryGetProperty("description", out var descriptionElement))
+                {
+                    var desc = descriptionElement.GetString();
+                    if (!string.IsNullOrEmpty(desc))
+                    {
+                        description = desc;
+                    }
+                }
+            }
+        }
+
+        return (displayName, description);
+    }
+    
     private ConfigurationType DetermineConfigurationType(object? value)
     {
-        return value switch
+        _logger.Debug("DetermineConfigurationType called with value: '{Value}' (Type: {Type})", 
+            value, value?.GetType().Name ?? "null");
+        
+        var result = value switch
         {
             bool => ConfigurationType.Boolean,
+            JsonElement jsonElement => DetermineConfigurationTypeFromJsonElement(jsonElement),
+            string str when bool.TryParse(str, out _) => ConfigurationType.Boolean,
             int or long or double or float or decimal => ConfigurationType.Number,
+            string str when double.TryParse(str, out _) => ConfigurationType.Number,
             string str when str.Contains('\n') || str.Length > 100 => ConfigurationType.TextArea,
             _ => ConfigurationType.Text
         };
+        
+        _logger.Debug("DetermineConfigurationType result: {Result} for value '{Value}'", result, value);
+        return result;
+    }
+
+    private ConfigurationType DetermineConfigurationTypeFromJsonElement(JsonElement jsonElement)
+    {
+        switch (jsonElement.ValueKind)
+        {
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+                return ConfigurationType.Boolean;
+            
+            case JsonValueKind.Number:
+                return ConfigurationType.Number;
+            
+            case JsonValueKind.String:
+                var stringValue = jsonElement.GetString();
+                if (stringValue != null)
+                {
+                    if (bool.TryParse(stringValue, out _))
+                        return ConfigurationType.Boolean;
+                    
+                    if (double.TryParse(stringValue, out _))
+                        return ConfigurationType.Number;
+                    
+                    if (stringValue.Contains('\n') || stringValue.Length > 100)
+                        return ConfigurationType.TextArea;
+                }
+                return ConfigurationType.Text;
+            
+            default:
+                return ConfigurationType.Text;
+        }
     }
 
     private string FormatValueForDisplay(object? value, ConfigurationType type)
