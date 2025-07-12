@@ -58,6 +58,7 @@ namespace Atomos.UI.Controllers
                     var mainWindow = desktop.MainWindow;
                     if (mainWindow != null)
                     {
+                        mainWindow.ShowInTaskbar = true;
                         mainWindow.Show();
                         mainWindow.WindowState = Avalonia.Controls.WindowState.Normal;
                         mainWindow.Activate();
