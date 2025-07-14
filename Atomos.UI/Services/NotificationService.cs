@@ -4,12 +4,12 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
-using Atomos.UI.Models;
 using Avalonia.Threading;
 using CommonLib.Enums;
 using CommonLib.Interfaces;
 using NLog;
 using ReactiveUI;
+using Notification = Atomos.UI.Models.Notification;
 
 namespace Atomos.UI.Services;
 
@@ -25,43 +25,70 @@ public class NotificationService : ReactiveObject, INotificationService
     private const int MaxNotifications = 3;
     private const int ProgressNotificationTimeoutMs = 3000;
     private const int StaleTimeoutMs = 15000;
-    private const int AnimationUpdateIntervalMs = 16; // ~60fps
+    private const int AnimationUpdateIntervalMs = 16;
 
     private readonly IConfigurationService _configurationService;
     private readonly ISoundManagerService _soundManagerService;
+    private readonly ISystemNotificationService _systemNotificationService;
 
     public ObservableCollection<Notification> Notifications { get; } = new();
 
     public NotificationService(
         IConfigurationService configurationService,
-        ISoundManagerService soundManagerService)
+        ISoundManagerService soundManagerService,
+        ISystemNotificationService systemNotificationService)
     {
         _configurationService = configurationService;
         _soundManagerService = soundManagerService;
+        _systemNotificationService = systemNotificationService;
     }
 
     public async Task ShowNotification(string title, string message, SoundType? soundType = null, int durationSeconds = 4)
     {
         if (!IsNotificationEnabled()) return;
 
-        var notification = CreateNotification(title, "Info", message, showProgress: true);
-            
-        await AddNotificationAsync(notification);
-        await PlaySoundIfRequested(soundType);
-            
-        _ = AnimateProgressAndRemoveAsync(notification, durationSeconds);
+        var isWindowHidden = _systemNotificationService.IsWindowHidden;
+        _logger.Debug("ShowNotification called. Title: {Title}, Message: {Message}, IsWindowHidden: {IsWindowHidden}", 
+            title, message, isWindowHidden);
+
+        if (isWindowHidden)
+        {
+            _logger.Debug("Window is hidden, showing system notification");
+            await _systemNotificationService.ShowSystemNotificationAsync(title, message);
+            await PlaySoundIfRequested(soundType);
+        }
+        else
+        {
+            _logger.Debug("Window is visible, showing in-app notification");
+            var notification = CreateNotification(title, "Info", message, showProgress: true);
+            await AddNotificationAsync(notification);
+            await PlaySoundIfRequested(soundType);
+            _ = AnimateProgressAndRemoveAsync(notification, durationSeconds);
+        }
     }
 
     public async Task ShowErrorNotification(string title, string message, SoundType? soundType = null, int durationSeconds = 6)
     {
         if (!IsNotificationEnabled()) return;
 
-        var notification = CreateNotification(title, "Error", message);
-            
-        await AddNotificationAsync(notification);
-        await PlaySoundIfRequested(soundType);
-            
-        _ = RemoveNotificationAfterDelayAsync(notification, durationSeconds);
+        var isWindowHidden = _systemNotificationService.IsWindowHidden;
+        _logger.Debug("ShowErrorNotification called. Title: {Title}, Message: {Message}, IsWindowHidden: {IsWindowHidden}", 
+            title, message, isWindowHidden);
+
+        if (isWindowHidden)
+        {
+            _logger.Debug("Window is hidden, showing system error notification");
+            await _systemNotificationService.ShowSystemNotificationAsync(title, message);
+            await PlaySoundIfRequested(soundType);
+        }
+        else
+        {
+            _logger.Debug("Window is visible, showing in-app error notification");
+            var notification = CreateNotification(title, "Error", message);
+            await AddNotificationAsync(notification);
+            await PlaySoundIfRequested(soundType);
+            _ = RemoveNotificationAfterDelayAsync(notification, durationSeconds);
+        }
     }
 
     public async Task UpdateProgress(string taskId, string title, string status, int progress)
@@ -70,6 +97,19 @@ public class NotificationService : ReactiveObject, INotificationService
 
         _logger.Debug("Updating progress for {TaskId} - {Title} to {Status}: Progress: {Progress}",
             taskId, title, status, progress);
+
+        if (_systemNotificationService.IsWindowHidden)
+        {
+            var isNew = !_progressNotifications.ContainsKey(taskId);
+            if (isNew)
+            {
+                await _systemNotificationService.ShowSystemNotificationAsync(title, $"Started: {status}");
+            }
+            else if (progress >= 100)
+            {
+                await _systemNotificationService.ShowSystemNotificationAsync(title, $"Completed: {status}");
+            }
+        }
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -104,7 +144,7 @@ public class NotificationService : ReactiveObject, INotificationService
         {
             IsVisible = true,
             Progress = 0,
-            AnimationState = "fade-in" // Set initial animation state
+            AnimationState = "fade-in"
         };
     
     private Notification CreateProgressNotification(string title, string status, int progress, string taskId) =>
@@ -113,7 +153,7 @@ public class NotificationService : ReactiveObject, INotificationService
             IsVisible = true,
             Progress = progress,
             ProgressText = status,
-            AnimationState = "fade-in" // Set initial animation state
+            AnimationState = "fade-in"
         };
 
     private async Task AddNotificationAsync(Notification notification)
@@ -198,14 +238,12 @@ public class NotificationService : ReactiveObject, INotificationService
 
                 var (notification, lastUpdated, _) = progressData;
 
-                // Check for stale timeout
                 if ((DateTime.UtcNow - lastUpdated).TotalMilliseconds >= StaleTimeoutMs)
                 {
                     RemoveProgressNotification(taskId);
                     return;
                 }
 
-                // Check for completion
                 if (notification.Progress >= 100)
                 {
                     if (!removedAfterComplete)
@@ -223,7 +261,6 @@ public class NotificationService : ReactiveObject, INotificationService
         }
         catch (OperationCanceledException)
         {
-            // Expected when cancellation is requested
         }
         catch (Exception ex)
         {

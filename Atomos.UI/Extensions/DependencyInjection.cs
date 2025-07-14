@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddSingleton<IAria2Service>(_ => new Aria2Service(AppContext.BaseDirectory));
         services.AddSingleton<IRegistryHelper, RegistryHelper>();
         services.AddSingleton<IFileLinkingService, FileLinkingService>();
+        services.AddSingleton<ISystemNotificationService, SystemNotificationService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IDownloadManagerService, DownloadManagerService>();
         services.AddSingleton<IWebSocketClient, WebSocketClient>();
