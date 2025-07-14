@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -9,6 +10,7 @@ using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using Atomos.UI.Interfaces;
 using DynamicData;
 using DynamicData.Binding;
 using NLog;
@@ -25,10 +27,12 @@ public class PluginViewModel : ViewModelBase, IDisposable
 
     private readonly IPluginManagementService _pluginManagementService;
     private readonly IPluginDiscoveryService _pluginDiscoveryService;
+    private readonly IPluginDataService _pluginDataService;
     private readonly CompositeDisposable _disposables = new();
     
     private readonly SourceList<PluginInfo> _availablePluginsSource = new();
     private readonly ReadOnlyObservableCollection<PluginInfo> _filteredPlugins;
+    private readonly HashSet<string> _processingPlugins = new();
 
     private string _searchTerm = string.Empty;
     public string SearchTerm
@@ -43,9 +47,6 @@ public class PluginViewModel : ViewModelBase, IDisposable
         get => _isLoading;
         set => this.RaiseAndSetIfChanged(ref _isLoading, value);
     }
-
-    private DateTime _lastRefresh = DateTime.MinValue;
-    private readonly TimeSpan _minRefreshInterval = TimeSpan.FromSeconds(10);
 
     public ReadOnlyObservableCollection<PluginInfo> FilteredPlugins => _filteredPlugins;
     
@@ -65,10 +66,12 @@ public class PluginViewModel : ViewModelBase, IDisposable
 
     public PluginViewModel(
         IPluginManagementService pluginManagementService,
-        IPluginDiscoveryService pluginDiscoveryService)
+        IPluginDiscoveryService pluginDiscoveryService,
+        IPluginDataService pluginDataService)
     {
         _pluginManagementService = pluginManagementService;
         _pluginDiscoveryService = pluginDiscoveryService;
+        _pluginDataService = pluginDataService;
 
         var searchFilter = this.WhenAnyValue(x => x.SearchTerm)
             .Throttle(TimeSpan.FromMilliseconds(300))
@@ -94,37 +97,26 @@ public class PluginViewModel : ViewModelBase, IDisposable
         OpenDiscordCommand = ReactiveCommand.Create(OpenDiscord);
         OpenGitHubIssuesCommand = ReactiveCommand.Create(OpenGitHubIssues);
         OpenPluginDocsCommand = ReactiveCommand.Create(OpenPluginDocs);
-
-        _pluginDiscoveryService.AllPluginsLoaded += OnAllPluginsLoaded;
+        
         _pluginDiscoveryService.PluginDiscovered += OnPluginDiscovered;
 
-        _ = LoadAvailablePluginsAsync();
-        
-        Observable.Timer(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2))
-            .Where(_ => DateTime.UtcNow - _lastRefresh >= _minRefreshInterval)
-            .SelectMany(_ => Observable.FromAsync(() => LoadAvailablePluginsAsync(false)))
+        _pluginDataService.PluginInfos
             .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe()
+            .Subscribe(UpdatePluginInfos)
             .DisposeWith(_disposables);
+
+        _ = RefreshAsync();
     }
 
-    private void OnAllPluginsLoaded(object? sender, AllPluginsLoadedEventArgs e)
+    private void UpdatePluginInfos(List<PluginInfo> pluginInfos)
     {
-        _logger.Info("All plugins loaded notification received. {SuccessCount} loaded, {FailedCount} failed in {Duration}ms",
-            e.LoadedPlugins.Count, e.FailedPlugins.Count, e.TotalLoadTime.TotalMilliseconds);
-
-        foreach (var failedPlugin in e.FailedPlugins)
+        _availablePluginsSource.Edit(updater =>
         {
-            _logger.Warn("Failed to load plugin: {PluginId} - {LoadError}", 
-                failedPlugin.PluginId, failedPlugin.LoadError);
-        }
-
-        Dispatcher.UIThread.InvokeAsync(async () =>
-        {
-            await LoadAvailablePluginsAsync(forceRefresh: true);
+            updater.Clear();
+            updater.AddRange(pluginInfos);
         });
     }
-    
+
     private void OnPluginDiscovered(object? sender, PluginDiscoveredEventArgs e)
     {
         _logger.Info("Plugin discovered: {PluginId} v{Version} by {Author} (IsNew: {IsNew})", 
@@ -133,32 +125,59 @@ public class PluginViewModel : ViewModelBase, IDisposable
             e.DiscoveredPlugin.Author,
             e.IsNewPlugin);
 
+        if (_processingPlugins.Contains(e.DiscoveredPlugin.PluginId))
+        {
+            _logger.Debug("Skipping plugin discovery - already processing {PluginId}", e.DiscoveredPlugin.PluginId);
+            return;
+        }
+
+        if (!e.IsNewPlugin)
+        {
+            var existingPlugin = _availablePluginsSource.Items.FirstOrDefault(p => p.PluginId == e.DiscoveredPlugin.PluginId);
+            if (existingPlugin != null && 
+                existingPlugin.Version == e.DiscoveredPlugin.Version && 
+                existingPlugin.IsEnabled == e.DiscoveredPlugin.IsEnabled)
+            {
+                _logger.Debug("Skipping plugin update - no meaningful changes detected for {PluginId}", e.DiscoveredPlugin.PluginId);
+                return;
+            }
+        }
+
         if (e.IsNewPlugin)
         {
             _logger.Info("New plugin detected: {PluginId}, refreshing UI immediately", e.DiscoveredPlugin.PluginId);
         }
+
+        _processingPlugins.Add(e.DiscoveredPlugin.PluginId);
         
         Dispatcher.UIThread.InvokeAsync(() =>
         {
-            var existingPlugin = _availablePluginsSource.Items.FirstOrDefault(p => p.PluginId == e.DiscoveredPlugin.PluginId);
-        
-            _availablePluginsSource.Edit(updater =>
+            try
             {
-                if (existingPlugin != null)
+                var existingPlugin = _availablePluginsSource.Items.FirstOrDefault(p => p.PluginId == e.DiscoveredPlugin.PluginId);
+        
+                _availablePluginsSource.Edit(updater =>
                 {
-                    var index = updater.IndexOf(existingPlugin);
-                    if (index >= 0)
+                    if (existingPlugin != null)
                     {
-                        updater[index] = e.DiscoveredPlugin;
+                        var index = updater.IndexOf(existingPlugin);
+                        if (index >= 0)
+                        {
+                            updater[index] = e.DiscoveredPlugin;
+                        }
                     }
-                }
-                else
-                {
-                    updater.Add(e.DiscoveredPlugin);
-                }
-            });
+                    else
+                    {
+                        updater.Add(e.DiscoveredPlugin);
+                    }
+                });
 
-            _logger.Debug("Updated plugin source with discovered plugin: {PluginId}", e.DiscoveredPlugin.PluginId);
+                _logger.Debug("Updated plugin source with discovered plugin: {PluginId}", e.DiscoveredPlugin.PluginId);
+            }
+            finally
+            {
+                Task.Delay(1000).ContinueWith(_ => _processingPlugins.Remove(e.DiscoveredPlugin.PluginId));
+            }
         });
     }
 
@@ -196,42 +215,6 @@ public class PluginViewModel : ViewModelBase, IDisposable
             (plugin.Author?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
-    private async Task LoadAvailablePluginsAsync(bool forceRefresh = true)
-    {
-        try
-        {
-            if (!forceRefresh && DateTime.UtcNow - _lastRefresh < _minRefreshInterval)
-            {
-                _logger.Debug("Skipping plugin refresh - too soon since last refresh");
-                return;
-            }
-
-            IsLoading = true;
-            _logger.Debug("Loading available plugins (forceRefresh: {ForceRefresh})", forceRefresh);
-            
-            var fetchedPlugins = await _pluginManagementService.GetAvailablePluginsAsync();
-
-            _logger.Debug("Fetched {Count} plugins from management service", fetchedPlugins.Count);
-
-            _availablePluginsSource.Edit(updater =>
-            {
-                updater.Clear();
-                updater.AddRange(fetchedPlugins);
-            });
-
-            _lastRefresh = DateTime.UtcNow;
-            _logger.Debug("Updated plugin source with {Count} plugins", _availablePluginsSource.Count);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error(ex, "Failed to load available plugins in PluginsViewModel");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
     private async Task TogglePluginAsync(PluginInfo plugin)
     {
         try
@@ -243,9 +226,9 @@ public class PluginViewModel : ViewModelBase, IDisposable
 
             await _pluginManagementService.SetPluginEnabledAsync(plugin.PluginId, desiredEnabledState);
 
-            await Task.Delay(500);
+            await Task.Delay(300);
 
-            await LoadAvailablePluginsAsync(true);
+            await _pluginDataService.RefreshPluginInfoAsync();
         }
         catch (Exception ex)
         {
@@ -324,7 +307,7 @@ public class PluginViewModel : ViewModelBase, IDisposable
             if (success)
             {
                 _logger.Info("Settings rollback successful for plugin {PluginId}", plugin.PluginId);
-                await LoadAvailablePluginsAsync(true);
+                await _pluginDataService.RefreshPluginInfoAsync();
             }
             else
             {
@@ -551,12 +534,11 @@ public class PluginViewModel : ViewModelBase, IDisposable
 
     public async Task RefreshAsync()
     {
-        await LoadAvailablePluginsAsync();
+        await _pluginDataService.RefreshPluginInfoAsync();
     }
 
     public void Dispose()
     {
-        _pluginDiscoveryService.AllPluginsLoaded -= OnAllPluginsLoaded;
         _pluginDiscoveryService.PluginDiscovered -= OnPluginDiscovered;
         _availablePluginsSource.Dispose();
         _disposables.Dispose();

@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
         services.AddSingleton<IRunUpdater, RunUpdater>();
+        services.AddSingleton<IPluginDataService, PluginDataService>();
         services.AddSingleton<IFileDialogService>(provider =>
         {
             var applicationLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;

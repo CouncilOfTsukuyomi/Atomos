@@ -112,7 +112,7 @@ public class TaskbarFlashService : ITaskbarFlashService
         {
             const int flashInterval = 600; // 600ms interval between flashes
 
-            _logger.Info("Starting persistent taskbar flashing until window gains focus");
+            _logger.Debug("Starting persistent taskbar flashing until window gains focus");
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -161,7 +161,7 @@ public class TaskbarFlashService : ITaskbarFlashService
                 };
 
                 FlashWindowEx(ref stopInfo);
-                _logger.Info("Taskbar flashing completed and stopped");
+                _logger.Debug("Taskbar flashing completed and stopped");
             });
         }
         catch (OperationCanceledException)
@@ -193,7 +193,7 @@ public class TaskbarFlashService : ITaskbarFlashService
             };
 
             bool result = FlashWindowEx(ref fInfo);
-            _logger.Info("Simple persistent flash initiated, result: {Result}", result);
+            _logger.Debug("Simple persistent flash initiated, result: {Result}", result);
 
             // Monitor for window focus change
             while (!cancellationToken.IsCancellationRequested)
@@ -226,7 +226,7 @@ public class TaskbarFlashService : ITaskbarFlashService
             };
 
             FlashWindowEx(ref stopInfo);
-            _logger.Info("Simple flash stopped");
+            _logger.Debug("Simple flash stopped");
         }
         catch (OperationCanceledException)
         {
@@ -263,7 +263,7 @@ public class TaskbarFlashService : ITaskbarFlashService
                     };
 
                     FlashWindowEx(ref fInfo);
-                    _logger.Info("Taskbar flashing stopped manually");
+                    _logger.Debug("Taskbar flashing stopped manually");
                 }
             }
         }
