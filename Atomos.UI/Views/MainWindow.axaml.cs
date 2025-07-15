@@ -96,9 +96,9 @@ namespace Atomos.UI.Views
             };
 
             // Direct event handling for window controls
-            this.Get<Button>("MinimizeButton").Click += (s, e) =>
+            this.Get<Button>("MinimiseButton").Click += (s, e) =>
             {
-                _logger.Info("Minimize button clicked");
+                _logger.Info("Minimise button clicked");
                 if ((bool)_configuration.ReturnConfigValue(x => x.UI.MinimiseToTray))
                 {
                     HiddenWindows.HideMainWindow();
@@ -111,15 +111,8 @@ namespace Atomos.UI.Views
 
             this.Get<Button>("CloseButton").Click += (s, e) =>
             {
-                if ((bool)_configuration.ReturnConfigValue(x => x.UI.MinimiseToTray)) 
-                {
-                    HiddenWindows.HideMainWindow();
-                    _logger.Info("Close button clicked, but minimizing to tray is enabled. Use tray to fully close application.");
-                } else 
-                {
-                    Close();
-                    _logger.Info("Close button clicked");
-                }
+                Close();
+                _logger.Info("Close button clicked");
             };
         }
 

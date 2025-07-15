@@ -58,9 +58,9 @@
                 <!-- Window Controls -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <!-- Minimize Button -->
-                    <Button Name="MinimizeButton" 
+                    <Button Name="MinimiseButton" 
                             Classes="windowControl" 
-                            ToolTip.Tip="Minimize"
+                            ToolTip.Tip="Minimise"
                             Cursor="Hand">
                         <Path Width="12" Height="2" Stretch="None">
                             <Path.Data>
