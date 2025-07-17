@@ -111,8 +111,16 @@ namespace Atomos.UI.Views
 
             this.Get<Button>("CloseButton").Click += (s, e) =>
             {
-                Close();
                 _logger.Info("Close button clicked");
+                if ((bool) _configuration.ReturnConfigValue(x => x.UI.MinimiseOnClose))
+                {
+                    HiddenWindows.HideMainWindow();
+                }
+                else
+                {
+                    Close();
+                }
+                
             };
         }
 
