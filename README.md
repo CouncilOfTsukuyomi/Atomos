@@ -20,7 +20,7 @@ Download the latest release from the GitHub repository and run `Launcher.exe`. A
 
 ### Support
 
-If you encounter any issues, please report them in the **Penumbra Mod Forwarder** category on [our Discord server](https://discord.gg/rtGXwMn7pX).
+If you encounter any issues, please report them in the **Atomos Mod Forwarder** category on [our Discord server](https://discord.gg/rtGXwMn7pX).
 
 ## Features
 
