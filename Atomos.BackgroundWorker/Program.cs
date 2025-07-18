@@ -36,7 +36,7 @@ public class Program
 
             if (!isInitializedByWatchdog)
             {
-                _logger.Warn("Application must be started through the main executable.");
+                _logger.Error("Application must be started through Atomos.Launcher.exe");
                 return;
             }
 
