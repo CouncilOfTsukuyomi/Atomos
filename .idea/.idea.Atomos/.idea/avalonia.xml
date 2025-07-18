@@ -23,6 +23,7 @@
         <entry key="Atomos.UI/Styles/Icons.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/AboutView .axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/AboutView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
+        <entry key="Atomos.UI/Views/ErrorWindow.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/HomeView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/InstallView.axaml" value="Atomos.UI/Atomos.UI.csproj" />
         <entry key="Atomos.UI/Views/MainWindow.axaml" value="Atomos.UI/Atomos.UI.csproj" />
