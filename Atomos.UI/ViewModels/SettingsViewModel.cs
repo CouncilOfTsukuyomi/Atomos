@@ -25,6 +25,27 @@ public class SettingsViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialogService;
     private readonly IWebSocketClient _webSocketClient;
     
+    // Dictionary to map property names to tutorial-friendly names
+    private readonly Dictionary<string, string> _tutorialNameMap = new()
+    {
+        { "DownloadPath", "DownloadPathSetting" },
+        { "StartOnBoot", "StartOnBoot" },
+        { "FileLinkingEnabled", "FileLinkingEnabled" },
+        { "EnableSentry", "EnableSentry" },
+        { "EnableDebugLogs", "EnableDebugLogs" }
+    };
+    
+    // Dictionary to map tutorial element names to their group names
+    private readonly Dictionary<string, string> _tutorialElementToGroupMap = new()
+    {
+        { "DownloadPathSetting", "Pathing" },
+        { "StartOnBoot", "General" },
+        { "FileLinkingEnabled", "General" },
+        { "EnableSentry", "General" },
+        { "EnableDebugLogs", "Advanced" } 
+    };
+
+    
     public ObservableCollection<ConfigurationGroup> AllGroups { get; } = new();
         
     private ObservableCollection<ConfigurationGroup> _filteredGroups = new();
@@ -34,7 +55,14 @@ public class SettingsViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _filteredGroups, value);
     }
 
-    private string _searchTerm;
+    private ConfigurationGroup? _selectedGroup;
+    public ConfigurationGroup? SelectedGroup
+    {
+        get => _selectedGroup;
+        set => this.RaiseAndSetIfChanged(ref _selectedGroup, value);
+    }
+
+    private string _searchTerm = string.Empty;
     public string SearchTerm
     {
         get => _searchTerm;
@@ -60,11 +88,52 @@ public class SettingsViewModel : ViewModelBase
     private void LoadConfigurationSettings()
     {
         var configurationModel = _configurationService.GetConfiguration();
-        // Populate AllGroups instead of Groups:
         LoadPropertiesFromModel(configurationModel);
-
-        // After loading is done, sync AllGroups to FilteredGroups.
         FilteredGroups = new ObservableCollection<ConfigurationGroup>(AllGroups);
+        
+        // Set the first group as selected by default
+        if (FilteredGroups.Any())
+        {
+            SelectedGroup = FilteredGroups.First();
+        }
+    }
+
+    public void NavigateToElement(string elementName)
+    {
+        _logger.Debug("NavigateToElement called for: {ElementName}", elementName);
+        
+        // Clear search term to show all groups
+        SearchTerm = string.Empty;
+        
+        // Find the group that contains this element
+        if (_tutorialElementToGroupMap.TryGetValue(elementName, out var groupName))
+        {
+            var targetGroup = AllGroups.FirstOrDefault(g => g.GroupName == groupName);
+            if (targetGroup != null)
+            {
+                _logger.Debug("Switching to group: {GroupName}", groupName);
+                SelectedGroup = targetGroup;
+                return;
+            }
+        }
+        
+        // Fallback: search through all groups for the element
+        foreach (var group in AllGroups)
+        {
+            var hasElement = group.Properties.Any(p => 
+                p.TutorialName == elementName || 
+                (p.TutorialName == null && _tutorialNameMap.ContainsValue(elementName) && 
+                 _tutorialNameMap.FirstOrDefault(kvp => kvp.Value == elementName).Key == p.PropertyInfo.Name));
+            
+            if (hasElement)
+            {
+                _logger.Debug("Found element {ElementName} in group: {GroupName}", elementName, group.GroupName);
+                SelectedGroup = group;
+                return;
+            }
+        }
+        
+        _logger.Warn("Could not find group for element: {ElementName}", elementName);
     }
 
     private void LoadPropertiesFromModel(
@@ -118,6 +187,13 @@ public class SettingsViewModel : ViewModelBase
                 };
 
                 descriptor.Value = prop.GetValue(model);
+
+                // Set tutorial name if available
+                if (_tutorialNameMap.TryGetValue(prop.Name, out var tutorialName))
+                {
+                    descriptor.TutorialName = tutorialName;
+                    _logger.Debug("Assigned tutorial name '{TutorialName}' to property '{PropertyName}'", tutorialName, prop.Name);
+                }
 
                 // If the property is a path, attach a "BrowseCommand"
                 if ((prop.PropertyType == typeof(string) || prop.PropertyType == typeof(List<string>)) &&
@@ -264,10 +340,6 @@ public class SettingsViewModel : ViewModelBase
         return string.Join(".", pathSegments);
     }
 
-    /// <summary>
-    /// Filters AllGroups into FilteredGroups, matching the property’s DisplayName
-    /// or Description against the SearchTerm.
-    /// </summary>
     private void FilterSettings()
     {
         if (string.IsNullOrWhiteSpace(SearchTerm))
@@ -281,15 +353,12 @@ public class SettingsViewModel : ViewModelBase
         var newGroups = new List<ConfigurationGroup>();
         foreach (var group in AllGroups)
         {
-            // Filter properties in each group
             var matchingProperties = group.Properties
                 .Where(pd => MatchesSearch(pd, term))
                 .ToList();
 
-            // Only add group if there is at least one matching property
             if (matchingProperties.Any())
             {
-                // Create a shallow copy of the group with filtered properties
                 var newGroup = new ConfigurationGroup(group.GroupName);
                 foreach (var match in matchingProperties)
                 {

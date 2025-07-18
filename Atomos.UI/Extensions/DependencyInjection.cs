@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Atomos.Statistics.Services;
 using Atomos.UI.Controllers;
 using Atomos.UI.Interfaces;
+using Atomos.UI.Interfaces.Tutorial;
 using Atomos.UI.Services;
+using Atomos.UI.Services.Tutorial;
 using Atomos.UI.ViewModels;
 using Atomos.UI.Views;
 using Avalonia;
@@ -52,27 +55,36 @@ public static class DependencyInjection
         services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
         services.AddSingleton<IRunUpdater, RunUpdater>();
         services.AddSingleton<IPluginDataService, PluginDataService>();
+        
+        // Register IFileDialogService with lazy initialisation to avoid MainWindow dependency issues
         services.AddSingleton<IFileDialogService>(provider =>
         {
-            var applicationLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
-            var mainWindow = applicationLifetime?.MainWindow;
-
-            if (mainWindow == null)
+            return new LazyFileDialogService(() =>
             {
-                throw new InvalidOperationException("MainWindow is not initialized.");
-            }
+                var applicationLifetime = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+                var mainWindow = applicationLifetime?.MainWindow;
 
-            return new FileDialogService(mainWindow);
+                if (mainWindow == null)
+                {
+                    throw new InvalidOperationException("MainWindow is not initialized.");
+                }
+
+                return new FileDialogService(mainWindow);
+            });
         });
+        
         services.AddSingleton<ITrayIconController, TrayIconController>();
         services.AddSingleton<ITrayIconManager, TrayIconManager>();
         services.AddSingleton<ITaskbarFlashService, TaskbarFlashService>();
+        services.AddSingleton<ITutorialService, TutorialService>();
+        services.AddSingleton<IElementHighlightService, ElementHighlightService>();
         
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ErrorWindowViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
+        services.AddSingleton<TutorialOverlayView>();
         services.AddScoped<PluginViewModel>();
         services.AddTransient<PluginDataViewModel>();
         
@@ -195,5 +207,24 @@ public static class DependencyInjection
     {
         MergedDebugLogging.DisableDebugLogging();
     }
+}
 
+public class LazyFileDialogService : IFileDialogService
+{
+    private readonly Lazy<IFileDialogService> _lazyService;
+
+    public LazyFileDialogService(Func<IFileDialogService> serviceFactory)
+    {
+        _lazyService = new Lazy<IFileDialogService>(serviceFactory);
+    }
+
+    public Task<string> OpenFolderAsync(string initialDirectory, string title)
+    {
+        return _lazyService.Value.OpenFolderAsync(initialDirectory, title);
+    }
+
+    public Task<IEnumerable<string>> OpenFoldersAsync(string initialDirectory, string title)
+    {
+        return _lazyService.Value.OpenFoldersAsync(initialDirectory, title);
+    }
 }

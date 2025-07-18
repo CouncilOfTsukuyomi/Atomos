@@ -24,7 +24,6 @@
     </Design.DataContext>
 
     <Grid RowDefinitions="40,*">
-        <!-- Custom Title Bar -->
         <Border Grid.Row="0" Height="40" Background="{StaticResource SecondaryBrush}">
             <Grid x:Name="TitleBar" Classes="titleBar">
                 <Grid.ColumnDefinitions>
@@ -35,14 +34,12 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Atomos Mod Forwarder" Classes="titleText"/>
     
-                    <!-- Beta Badge -->
                     <Border IsVisible="{Binding IsBetaBuild}"
                             Classes="betaBadge"
                             Margin="10,0,0,0">
                         <TextBlock Text="BETA" Classes="betaText"/>
                     </Border>
     
-                    <!-- Update Check Badge -->
                     <Border IsVisible="{Binding IsCheckingForUpdates}"
                             Classes="updateCheckBadge"
                             Margin="10,0,0,0">
@@ -55,9 +52,7 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Window Controls -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <!-- Minimize Button -->
                     <Button Name="MinimiseButton" 
                             Classes="windowControl" 
                             ToolTip.Tip="Minimise"
@@ -71,7 +66,6 @@
                         </Path>
                     </Button>
 
-                    <!-- Close Button -->
                     <Button Name="CloseButton" 
                             Classes="windowControl closeButton"
                             ToolTip.Tip="Close"
@@ -88,12 +82,9 @@
             </Grid>
         </Border>
 
-        <!-- Main Content -->
         <Grid Grid.Row="1" ColumnDefinitions="280,*">
-            <!-- Navigation Panel -->
             <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}">
-                <Grid Classes="navPanel" RowDefinitions="Auto,*,Auto">
-                    <!-- App Logo/Title -->
+                <Grid x:Name="NavigationPanel" Classes="navPanel" RowDefinitions="Auto,*,Auto">
                     <StackPanel Grid.Row="0" Classes="appLogo">
                         <Border Classes="logoContainer">
                             <Image Source="{Binding AppLogoSource}" 
@@ -106,8 +97,8 @@
                         <TextBlock Text="Mod Forwarder" Classes="logoSubtext"/>
                     </StackPanel>
 
-                    <!-- Navigation Items -->
                     <ListBox Grid.Row="1" 
+                            x:Name="HomeMenuItem"
                             Classes="navItems" 
                             ItemsSource="{Binding MenuItems}" 
                             SelectedItem="{Binding SelectedMenuItem}"
@@ -122,13 +113,11 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                     
-                    <!-- Footer Section -->
                     <StackPanel Grid.Row="2" Margin="0,0,0,20">
-                        <!-- Divider -->
                         <Border Classes="navDivider" Margin="0,0,0,12"/>
                         
-                        <!-- Settings Button -->
-                        <Button Command="{Binding NavigateToSettingsCommand}" 
+                        <Button x:Name="SettingsButton"
+                                Command="{Binding NavigateToSettingsCommand}" 
                                 Classes="navButton"
                                 Margin="16,0,16,8"
                                 Cursor="Hand">
@@ -138,7 +127,6 @@
                             </StackPanel>
                         </Button>
 
-                        <!-- About Button -->
                         <Button Command="{Binding NavigateToAboutCommand}" 
                                 Classes="navButton"
                                 Margin="16,0,16,0"
@@ -152,37 +140,33 @@
                 </Grid>
             </Border>
 
-            <!-- Content Area -->
             <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
                 <ContentControl Content="{Binding CurrentPage}" Margin="20"/>
             </Border>
         </Grid>
 
-        <!-- Notification Overlay -->
         <ItemsControl Grid.Row="1" 
                      ItemsSource="{Binding Notifications}" 
                      Classes="notifications"/>
         
-        <!-- Install View Overlay -->
         <views:InstallView DataContext="{Binding InstallViewModel}"
                            Grid.Row="0" Grid.RowSpan="2"/>
         
-        <!-- Update View Overlay -->
         <views:UpdatePromptView DataContext="{Binding UpdatePromptViewModel}"
                            Grid.Row="0" Grid.RowSpan="2"/>
         
-        <!-- Sentry Enable Overlay -->
         <views:SentryPromptView DataContext="{Binding SentryPromptViewModel}"
                                 Grid.Row="0" Grid.RowSpan="2"/>
 
-        <!-- Notification Hub View -->
         <views:NotificationHubView DataContext="{Binding NotificationHubViewModel}"
                                    Grid.Row="0" Grid.RowSpan="2"/>
 
-        <!-- Plugin Settings Overlay -->
         <views:PluginSettingsView x:Name="PluginSettingsOverlay"
                                   DataContext="{Binding PluginSettingsViewModel}"
                                   IsVisible="{Binding #PluginSettingsOverlay.DataContext, Converter={x:Static ObjectConverters.IsNotNull}}"
                                   Grid.Row="0" Grid.RowSpan="2"/>
+
+        <views:TutorialOverlayView DataContext="{Binding TutorialViewModel}"
+                               Grid.Row="0" Grid.RowSpan="2"/>
     </Grid>
 </Window>

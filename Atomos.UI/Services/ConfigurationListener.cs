@@ -16,6 +16,8 @@ public class ConfigurationListener : IConfigurationListener, IDisposable
     private readonly IXivLauncherService _xivLauncherService;
     private readonly IFileLinkingService _fileLinkingService;
     private bool _disposed;
+    
+    public event EventHandler<ConfigurationChangedEventArgs>? TutorialRelevantConfigurationChanged;
 
     public ConfigurationListener(
         IConfigurationService configurationService,
@@ -93,6 +95,12 @@ public class ConfigurationListener : IConfigurationListener, IDisposable
             case "AdvancedOptions.EnableDebugLogs" when e.NewValue is bool shouldEnableLogging:
                 HandleDebugLogsChange(shouldEnableLogging);
                 break;
+            
+            case "BackgroundWorker.DownloadPath":
+                _logger.Debug("DownloadPath changed, notifying tutorial system");
+                TutorialRelevantConfigurationChanged?.Invoke(this, e);
+                break;
+
         }
     }
 

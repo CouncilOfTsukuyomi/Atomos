@@ -1,0 +1,125 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Atomos.UI.ViewModels"
+             x:Class="Atomos.UI.Views.TutorialOverlayView"
+             x:DataType="vm:TutorialOverlayViewModel"
+             IsVisible="{Binding IsVisible}"
+             IsHitTestVisible="{Binding IsVisible}">
+    
+    <UserControl.Styles>
+        <Style Selector="Border.tutorialTooltip">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="MinWidth" Value="450"/>
+            <Setter Property="MaxWidth" Value="600"/>
+            <Setter Property="IsHitTestVisible" Value="True"/>
+            <Setter Property="BoxShadow" Value="0 8 32 0 #4C000000"/>
+        </Style>
+        
+        <Style Selector="TextBlock.tutorialTitle">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        
+        <Style Selector="TextBlock.tutorialDescription">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="20"/>
+        </Style>
+        
+        <Style Selector="TextBlock.tutorialProgress">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="MinWidth" Value="120"/>
+        </Style>
+        
+        <Style Selector="Button.tutorialButton">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="80"/>
+        </Style>
+        
+        <Style Selector="Button.tutorialButton.primary">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        </Style>
+        
+        <Style Selector="Button.tutorialButton.secondary">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        
+        <Style Selector="Button.tutorialButton.skip">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        
+        <Style Selector="Button.tutorialButton:pointerover">
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+        
+        <Style Selector="Button.tutorialButton:disabled">
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+    </UserControl.Styles>
+    
+    <!-- Tutorial tooltip positioned based on step position -->
+    <Border x:Name="TutorialTooltip"
+            Classes="tutorialTooltip"
+            IsVisible="{Binding CurrentStep, Converter={x:Static ObjectConverters.IsNotNull}}"
+            HorizontalAlignment="{Binding HorizontalAlignment}"
+            VerticalAlignment="{Binding VerticalAlignment}"
+            Margin="{Binding Margin}">
+        
+        <StackPanel Spacing="20">
+            <!-- Progress indicator -->
+            <TextBlock Text="{Binding ProgressText}" 
+                       Classes="tutorialProgress"/>
+            
+            <!-- Content -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="{Binding CurrentStep.Title}" 
+                           Classes="tutorialTitle"/>
+                <TextBlock Text="{Binding CurrentStep.Description}" 
+                           Classes="tutorialDescription"/>
+            </StackPanel>
+            
+            <!-- Action buttons -->
+            <StackPanel Orientation="Horizontal" 
+                        Spacing="12" 
+                        HorizontalAlignment="Center">
+                
+                <Button Content="Previous" 
+                        Command="{Binding PreviousCommand}"
+                        Classes="tutorialButton secondary"
+                        IsVisible="{Binding CanGoPrevious}"/>
+                
+                <Button Content="Skip Tutorial" 
+                        Command="{Binding SkipCommand}"
+                        Classes="tutorialButton skip"
+                        IsVisible="{Binding !IsRequiredStep}"/>
+                
+                <Button Content="{Binding NextButtonText}" 
+                        Command="{Binding NextCommand}"
+                        Classes="tutorialButton primary"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>
