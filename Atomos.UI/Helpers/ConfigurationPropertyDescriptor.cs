@@ -19,6 +19,7 @@ public class ConfigurationPropertyDescriptor : ReactiveObject
     public PropertyInfo PropertyInfo { get; set; }
     public object ModelInstance { get; set; }
     public ConfigurationPropertyDescriptor ParentDescriptor { get; set; }
+    public string TutorialName { get; set; }
 
     private object _value;
     public object Value

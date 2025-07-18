@@ -1,5 +1,4 @@
 using System;
-using Atomos.UI.Interfaces;
 using Atomos.UI.ViewModels;
 using Atomos.UI.Views;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -59,11 +58,24 @@ public partial class App : Avalonia.Application
                 int port = int.Parse(args[1]);
                 _logger.Info("Listening on port {Port}", port);
 
-                var mainWindow = ActivatorUtilities.CreateInstance<MainWindow>(_serviceProvider);
-                var mainViewModel = ActivatorUtilities.CreateInstance<MainWindowViewModel>(_serviceProvider, port);
-                mainWindow.DataContext = mainViewModel;
-
-                desktop.MainWindow = mainWindow;
+                try
+                {
+                    var mainWindow = ActivatorUtilities.CreateInstance<MainWindow>(_serviceProvider);
+                    
+                    // Set the MainWindow first so it's available for any services that need it
+                    desktop.MainWindow = mainWindow;
+                    
+                    // Now create the ViewModel - this way MainWindow is available if needed
+                    var mainViewModel = ActivatorUtilities.CreateInstance<MainWindowViewModel>(_serviceProvider, port);
+                    mainWindow.DataContext = mainViewModel;
+                    
+                    _logger.Info("Main window and view model created successfully");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Fatal(ex, "Failed to create main window or view model");
+                    Environment.Exit(1);
+                }
             }
         }
         
