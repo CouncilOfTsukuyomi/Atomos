@@ -8,31 +8,33 @@
         <Company>Atomos.Launcher</Company>
         <Product>Atomos.Launcher</Product>
         <AssemblyName>Atomos.Launcher</AssemblyName>
-        <OutputType>Exe</OutputType>
+        <OutputType>WinExe</OutputType>
+        <UseWindowsForms>false</UseWindowsForms>
+        <UseWPF>false</UseWPF>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AutoMapper" Version="14.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0-preview.4.25258.110" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0-preview.4.25258.110" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.4.25258.110" />
-      <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.4.25258.110" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="NLog" Version="6.0.0-preview1" />
-      <PackageReference Include="Sentry" Version="5.7.0" />
+        <PackageReference Include="AutoMapper" Version="14.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0-preview.4.25258.110" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0-preview.4.25258.110" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.4.25258.110" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0-preview.4.25258.110" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="NLog" Version="6.0.0-preview1" />
+        <PackageReference Include="Sentry" Version="5.7.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="..\SharedResources\Assets\Icons\ico\Exclamation_mark_cat_icon.ico">
-        <Link>Exclamation_mark_cat_icon.ico</Link>
-      </None>
-      <None Include="..\SharedResources\Assets\Icons\png\Exclamation_mark_cat_image.png">
-        <Link>Exclamation_mark_cat_image.png</Link>
-      </None>
+        <None Include="..\SharedResources\Assets\Icons\ico\Exclamation_mark_cat_icon.ico">
+            <Link>Exclamation_mark_cat_icon.ico</Link>
+        </None>
+        <None Include="..\SharedResources\Assets\Icons\png\Exclamation_mark_cat_image.png">
+            <Link>Exclamation_mark_cat_image.png</Link>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CommonLib\CommonLib\CommonLib.csproj" />
+        <ProjectReference Include="..\CommonLib\CommonLib\CommonLib.csproj" />
     </ItemGroup>
 
 </Project>

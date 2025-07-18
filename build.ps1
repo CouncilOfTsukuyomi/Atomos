@@ -1,5 +1,5 @@
 
-# build.ps1 - Build script for PenumbraModForwarder
+# build.ps1 - Build script for Atomos
 param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
@@ -7,7 +7,7 @@ param(
     [string]$OutputDir = "./publish/windows"
 )
 
-Write-Host "=== PenumbraModForwarder Build Script ===" -ForegroundColor Green
+Write-Host "=== Atomos Build Script ===" -ForegroundColor Green
 Write-Host "Configuration: $Configuration"
 Write-Host "Runtime: $Runtime"
 Write-Host "Framework: $Framework"
@@ -26,10 +26,10 @@ if (!(Test-Path $OutputDir)) {
 
 # Define projects (now in the same directory as the script)
 $projects = @(
-    "PenumbraModForwarder.Watchdog",
-    "PenumbraModForwarder.UI",
-    "PenumbraModForwarder.ConsoleTooling",
-    "PenumbraModForwarder.BackgroundWorker"
+    "Atomos.Watchdog",
+    "Atomos.UI",
+    "Atomos.ConsoleTooling",
+    "Atomos.BackgroundWorker"
 )
 
 Write-Host "`nVerifying projects..."
