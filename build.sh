@@ -36,10 +36,10 @@ fi
 
 # Define projects (in the same directory as the script)
 PROJECTS=(
-    "PenumbraModForwarder.Watchdog"
-    "PenumbraModForwarder.UI"
-    "PenumbraModForwarder.ConsoleTooling"
-    "PenumbraModForwarder.BackgroundWorker"
+    "Atomos.Watchdog"
+    "Atomos.UI"
+    "Atomos.ConsoleTooling"
+    "Atomos.BackgroundWorker"
 )
 
 echo ""

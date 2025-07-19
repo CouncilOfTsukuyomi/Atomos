@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using Atomos.Watchdog.Interfaces;
 using NLog;
 
@@ -76,9 +77,18 @@ public class ProcessManager : IProcessManager, IDisposable
     private Process StartProcess(string projectName, string port)
     {
         _logger.Info("Starting: {ProjectName}", projectName);
-        return _isDevMode
-            ? StartDevProcess(projectName, port)
-            : StartProdProcess($"{projectName}.exe", port);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return _isDevMode
+                ? StartDevProcess(projectName, port)
+                : StartProdProcess($"{projectName}", port);
+        }
+        {
+            return _isDevMode
+                ? StartDevProcess(projectName, port)
+                : StartProdProcess($"{projectName}.exe", port);
+        }
+
     }
 
     private Process StartDevProcess(string projectName, string port)
