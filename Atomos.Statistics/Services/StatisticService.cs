@@ -50,9 +50,9 @@ public class StatisticService : IStatisticService, IDisposable
         _fileStorage = fileStorage;
         
 #if DEBUG
-        _databasePath = @"C:\Temp\SharedDebugDb\userstats.db";
+        _databasePath = Path.Combine(Path.GetTempPath(), "userstats.db");
 #else
-        _databasePath = databasePath ?? $@"{CommonLib.Consts.ConfigurationConsts.DatabasePath}\userstats.db";
+        _databasePath = databasePath ?? Path.Combine(CommonLib.Consts.ConfigurationConsts.DatabasePath, "userstats.db");
 #endif
 
         _logger.Info("StatisticService initializing with database path: {DatabasePath}", _databasePath);
