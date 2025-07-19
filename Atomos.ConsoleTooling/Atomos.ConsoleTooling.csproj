@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Atomos.ConsoleTooling</RootNamespace>
+        <ApplicationIcon>..\SharedResources\Assets\Icons\ico\Purple_arrow_cat_icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,6 +21,12 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Atomos.Statistics\Atomos.Statistics.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="..\SharedResources\Assets\Icons\ico\Purple_arrow_cat_icon.ico">
+        <Link>Purple_arrow_cat_icon.ico</Link>
+      </None>
     </ItemGroup>
 
 </Project>
