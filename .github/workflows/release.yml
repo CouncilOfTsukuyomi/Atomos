@@ -34,7 +34,7 @@ permissions:
 
 jobs:
     version-update:
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         outputs:
             version: ${{ steps.version-output.outputs.version }}
             major: ${{ steps.version-output.outputs.major }}
@@ -44,18 +44,18 @@ jobs:
         steps:
             - name: Determine Source Branch
               id: determine-branch
-              shell: pwsh
+              shell: bash
               run: |
-                  if ("${{ github.event.inputs.sourceBranch }}" -ne "") {
-                    echo "source_branch=${{ github.event.inputs.sourceBranch }}" >> $env:GITHUB_OUTPUT
-                    Write-Host "Using manually specified branch: ${{ github.event.inputs.sourceBranch }}"
-                  } elseif ("${{ github.event.inputs.isBeta }}" -eq "true") {
-                    echo "source_branch=develop" >> $env:GITHUB_OUTPUT
-                    Write-Host "Beta release detected - using develop branch"
-                  } else {
-                    echo "source_branch=main" >> $env:GITHUB_OUTPUT
-                    Write-Host "Production release detected - using main branch"
-                  }
+                  if [ -n "${{ github.event.inputs.sourceBranch }}" ]; then
+                    echo "source_branch=${{ github.event.inputs.sourceBranch }}" >> $GITHUB_OUTPUT
+                    echo "Using manually specified branch: ${{ github.event.inputs.sourceBranch }}"
+                  elif [ "${{ github.event.inputs.isBeta }}" = "true" ]; then
+                    echo "source_branch=develop" >> $GITHUB_OUTPUT
+                    echo "Beta release detected - using develop branch"
+                  else
+                    echo "source_branch=main" >> $GITHUB_OUTPUT
+                    echo "Production release detected - using main branch"
+                  fi
 
             - uses: actions/create-github-app-token@v1
               id: app-token
@@ -77,57 +77,43 @@ jobs:
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
             - name: Setup Dependencies
-              shell: pwsh
               run: |
                   # Install Python if not available
-                  if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-                    choco install python -y
-                    refreshenv
-                  }
+                  if ! command -v python3 &> /dev/null; then
+                      sudo apt-get update
+                      sudo apt-get install -y python3 python3-pip
+                  fi
                   
-                  # Make script executable (Git Bash style)
-                  if (Test-Path ".github/scripts/increment_version.py") {
-                    Write-Host "Python script found"
-                  } else {
-                    Write-Host "Warning: Python script not found"
-                  }
+                  # Make script executable
+                  if [ -f ".github/scripts/increment_version.py" ]; then
+                      echo "Python script found"
+                  else
+                      echo "Warning: Python script not found"
+                  fi
 
             - name: Determine Version with GitVersion
               id: gitversion
-              shell: pwsh
               run: |
-                  $env:RELEASE_TYPE = "${{ github.event.inputs.releaseType }}"
-                  $env:IS_BETA = "${{ github.event.inputs.isBeta }}"
-                  python .github/scripts/increment_version.py
+                  export RELEASE_TYPE="${{ github.event.inputs.releaseType }}"
+                  export IS_BETA="${{ github.event.inputs.isBeta }}"
+                  python3 .github/scripts/increment_version.py
               env:
                   RELEASE_TYPE: ${{ github.event.inputs.releaseType }}
                   IS_BETA: ${{ github.event.inputs.isBeta }}
 
             - name: Update Directory.Build.props Versions
-              shell: pwsh
               run: |
-                  $major = "${{ steps.gitversion.outputs.major }}"
-                  $minor = "${{ steps.gitversion.outputs.minor }}"
-                  $patch = "${{ steps.gitversion.outputs.patch }}"
+                  major="${{ steps.gitversion.outputs.major }}"
+                  minor="${{ steps.gitversion.outputs.minor }}"
+                  patch="${{ steps.gitversion.outputs.patch }}"
                   
-                  $content = Get-Content "Directory.Build.props" -Raw
-                  $content = $content -replace '<MajorVersion>.*</MajorVersion>', "<MajorVersion>$major</MajorVersion>"
-                  $content = $content -replace '<MinorVersion>.*</MinorVersion>', "<MinorVersion>$minor</MinorVersion>"
-                  $content = $content -replace '<PatchVersion>.*</PatchVersion>', "<PatchVersion>$patch</PatchVersion>"
-                  
-                  # Remove any trailing newlines and write without adding extra ones
-                  $content = $content.TrimEnd("`r", "`n")
-                  [System.IO.File]::WriteAllText("Directory.Build.props", $content + "`n", [System.Text.UTF8Encoding]::new($false))
+                  sed -i "s|<MajorVersion>.*</MajorVersion>|<MajorVersion>$major</MajorVersion>|g" Directory.Build.props
+                  sed -i "s|<MinorVersion>.*</MinorVersion>|<MinorVersion>$minor</MinorVersion>|g" Directory.Build.props
+                  sed -i "s|<PatchVersion>.*</PatchVersion>|<PatchVersion>$patch</PatchVersion>|g" Directory.Build.props
 
             - name: Handle Beta Builds
-              shell: pwsh
               run: |
-                  $content = Get-Content "Directory.Build.props" -Raw
-                  $content = $content -replace '<IsBeta>.*</IsBeta>', "<IsBeta>${{ github.event.inputs.isBeta }}</IsBeta>"
-                  
-                  # Remove any trailing newlines and write without adding extra ones
-                  $content = $content.TrimEnd("`r", "`n")
-                  [System.IO.File]::WriteAllText("Directory.Build.props", $content + "`n", [System.Text.UTF8Encoding]::new($false))
+                  sed -i "s|<IsBeta>.*</IsBeta>|<IsBeta>${{ github.event.inputs.isBeta }}</IsBeta>|g" Directory.Build.props
 
             - name: Create Pull Request for Version Update
               id: create-pr
@@ -159,187 +145,83 @@ jobs:
 
             - name: Wait for PR to be merged
               if: steps.create-pr.outputs.pull-request-number
-              shell: pwsh
               run: |
-                  $prNumber = "${{ steps.create-pr.outputs.pull-request-number }}"
-                  $maxAttempts = 30
-                  $attempt = 0
+                  prNumber="${{ steps.create-pr.outputs.pull-request-number }}"
+                  maxAttempts=30
+                  attempt=0
                   
-                  Write-Host "⏳ Waiting for PR #$prNumber to be merged..."
+                  echo "⏳ Waiting for PR #$prNumber to be merged..."
                   
-                  do {
-                      Start-Sleep -Seconds 10
-                      $attempt++
+                  while [ $attempt -lt $maxAttempts ]; do
+                      sleep 10
+                      attempt=$((attempt + 1))
                   
-                      try {
-                          $prInfo = gh pr view $prNumber --json state,mergeable,mergeStateStatus --repo ${{ github.repository }}
-                          $prData = $prInfo | ConvertFrom-Json
+                      prInfo=$(gh pr view $prNumber --json state,mergeable,mergeStateStatus --repo ${{ github.repository }})
+                      prState=$(echo "$prInfo" | jq -r '.state')
                   
-                          Write-Host "Attempt $attempt/$maxAttempts - PR State: $($prData.state), Mergeable: $($prData.mergeable), Merge Status: $($prData.mergeStateStatus)"
+                      echo "Attempt $attempt/$maxAttempts - PR State: $prState"
                   
-                          if ($prData.state -eq "MERGED") {
-                              Write-Host "✅ PR merged successfully!"
-                              break
-                          } elseif ($prData.state -eq "CLOSED") {
-                              Write-Error "❌ PR was closed without merging"
-                              exit 1
-                          }
+                      if [ "$prState" = "MERGED" ]; then
+                          echo "✅ PR merged successfully!"
+                          break
+                      elif [ "$prState" = "CLOSED" ]; then
+                          echo "❌ PR was closed without merging"
+                          exit 1
+                      fi
                   
-                          if ($attempt -ge $maxAttempts) {
-                              Write-Error "❌ PR was not merged within expected time (5 minutes)"
-                              exit 1
-                          }
-                      } catch {
-                          Write-Host "Error checking PR status: $($_.Exception.Message)"
-                          if ($attempt -ge $maxAttempts) {
-                              Write-Error "❌ Failed to check PR status after $maxAttempts attempts"
-                              exit 1
-                          }
-                      }
-                  } while ($true)
+                      if [ $attempt -ge $maxAttempts ]; then
+                          echo "❌ PR was not merged within expected time (5 minutes)"
+                          exit 1
+                      fi
+                  done
               env:
-                  GH_TOKEN: ${{ steps.app-token.outputs.token }}  # Use GitHub App token
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
             - name: Set Version Outputs
               id: version-output
-              shell: pwsh
               run: |
-                  echo "version=${{ steps.gitversion.outputs.fullsemver }}" >> $env:GITHUB_OUTPUT
-                  echo "major=${{ steps.gitversion.outputs.major }}" >> $env:GITHUB_OUTPUT
-                  echo "minor=${{ steps.gitversion.outputs.minor }}" >> $env:GITHUB_OUTPUT
-                  echo "patch=${{ steps.gitversion.outputs.patch }}" >> $env:GITHUB_OUTPUT
+                  echo "version=${{ steps.gitversion.outputs.fullsemver }}" >> $GITHUB_OUTPUT
+                  echo "major=${{ steps.gitversion.outputs.major }}" >> $GITHUB_OUTPUT
+                  echo "minor=${{ steps.gitversion.outputs.minor }}" >> $GITHUB_OUTPUT
+                  echo "patch=${{ steps.gitversion.outputs.patch }}" >> $GITHUB_OUTPUT
     
-    build-and-release:
+    build-windows:
         needs: version-update
         runs-on: windows-latest
-        env:
-            SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        outputs:
+            artifact_name: ${{ steps.build.outputs.artifact_name }}
+            zip_filename: ${{ steps.build.outputs.zip_filename }}
         steps:
-            - name: Checkout Updated Code
-              uses: actions/checkout@v4
+            - name: Build Windows
+              id: build
+              uses: ./.github/workflows/templates/BuildWindows/action.yml
               with:
-                  fetch-depth: 0
-                  submodules: recursive
-                  ref: ${{ needs.version-update.outputs.source_branch }}
+                  source_branch: ${{ needs.version-update.outputs.source_branch }}
+                  version: ${{ needs.version-update.outputs.version }}
+                  configuration: 'Release'
+                  run_tests: 'true'
+                  sentry_dsn: ${{ secrets.SENTRY_DSN }}
 
-            - name: Cache NuGet packages
-              uses: actions/cache@v4
+    build-linux:
+        needs: version-update
+        runs-on: ubuntu-latest
+        outputs:
+            artifact_name: ${{ steps.build.outputs.artifact_name }}
+            zip_filename: ${{ steps.build.outputs.zip_filename }}
+        steps:
+            - name: Build Linux
+              id: build
+              uses: ./.github/workflows/templates/BuildLinux/action.yml
               with:
-                  path: ~/.nuget/packages
-                  key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-nuget-
-
-            - name: Set Up .NET (v9)
-              uses: actions/setup-dotnet@v4
-              with:
-                  dotnet-version: 9.x
-
-            - name: Restore Dependencies
-              run: dotnet restore
-
-            - name: Build Solution
-              run: dotnet build --configuration Release --verbosity minimal
-
-            - name: Run Tests
-              run: dotnet test --configuration Release --no-build --verbosity normal
-              continue-on-error: true
-
-            - name: Publish Solution Components
-              shell: pwsh
-              env:
-                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-              run: |
-                  # Create main publish directory
-                  New-Item -ItemType Directory -Path "./publish/Atomos-win-x64" -Force
-                  
-                  # Publish Console Tooling with optimizations
-                  dotnet publish Atomos.ConsoleTooling `
-                    -c Release `
-                    -p:PublishSingleFile=true `
-                    -p:PublishReadyToRun=true `
-                    --self-contained=true `
-                    -p:DebugType=None -p:DebugSymbols=false `
-                    -r win-x64 `
-                    -o "./publish/temp-console-win-x64" `
-                    -f net9.0
-                  
-                  # Publish UI Application with optimizations
-                  dotnet publish Atomos.UI `
-                    -c Release `
-                    -p:PublishSingleFile=true `
-                    -p:PublishReadyToRun=true `
-                    --self-contained=true `
-                    -p:DebugType=None -p:DebugSymbols=false `
-                    -r win-x64 `
-                    -o "./publish/temp-ui-win-x64" `
-                    -f net9.0
-                  
-                  # Publish Background Worker with optimizations
-                  dotnet publish Atomos.BackgroundWorker `
-                    -c Release `
-                    -p:PublishSingleFile=true `
-                    -p:PublishReadyToRun=true `
-                    --self-contained=true `
-                    -p:DebugType=None -p:DebugSymbols=false `
-                    -r win-x64 `
-                    -o "./publish/temp-worker-win-x64" `
-                    -f net9.0
-                  
-                  # Publish Watchdog/Launcher with optimizations
-                  dotnet publish Atomos.Watchdog `
-                    -c Release `
-                    -p:PublishSingleFile=true `
-                    -p:PublishReadyToRun=true `
-                    --self-contained=true `
-                    -p:DebugType=None -p:DebugSymbols=false `
-                    -r win-x64 `
-                    -o "./publish/temp-watchdog-win-x64" `
-                    -f net9.0
-                  
-                  # Move all files to the root Atomos directory
-                  Copy-Item -Path "./publish/temp-console-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
-                  Copy-Item -Path "./publish/temp-ui-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
-                  Copy-Item -Path "./publish/temp-worker-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
-                  Copy-Item -Path "./publish/temp-watchdog-win-x64/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
-                  
-                  # Clean up temporary directories
-                  Remove-Item -Path "./publish/temp-console-win-x64" -Recurse -Force
-                  Remove-Item -Path "./publish/temp-ui-win-x64" -Recurse -Force
-                  Remove-Item -Path "./publish/temp-worker-win-x64" -Recurse -Force
-                  Remove-Item -Path "./publish/temp-watchdog-win-x64" -Recurse -Force
-
-            - name: Validate Executables
-              shell: pwsh
-              run: |
-                  # Verify executables were created and are not zero-byte
-                  $exeFiles = Get-ChildItem -Path "./publish/Atomos-win-x64/" -Filter "*.exe"
-                  foreach ($exe in $exeFiles) {
-                    if ($exe.Length -eq 0) {
-                      Write-Error "Error: $($exe.Name) is empty"
-                      exit 1
-                    }
-                    $sizeKB = [math]::Round($exe.Length / 1KB, 2)
-                    Write-Host "✓ $($exe.Name) - $sizeKB KB"
-                  }
-
-            - name: Create Release ZIP
-              shell: pwsh
-              run: |
-                  Set-Location "./publish"
-                  Compress-Archive -Path "Atomos-win-x64/*" -DestinationPath "Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip"
-                  Set-Location ".."
-
-            - name: Upload Build Artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: Atomos-win-x64-v${{ needs.version-update.outputs.version }}
-                  path: ./publish/Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip
-                  retention-days: 6
+                  source_branch: ${{ needs.version-update.outputs.source_branch }}
+                  version: ${{ needs.version-update.outputs.version }}
+                  configuration: 'Release'
+                  run_tests: 'true'
+                  sentry_dsn: ${{ secrets.SENTRY_DSN }}
     
     create-release:
-        needs: [version-update, build-and-release]
-        runs-on: windows-latest
+        needs: [version-update, build-windows, build-linux]
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout Code for Release Notes
               uses: actions/checkout@v4
@@ -414,17 +296,13 @@ jobs:
                   path: ./artifacts
 
             - name: Move artifacts to publish folder
-              shell: pwsh
               run: |
-                  New-Item -ItemType Directory -Path "./publish" -Force
-                  Get-ChildItem -Path "./artifacts" -Recurse -Filter "*.zip" | ForEach-Object {
-                      Copy-Item -Path $_.FullName -Destination "./publish/" -Force
-                      Write-Host "Found artifact: $($_.Name)"
-                  }
+                  mkdir -p "./publish"
+                  find "./artifacts" -name "*.zip" -exec cp {} "./publish/" \;
                   
                   # List all files for verification
-                  Write-Host "Files in publish directory:"
-                  Get-ChildItem -Path "./publish" | ForEach-Object { Write-Host "  $($_.Name)" }
+                  echo "Files in publish directory:"
+                  ls -la "./publish"
 
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v1
@@ -436,14 +314,16 @@ jobs:
                       ${{ env.COMMITS }}
                       
                       ## Available Downloads:
-                      - `Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip` - Windows 64-bit (Universal)
+                      - `${{ needs.build-windows.outputs.zip_filename }}` - Windows 64-bit
+                      - `${{ needs.build-linux.outputs.zip_filename }}` - Linux 64-bit
                       
-                      **Note:** This release contains a universal x64 build that works on all Windows systems.
+                      **Note:** These releases contain self-contained builds that work on their respective platforms.
                       
                       **Source Branch:** ${{ needs.version-update.outputs.source_branch }}
                       **Release Type:** ${{ github.event.inputs.isBeta == 'true' && 'Beta' || 'Production' }}
                   files: |
-                      ./publish/Atomos-Windows-x64.v${{ needs.version-update.outputs.version }}.zip
+                      ./publish/${{ needs.build-windows.outputs.zip_filename }}
+                      ./publish/${{ needs.build-linux.outputs.zip_filename }}
                   draft: false
                   prerelease: ${{ github.event.inputs.isBeta == 'true' }}
               env:
@@ -451,9 +331,8 @@ jobs:
 
             - name: Notify on Success
               if: success()
-              shell: pwsh
               run: |
-                  $releaseType = if ("${{ github.event.inputs.isBeta }}" -eq "true") { "Beta" } else { "Production" }
-                  $sourceBranch = "${{ needs.version-update.outputs.source_branch }}"
-                  Write-Host "✅ $releaseType Release v${{ needs.version-update.outputs.version }} created successfully from $sourceBranch branch!"
-                  Write-Host "📦 Download: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.version-update.outputs.version }}"
+                  releaseType=${{ github.event.inputs.isBeta == 'true' && 'Beta' || 'Production' }}
+                  sourceBranch="${{ needs.version-update.outputs.source_branch }}"
+                  echo "✅ $releaseType Release v${{ needs.version-update.outputs.version }} created successfully from $sourceBranch branch!"
+                  echo "📦 Download: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.version-update.outputs.version }}"

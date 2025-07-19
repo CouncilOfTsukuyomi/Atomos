@@ -1,0 +1,140 @@
+﻿name: 'Build Linux'
+description: 'Build Atomos for Linux x64'
+inputs:
+    source_branch:
+        description: 'Source branch to checkout'
+        required: true
+    version:
+        description: 'Version string for the build'
+        required: true
+    configuration:
+        description: 'Build configuration (Release/Debug)'
+        required: false
+        default: 'Release'
+    run_tests:
+        description: 'Whether to run tests'
+        required: false
+        default: 'true'
+    sentry_dsn:
+        description: 'Sentry DSN for error tracking'
+        required: false
+outputs:
+    artifact_name:
+        description: 'Name of the uploaded artifact'
+        value: ${{ steps.set-outputs.outputs.artifact_name }}
+    zip_filename:
+        description: 'Name of the created zip file'
+        value: ${{ steps.set-outputs.outputs.zip_filename }}
+runs:
+    using: 'composite'
+    steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
+          with:
+              fetch-depth: 0
+              submodules: recursive
+              ref: ${{ inputs.source_branch }}
+
+        - name: Cache NuGet packages
+          uses: actions/cache@v4
+          with:
+              path: ~/.nuget/packages
+              key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+              restore-keys: |
+                  ${{ runner.os }}-nuget-
+
+        - name: Set Up .NET (v9)
+          uses: actions/setup-dotnet@v4
+          with:
+              dotnet-version: 9.x
+
+        - name: Restore Dependencies
+          shell: bash
+          run: dotnet restore
+
+        - name: Build Solution
+          shell: bash
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal
+
+        - name: Run Tests
+          if: ${{ inputs.run_tests == 'true' }}
+          shell: bash
+          run: dotnet test --configuration ${{ inputs.configuration }} --no-build --verbosity normal
+          continue-on-error: true
+
+        - name: Publish Solution Components
+          shell: bash
+          env:
+              SENTRY_DSN: ${{ inputs.sentry_dsn }}
+          run: |
+              # Create main publish directory
+              mkdir -p "./publish/Atomos-linux-x64"
+              
+              projects=("Atomos.ConsoleTooling" "Atomos.UI" "Atomos.BackgroundWorker" "Atomos.Watchdog")
+              
+              for project in "${projects[@]}"; do
+                temp_dir="./publish/temp-$(echo $project | tr '[:upper:]' '[:lower:]')-linux-x64"
+              
+                echo "Publishing $project..."
+                dotnet publish "$project" \
+                  -c ${{ inputs.configuration }} \
+                  -p:PublishSingleFile=true \
+                  -p:PublishReadyToRun=true \
+                  --self-contained=true \
+                  -p:DebugType=None -p:DebugSymbols=false \
+                  -r linux-x64 \
+                  -o "$temp_dir" \
+                  -f net9.0
+              
+                # Move files to main directory
+                cp -r "$temp_dir/"* "./publish/Atomos-linux-x64/"
+              
+                # Clean up temp directory
+                rm -rf "$temp_dir"
+              done
+
+        - name: Validate Executables
+          shell: bash
+          run: |
+              exe_count=0
+              for exe in ./publish/Atomos-linux-x64/Atomos.*; do
+                if [ -f "$exe" ] && [ -x "$exe" ]; then
+                  if [ ! -s "$exe" ]; then
+                    echo "Error: $(basename $exe) is empty"
+                    exit 1
+                  fi
+                  sizeKB=$(du -k "$exe" | cut -f1)
+                  echo "✓ $(basename $exe) - ${sizeKB} KB"
+                  exe_count=$((exe_count + 1))
+                fi
+              done
+              
+              if [ $exe_count -eq 0 ]; then
+                echo "No executable files found!"
+                exit 1
+              fi
+
+        - name: Create Release ZIP
+          shell: bash
+          run: |
+              cd "./publish"
+              zip_name="Atomos-Linux-x64.v${{ inputs.version }}.zip"
+              zip -r "$zip_name" "Atomos-linux-x64/"
+              cd ".."
+
+        - name: Set Outputs
+          id: set-outputs
+          shell: bash
+          run: |
+              artifact_name="Atomos-Linux-x64-v${{ inputs.version }}"
+              zip_filename="Atomos-Linux-x64.v${{ inputs.version }}.zip"
+              
+              echo "artifact_name=$artifact_name" >> $GITHUB_OUTPUT
+              echo "zip_filename=$zip_filename" >> $GITHUB_OUTPUT
+
+        - name: Upload Build Artifacts
+          uses: actions/upload-artifact@v4
+          with:
+              name: ${{ steps.set-outputs.outputs.artifact_name }}
+              path: ./publish/${{ steps.set-outputs.outputs.zip_filename }}
+              retention-days: 6
