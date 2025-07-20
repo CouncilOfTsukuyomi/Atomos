@@ -124,25 +124,7 @@ public static class DependencyInjection
                 {
                     logger?.LogInformation("Starting background plugin installation and updates...");
                     
-                    if (notificationService != null)
-                    {
-                        await notificationService.ShowNotification(
-                            "Setting Up Plugins", 
-                            "Checking for new plugins and updates...", 
-                            null, 
-                            3);
-                    }
-                    
                     await serviceProvider.InitializePluginServicesAsync();
-                    
-                    if (notificationService != null)
-                    {
-                        await notificationService.ShowNotification(
-                            "Plugins Ready", 
-                            "All plugins have been installed and updated successfully, refresh to view.", 
-                            null, 
-                            5);
-                    }
 
                     logger?.LogInformation("Background plugin installation and updates completed successfully");
                 }
