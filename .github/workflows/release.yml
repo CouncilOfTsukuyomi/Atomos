@@ -33,13 +33,12 @@ permissions:
     security-events: write
 
 jobs:
-    version-update:
+    release-approval:
         runs-on: ubuntu-latest
+        environment:
+            name: ${{ github.event.inputs.isBeta == 'true' && 'Development' || 'Production' }}
         outputs:
-            version: ${{ steps.version-output.outputs.version }}
-            major: ${{ steps.version-output.outputs.major }}
-            minor: ${{ steps.version-output.outputs.minor }}
-            patch: ${{ steps.version-output.outputs.patch }}
+            approved: ${{ steps.approval.outputs.approved }}
             source_branch: ${{ steps.determine-branch.outputs.source_branch }}
         steps:
             - name: Determine Source Branch
@@ -57,6 +56,35 @@ jobs:
                     echo "Production release detected - using main branch"
                   fi
 
+            - name: Release Approval Request
+              id: approval
+              run: |
+                  echo "🔒 Release pipeline is awaiting approval..."
+                  echo "📋 Release Details:"
+                  echo "   • Release Type: ${{ github.event.inputs.isBeta == 'true' && 'Beta' || 'Production' }}"
+                  echo "   • Version Increment: ${{ github.event.inputs.releaseType }}"
+                  echo "   • Source Branch: ${{ steps.determine-branch.outputs.source_branch }}"
+                  echo "   • Triggered by: ${{ github.actor }}"
+                  echo ""
+                  echo "⚠️  This will:"
+                  echo "   • Update version numbers"
+                  echo "   • Create version update PR"
+                  echo "   • Build Windows and Linux releases"
+                  echo "   • Create GitHub release"
+                  echo ""
+                  echo "✅ Approval granted - proceeding with release pipeline..."
+                  echo "approved=true" >> $GITHUB_OUTPUT
+
+    version-update:
+        needs: release-approval
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.version-output.outputs.version }}
+            major: ${{ steps.version-output.outputs.major }}
+            minor: ${{ steps.version-output.outputs.minor }}
+            patch: ${{ steps.version-output.outputs.patch }}
+            source_branch: ${{ needs.release-approval.outputs.source_branch }}
+        steps:
             - uses: actions/create-github-app-token@v1
               id: app-token
               with:
@@ -69,7 +97,7 @@ jobs:
                   fetch-depth: 0
                   submodules: recursive
                   token: ${{ steps.app-token.outputs.token }}
-                  ref: ${{ steps.determine-branch.outputs.source_branch }}
+                  ref: ${{ needs.release-approval.outputs.source_branch }}
 
             - name: Set Git User
               run: |
@@ -128,11 +156,12 @@ jobs:
                       - **Version**: ${{ steps.gitversion.outputs.fullsemver }}
                       - **Beta**: ${{ github.event.inputs.isBeta }}
                       - **Release Type**: ${{ github.event.inputs.releaseType }}
-                      - **Source Branch**: ${{ steps.determine-branch.outputs.source_branch }}
+                      - **Source Branch**: ${{ needs.release-approval.outputs.source_branch }}
+                      - **Approved by**: ${{ github.actor }}
                       
-                      This PR was automatically created by the release workflow.
+                      This PR was automatically created by the release workflow after manual approval.
                   branch: version-update-${{ steps.gitversion.outputs.fullsemver }}
-                  base: ${{ steps.determine-branch.outputs.source_branch }}
+                  base: ${{ needs.release-approval.outputs.source_branch }}
                   delete-branch: true
 
             - name: Auto-merge Version Update PR
@@ -186,7 +215,7 @@ jobs:
                   echo "patch=${{ steps.gitversion.outputs.patch }}" >> $GITHUB_OUTPUT
     
     build-windows:
-        needs: version-update
+        needs: [release-approval, version-update]
         runs-on: windows-latest
         outputs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
@@ -203,7 +232,7 @@ jobs:
                   sentry_dsn: ${{ secrets.SENTRY_DSN }}
 
     build-linux:
-        needs: version-update
+        needs: [release-approval, version-update]
         runs-on: ubuntu-latest
         outputs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
@@ -220,7 +249,7 @@ jobs:
                   sentry_dsn: ${{ secrets.SENTRY_DSN }}
     
     create-release:
-        needs: [version-update, build-windows, build-linux]
+        needs: [release-approval, version-update, build-windows, build-linux]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code for Release Notes
@@ -321,6 +350,7 @@ jobs:
                       
                       **Source Branch:** ${{ needs.version-update.outputs.source_branch }}
                       **Release Type:** ${{ github.event.inputs.isBeta == 'true' && 'Beta' || 'Production' }}
+                      **Approved by:** ${{ github.actor }}
                   files: |
                       ./publish/${{ needs.build-windows.outputs.zip_filename }}
                       ./publish/${{ needs.build-linux.outputs.zip_filename }}
@@ -336,3 +366,4 @@ jobs:
                   sourceBranch="${{ needs.version-update.outputs.source_branch }}"
                   echo "✅ $releaseType Release v${{ needs.version-update.outputs.version }} created successfully from $sourceBranch branch!"
                   echo "📦 Download: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.version-update.outputs.version }}"
+                  echo "👤 Approved by: ${{ github.actor }}"
