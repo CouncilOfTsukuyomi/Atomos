@@ -1,3 +1,4 @@
+
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,7 +9,6 @@
         x:Class="Atomos.UI.Views.MainWindow"
         x:CompileBindings="True"
         x:DataType="vm:MainWindowViewModel"
-        xmlns:converters="clr-namespace:Atomos.UI.Converters"
         xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
         xmlns:models="clr-namespace:Atomos.UI.Models"
         xmlns:views="clr-namespace:Atomos.UI.Views"
@@ -26,7 +26,7 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="{Binding ShowCustomTitleBar, Converter={converters:BoolToGridLengthConverter}}"/>
+            <RowDefinition Height="{Binding ShowCustomTitleBar, Converter={StaticResource BoolToGridLengthConverter}}"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
