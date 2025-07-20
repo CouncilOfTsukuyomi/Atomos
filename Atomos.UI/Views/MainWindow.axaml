@@ -8,6 +8,7 @@
         x:Class="Atomos.UI.Views.MainWindow"
         x:CompileBindings="True"
         x:DataType="vm:MainWindowViewModel"
+        xmlns:converters="clr-namespace:Atomos.UI.Converters"
         xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
         xmlns:models="clr-namespace:Atomos.UI.Models"
         xmlns:views="clr-namespace:Atomos.UI.Views"
@@ -23,8 +24,16 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="40,*">
-        <Border Grid.Row="0" Height="40" Background="{StaticResource SecondaryBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="{Binding ShowCustomTitleBar, Converter={converters:BoolToGridLengthConverter}}"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <Border Grid.Row="0" 
+                Height="40" 
+                Background="{StaticResource SecondaryBrush}"
+                IsVisible="{Binding ShowCustomTitleBar}">
             <Grid x:Name="TitleBar" Classes="titleBar">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
