@@ -27,17 +27,22 @@ public class ProcessManager : IProcessManager, IDisposable
         if (_isDevMode)
         {
             _solutionDirectory = GetSolutionDirectory();
-            _logger.Info("Solution Directory: {SolutionDirectory}", _solutionDirectory);
+            _logger.Info("Development mode detected - using solution directory: {SolutionDirectory}", _solutionDirectory);
         }
         else
         {
             _solutionDirectory = AppContext.BaseDirectory;
+            _logger.Info("Production mode - using base directory: {BaseDirectory}", _solutionDirectory);
         }
 
         _logger.Info("Running in {Mode} mode.", _isDevMode ? "DEV" : "PROD");
 
+        _logger.Info("Searching for available port...");
         _port = FindRandomAvailablePort();
+        _logger.Info("Selected port {Port} for inter-process communication", _port);
+        
         SetupShutdownHandlers();
+        _logger.Info("Shutdown handlers configured successfully");
     }
 
     public void Run()
@@ -63,13 +68,16 @@ public class ProcessManager : IProcessManager, IDisposable
     {
         try
         {
+            _logger.Debug("Attempting to find random available port...");
             using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
-            return ((System.Net.IPEndPoint)socket.LocalEndPoint).Port;
+            var port = ((System.Net.IPEndPoint)socket.LocalEndPoint).Port;
+            _logger.Info("Found available port: {Port}", port);
+            return port;
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Failed to find an available port");
+            _logger.Error(ex, "Failed to find an available port - this may indicate network configuration issues");
             throw;
         }
     }
@@ -318,22 +326,21 @@ public class ProcessManager : IProcessManager, IDisposable
 
     private void MonitorProcesses(Process uiProcess, Process backgroundServiceProcess)
     {
+        _logger.Info("Starting process monitoring loop...");
+        _logger.Info("Monitoring UI Process (PID: {UiPid}) and Background Service (PID: {BgPid})", 
+            uiProcess.Id, backgroundServiceProcess.Id);
+    
         while (!_isShuttingDown)
         {
             if (uiProcess.HasExited)
             {
-                _logger.Info(
-                    "UI Process {ProcessId} exited with code {ExitCode}",
-                    uiProcess.Id,
-                    uiProcess.ExitCode
-                );
+                _logger.Info("UI Process {ProcessId} has exited with code {ExitCode}", 
+                    uiProcess.Id, uiProcess.ExitCode);
 
                 if (backgroundServiceProcess != null && !backgroundServiceProcess.HasExited)
                 {
-                    _logger.Info(
-                        "Terminating Background Service (PID: {ProcessId}) due to UI exit",
-                        backgroundServiceProcess.Id
-                    );
+                    _logger.Info("UI has closed - initiating graceful shutdown of background service (PID: {ProcessId})", 
+                        backgroundServiceProcess.Id);
                     ShutdownChildProcesses();
                 }
                 break;
@@ -341,28 +348,46 @@ public class ProcessManager : IProcessManager, IDisposable
 
             if (backgroundServiceProcess.HasExited)
             {
-                _logger.Warn("Background Service exited unexpectedly!");
+                _logger.Warn("Background service has stopped unexpectedly! Exit code: {ExitCode}", 
+                    backgroundServiceProcess.ExitCode);
+                _logger.Info("Background service ran for approximately {Duration} seconds before exiting", 
+                    (DateTime.Now - backgroundServiceProcess.StartTime).TotalSeconds);
 
                 if (_backgroundServiceRestartCount >= _maxRestartAttempts)
                 {
-                    _logger.Error("Maximum restart attempts reached for Background Service. Shutting down.");
+                    _logger.Error("Background service has failed {MaxAttempts} times. This usually indicates:", _maxRestartAttempts);
+                    _logger.Error("  • Configuration issues");
+                    _logger.Error("  • Missing dependencies");
+                    _logger.Error("  • Port conflicts");
+                    _logger.Error("  • Insufficient permissions");
+                    _logger.Error("Shutting down to prevent continuous restart loop...");
                     ShutdownChildProcesses();
                     break;
                 }
 
                 _backgroundServiceRestartCount++;
-                _logger.Info(
-                    "Restarting Background Service (Attempt {Attempt}/{MaxAttempts})",
-                    _backgroundServiceRestartCount,
-                    _maxRestartAttempts
-                );
-
-                backgroundServiceProcess = StartProcess("Atomos.BackgroundWorker", _port.ToString());
-                _backgroundServiceProcess = backgroundServiceProcess;
+                _logger.Info("Attempting to restart background service (Attempt {Attempt} of {MaxAttempts})", 
+                    _backgroundServiceRestartCount, _maxRestartAttempts);
+                _logger.Info("Waiting a moment before restart attempt...");
+            
+                Thread.Sleep(1000);
+            
+                try
+                {
+                    backgroundServiceProcess = StartProcess("Atomos.BackgroundWorker", _port.ToString());
+                    _backgroundServiceProcess = backgroundServiceProcess;
+                    _logger.Info("Background service restart attempt {Attempt} completed successfully", _backgroundServiceRestartCount);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Failed to restart background service on attempt {Attempt}", _backgroundServiceRestartCount);
+                }
             }
 
             Thread.Sleep(1000);
         }
+    
+        _logger.Info("Process monitoring loop has ended");
     }
 
     private string GetSolutionDirectory()
