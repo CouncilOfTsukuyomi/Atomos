@@ -116,6 +116,8 @@ public sealed class FileQueueProcessor : IFileQueueProcessor, IDisposable
                 var deserializedQueue = JsonConvert.DeserializeObject<ConcurrentDictionary<string, DateTime>>(serializedQueue);
                 if (deserializedQueue != null)
                 {
+                    var validEntries = new List<KeyValuePair<string, DateTime>>();
+                    
                     foreach (var kvp in deserializedQueue)
                     {
                         if (IgnoreList.IgnoreListStrings.Contains(kvp.Key, StringComparer.InvariantCultureIgnoreCase))
@@ -126,13 +128,15 @@ public sealed class FileQueueProcessor : IFileQueueProcessor, IDisposable
 
                         if (!_fileStorage.Exists(kvp.Key))
                         {
-                            _logger.Warn("File from state no longer exists. Removing from queue: {FullPath}", kvp.Key);
-                            _fileQueue.TryRemove(kvp.Key, out _);
-                            _retryCounts.TryRemove(kvp.Key, out _);
-                            _fileTaskIds.TryRemove(kvp.Key, out _);
+                            _logger.Warn("File from state no longer exists. Skipping: {FullPath}", kvp.Key);
                             continue;
                         }
 
+                        validEntries.Add(kvp);
+                    }
+                    
+                    foreach (var kvp in validEntries)
+                    {
                         _fileQueue[kvp.Key] = kvp.Value;
                         _retryCounts[kvp.Key] = 0;
                         if (!_fileTaskIds.ContainsKey(kvp.Key))
@@ -140,8 +144,10 @@ public sealed class FileQueueProcessor : IFileQueueProcessor, IDisposable
                             _fileTaskIds[kvp.Key] = Guid.NewGuid().ToString();
                         }
                     }
+
+                    _logger.Info("File queue state loaded successfully. Loaded {ValidCount} valid entries out of {TotalCount} entries.", 
+                        validEntries.Count, deserializedQueue.Count);
                 }
-                _logger.Info("File queue state loaded successfully.");
             }
         }
         catch (Exception ex)
