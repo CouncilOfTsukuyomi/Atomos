@@ -204,6 +204,20 @@ public class ProcessManager : IProcessManager, IDisposable
 
         // Mark that the background process is under watchdog's control
         startInfo.EnvironmentVariables["WATCHDOG_INITIALIZED"] = "true";
+        
+        _logger.Info("=== Diagnostic Environment Variables for {ExecutableName} ===", executableName);
+        var diagnosticVars = new[] { "COREHOST_TRACE", "COREHOST_TRACEFILE", "DOTNET_STARTUP_HOOKS", "DOTNET_DbgJITDebugLaunchSetting" };
+        foreach (var varName in diagnosticVars)
+        {
+            var value = Environment.GetEnvironmentVariable(varName);
+            _logger.Info("  {VarName}: {Value}", varName, value ?? "<not set>");
+            if (value != null)
+            {
+                startInfo.EnvironmentVariables[varName] = value;
+            }
+        }
+        _logger.Info("Working Directory: {WorkingDir}", executableDir);
+        _logger.Info("===================================================");
 
         var process = new Process { StartInfo = startInfo };
         process.EnableRaisingEvents = true;
