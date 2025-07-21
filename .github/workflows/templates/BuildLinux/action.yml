@@ -97,7 +97,7 @@ runs:
           shell: bash
           run: |
               exe_count=0
-              for exe in ./publish/Atomos-linux-x64/Atomos.*; do
+              for exe in ./publish/Atomos-linux-x64/Atomos; do
                 if [ -f "$exe" ] && [ -x "$exe" ]; then
                   if [ ! -s "$exe" ]; then
                     echo "Error: $(basename $exe) is empty"
