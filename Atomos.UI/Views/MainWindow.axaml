@@ -1,3 +1,4 @@
+
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -23,8 +24,16 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="40,*">
-        <Border Grid.Row="0" Height="40" Background="{StaticResource SecondaryBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="{Binding ShowCustomTitleBar, Converter={StaticResource BoolToGridLengthConverter}}"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <Border Grid.Row="0" 
+                Height="40" 
+                Background="{StaticResource SecondaryBrush}"
+                IsVisible="{Binding ShowCustomTitleBar}">
             <Grid x:Name="TitleBar" Classes="titleBar">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

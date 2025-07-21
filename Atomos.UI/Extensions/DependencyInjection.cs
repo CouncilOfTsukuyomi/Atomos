@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -36,6 +37,7 @@ public static class DependencyInjection
         
         services.AddSingleton<ConfigurationModel>();
         
+        // Core services
         services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
         services.AddSingleton<ISoundManagerService, SoundManagerService>();
         services.AddSingleton<IAria2Service>(_ => new Aria2Service(AppContext.BaseDirectory));
@@ -55,6 +57,15 @@ public static class DependencyInjection
         services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
         services.AddSingleton<IRunUpdater, RunUpdater>();
         services.AddSingleton<IPluginDataService, PluginDataService>();
+        
+        // Tutorial services
+        services.AddSingleton<ITutorialService, TutorialService>();
+        services.AddSingleton<IElementHighlightService, ElementHighlightService>();
+        
+        services.AddSingleton<ITutorialManager, TutorialManager>();
+        services.AddSingleton<IApplicationInitializationManager, ApplicationInitializationManager>();
+        services.AddSingleton<IUpdateManager, UpdateManager>();
+        services.AddSingleton<ISentryManager, SentryManager>();
         
         // Register IFileDialogService with lazy initialisation to avoid MainWindow dependency issues
         services.AddSingleton<IFileDialogService>(provider =>
@@ -76,26 +87,21 @@ public static class DependencyInjection
         services.AddSingleton<ITrayIconController, TrayIconController>();
         services.AddSingleton<ITrayIconManager, TrayIconManager>();
         services.AddSingleton<ITaskbarFlashService, TaskbarFlashService>();
-        services.AddSingleton<ITutorialService, TutorialService>();
-        services.AddSingleton<IElementHighlightService, ElementHighlightService>();
         
+        // ViewModels
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ErrorWindowViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<HomeViewModel>();
-        services.AddSingleton<TutorialOverlayView>();
         services.AddScoped<PluginViewModel>();
         services.AddTransient<PluginDataViewModel>();
         
+        // Views
         services.AddSingleton<MainWindow>();
-        services.AddSingleton<ErrorWindowViewModel>();
-        services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<ModsViewModel>();
-        services.AddSingleton<HomeViewModel>();
+        services.AddSingleton<TutorialOverlayView>();
         services.AddScoped<PluginView>();
         
-        // Replace the individual plugin service registrations with the comprehensive method
         services.AddPluginServicesWithUpdates(options =>
         {
             options.RegistryUrl = "https://raw.githubusercontent.com/CouncilOfTsukuyomi/StaticResources/refs/heads/main/plugins.json";

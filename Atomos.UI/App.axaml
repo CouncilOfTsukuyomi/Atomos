@@ -19,6 +19,7 @@
             </ResourceDictionary.MergedDictionaries>
             
             <converters:ProgressVisibilityConverter x:Key="ProgressVisibilityConverter"/>
+            <converters:BoolToGridLengthConverter x:Key="BoolToGridLengthConverter"/>
         </ResourceDictionary>
     </Application.Resources>
     
