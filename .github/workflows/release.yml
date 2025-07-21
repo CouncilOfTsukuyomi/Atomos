@@ -221,6 +221,8 @@ jobs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
             zip_filename: ${{ steps.build.outputs.zip_filename }}
         steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v4
             - name: Build Windows
               id: build
               uses: ./.github/workflows/templates/BuildWindows/action.yml
@@ -238,6 +240,8 @@ jobs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
             zip_filename: ${{ steps.build.outputs.zip_filename }}
         steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v4
             - name: Build Linux
               id: build
               uses: ./.github/workflows/templates/BuildLinux/action.yml
