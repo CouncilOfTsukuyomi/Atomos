@@ -92,20 +92,25 @@ runs:
                 # Clean up temp directory
                 rm -rf "$temp_dir"
               done
-
+              
         - name: Validate Executables
           shell: bash
           run: |
               exe_count=0
-              for exe in ./publish/Atomos-linux-x64/Atomos; do
-                if [ -f "$exe" ] && [ -x "$exe" ]; then
-                  if [ ! -s "$exe" ]; then
-                    echo "Error: $(basename $exe) is empty"
+              expected_executables=("Atomos.ConsoleTooling" "Atomos.UI" "Atomos.BackgroundWorker" "Atomos.Watchdog")
+              
+              for exe_name in "${expected_executables[@]}"; do
+                exe_path="./publish/Atomos-linux-x64/$exe_name"
+                if [ -f "$exe_path" ] && [ -x "$exe_path" ]; then
+                  if [ ! -s "$exe_path" ]; then
+                    echo "Error: $(basename $exe_path) is empty"
                     exit 1
                   fi
-                  sizeKB=$(du -k "$exe" | cut -f1)
-                  echo "✓ $(basename $exe) - ${sizeKB} KB"
+                  sizeKB=$(du -k "$exe_path" | cut -f1)
+                  echo "✓ $(basename $exe_path) - ${sizeKB} KB"
                   exe_count=$((exe_count + 1))
+                else
+                  echo "Warning: Expected executable not found or not executable: $exe_path"
                 fi
               done
               
@@ -113,6 +118,8 @@ runs:
                 echo "No executable files found!"
                 exit 1
               fi
+              
+              echo "Found $exe_count executable(s) out of ${#expected_executables[@]} expected."
 
         - name: Create Release ZIP
           shell: bash

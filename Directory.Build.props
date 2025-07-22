@@ -2,8 +2,8 @@
     <PropertyGroup>
         <!-- Version components -->
         <MajorVersion>1</MajorVersion>
-        <MinorVersion>4</MinorVersion>
-        <PatchVersion>0</PatchVersion>
+        <MinorVersion>3</MinorVersion>
+        <PatchVersion>2</PatchVersion>
 
         <!-- Controls whether we're doing a beta build -->
         <IsBeta>false</IsBeta>
