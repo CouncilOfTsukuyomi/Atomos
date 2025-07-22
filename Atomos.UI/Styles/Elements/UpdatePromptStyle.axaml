@@ -20,6 +20,13 @@
     <Setter Property="BoxShadow" Value="0 8 32 4 #40000000" />
   </Style>
 
+  <!-- Dialog variants for critical updates -->
+  <Style Selector="Border.updatePromptDialog.critical">
+    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="BoxShadow" Value="0 8 32 4 #60FF4757" />
+  </Style>
+
   <!-- Header -->
   <Style Selector="Border.updatePromptHeader">
     <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
@@ -32,6 +39,10 @@
     <Setter Property="CornerRadius" Value="20" />
     <Setter Property="Width" Value="40" />
     <Setter Property="Height" Value="40" />
+  </Style>
+
+  <Style Selector="Border.updateIcon.critical">
+    <Setter Property="Background" Value="#FF4757" />
   </Style>
 
   <Style Selector="TextBlock.updateIconText">
@@ -56,6 +67,40 @@
     <Setter Property="Opacity" Value="0.8" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Critical Badge -->
+  <Style Selector="Border.criticalBadge">
+    <Setter Property="Background" Value="#FF4757" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="8,3" />
+  </Style>
+
+  <Style Selector="TextBlock.criticalBadgeText">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="LetterSpacing" Value="0.5" />
+  </Style>
+
+  <!-- Critical Message -->
+  <Style Selector="Border.criticalMessage">
+    <Setter Property="Background" Value="#FEF2F2" />
+    <Setter Property="BorderBrush" Value="#F87171" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="Margin" Value="0,12,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.criticalMessageText">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="#DC2626" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="LineHeight" Value="18" />
   </Style>
 
   <!-- Content Area -->
@@ -108,12 +153,20 @@
     <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
   </Style>
 
+  <Style Selector="TextBlock.newVersionText.critical">
+    <Setter Property="Foreground" Value="#FF4757" />
+  </Style>
+
   <Style Selector="Border.versionArrow">
     <Setter Property="Background" Value="{StaticResource AccentBrush}" />
     <Setter Property="CornerRadius" Value="16" />
     <Setter Property="Width" Value="32" />
     <Setter Property="Height" Value="32" />
     <Setter Property="Margin" Value="16,0" />
+  </Style>
+
+  <Style Selector="Border.versionArrow.critical">
+    <Setter Property="Background" Value="#FF4757" />
   </Style>
 
   <Style Selector="TextBlock.versionArrowText">
@@ -410,5 +463,126 @@
     <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
     <Setter Property="RenderTransform" Value="scale(0.98)" />
   </Style>
+
+  <!-- Critical Update Button Styling -->
+  <Style Selector="Button.updateButton.critical">
+    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+    <Setter Property="Width" Value="200" />
+  </Style>
+
+  <Style Selector="Button.updateButton.critical:pointerover">
+    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+  </Style>
+
+  <Style Selector="Button.updateButton.critical:pressed">
+    <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+    <Setter Property="RenderTransform" Value="scale(0.98)" />
+  </Style>
+
+  <!-- Cancel Button -->
+  <Style Selector="Button.cancelButton">
+    <Setter Property="Width" Value="120" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.cancelButton:pointerover">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+  </Style>
+
+  <Style Selector="Button.cancelButton:pressed">
+    <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+    <Setter Property="RenderTransform" Value="scale(0.98)" />
+  </Style>
+  
+  <!-- Cancellation Disabled Message -->
+  <Style Selector="Border.cancelDisabledMessage">
+    <Setter Property="Background" Value="#FEF3CD" />
+    <Setter Property="BorderBrush" Value="#F59E0B" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="Margin" Value="0,12,0,0" />
+  </Style>
+
+  <Style Selector="Border.warningIcon">
+    <Setter Property="Background" Value="#F59E0B" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="TextBlock.warningIconText">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.cancelDisabledTitle">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="#92400E" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="LineHeight" Value="20" />
+  </Style>
+
+  <Style Selector="TextBlock.cancelDisabledText">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="#92400E" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="LineHeight" Value="18" />
+    <Setter Property="Margin" Value="32,0,0,0" />
+  </Style>
+  
+  <!-- Security Warning Message -->
+  <Style Selector="Border.securityWarningMessage">
+    <Setter Property="Background" Value="#FEF2F2" />
+    <Setter Property="BorderBrush" Value="#DC2626" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="Margin" Value="0,12,0,0" />
+  </Style>
+
+  <Style Selector="Border.securityWarningIcon">
+    <Setter Property="Background" Value="#DC2626" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="TextBlock.securityWarningIconText">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.securityWarningTitle">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="#DC2626" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="LineHeight" Value="20" />
+  </Style>
+
+  <Style Selector="TextBlock.securityWarningText">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="#DC2626" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="LineHeight" Value="18" />
+    <Setter Property="Margin" Value="32,0,0,0" />
+  </Style>
+
 
 </Styles>
