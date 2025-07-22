@@ -1,4 +1,3 @@
-
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -48,7 +47,8 @@
                             Margin="10,0,0,0">
                         <TextBlock Text="BETA" Classes="betaText"/>
                     </Border>
-    
+
+                    <!-- Checking for updates indicator (not clickable) -->
                     <Border IsVisible="{Binding IsCheckingForUpdates}"
                             Classes="updateCheckBadge"
                             Margin="10,0,0,0">
@@ -59,6 +59,20 @@
                             <TextBlock Text="Checking for updates..." Classes="updateCheckText"/>
                         </StackPanel>
                     </Border>
+
+                    <!-- Update available indicator (clickable) -->
+                    <Button IsVisible="{Binding HasUpdateAvailable}"
+                            Command="{Binding ShowUpdatePromptCommand}"
+                            Classes="updateAvailableButton"
+                            Margin="10,0,0,0"
+                            Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Border Classes="updateAvailableIcon">
+                                <TextBlock Text="📥" Classes="updateAvailableIconText"/>
+                            </Border>
+                            <TextBlock Text="{Binding UpdateAvailableText}" Classes="updateAvailableText"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">

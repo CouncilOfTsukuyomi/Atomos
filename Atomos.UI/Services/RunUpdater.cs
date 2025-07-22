@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Atomos.UI.Interfaces;
 using CommonLib.Interfaces;
 using CommonLib.Models;
+using CommonLib.Services;
 using NLog;
 
 namespace Atomos.UI.Services;
@@ -21,16 +22,6 @@ public class RunUpdater : IRunUpdater
         _downloadUpdater = downloadUpdater;
     }
 
-    /// <summary>
-    /// Downloads and extracts the updater, then runs the downloaded file
-    /// with the specified arguments.
-    /// 
-    /// The programToRunAfterInstallation parameter is optional. If null or empty,
-    /// no additional program is specified for launch after the update process.
-    /// 
-    /// After attempting to start the updater, this method checks if the updater 
-    /// is indeed running by scanning the system's process list.
-    /// </summary>
     public async Task<bool> RunDownloadedUpdaterAsync(
         string versionNumber,
         string gitHubRepo,
@@ -48,7 +39,6 @@ public class RunUpdater : IRunUpdater
             
             var ct = CancellationToken.None;
 
-            // Create a progress wrapper for the download phase (0-80%)
             IProgress<DownloadProgress>? downloadProgress = null;
             if (progress != null)
             {
@@ -73,13 +63,11 @@ public class RunUpdater : IRunUpdater
 
             static string EscapeForCmd(string argument)
             {
-                // Escape double quotes and wrap only the individual argument in quotes
                 return argument.Contains(' ') || argument.Contains('"') 
                     ? $"\"{argument.Replace("\"", "\\\"")}\"" 
                     : argument;
             }
 
-            // Escape and prepare all arguments individually
             var escapedVersion = EscapeForCmd(versionNumber);
             var escapedRepo = EscapeForCmd(gitHubRepo);
             var escapedPath = EscapeForCmd(installationPath);
@@ -121,12 +109,8 @@ public class RunUpdater : IRunUpdater
 
                 _logger.Info($"Updater process started with PID: {process.Id}");
                 progress?.Report(new DownloadProgress { Status = "Updater process started...", PercentComplete = 95 });
-                
-                // Don't wait for the process or keep any references to it
-                // The updater should run independently
             }
 
-            // Brief wait to allow process to initialise
             await Task.Delay(1000);
 
             progress?.Report(new DownloadProgress { Status = "Verifying updater is running...", PercentComplete = 98 });
@@ -145,6 +129,12 @@ public class RunUpdater : IRunUpdater
                 return false;
             }
         }
+        catch (UpdateService.SecurityException ex)
+        {
+            _logger.Error(ex, "SECURITY VIOLATION: Updater execution blocked - {SecurityError}", ex.Message);
+            progress?.Report(new DownloadProgress { Status = $"Security Alert: {ex.Message}", PercentComplete = 0 });
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error while attempting to run the updater file.");
@@ -161,8 +151,7 @@ public class RunUpdater : IRunUpdater
         _logger.Debug("Speed: {Speed}", downloadProgress.FormattedSpeed);
         _logger.Debug("Size: {Size}", downloadProgress.FormattedSize);
 
-        // Map download progress to overall progress (0% to 80% of total)
-        var mappedProgress = downloadProgress.PercentComplete * 0.8; // 80% of total progress for download
+        var mappedProgress = downloadProgress.PercentComplete * 0.8;
         
         _logger.Debug("Calculated mapped progress: {MappedProgress}%", mappedProgress);
 
@@ -181,10 +170,6 @@ public class RunUpdater : IRunUpdater
         _logger.Debug("=== END UPDATER EXECUTION PROGRESS REPORT ===");
     }
 
-    /// <summary>
-    /// Checks if the updater is running by matching the file name, without extension, 
-    /// against running processes.
-    /// </summary>
     private bool IsUpdaterRunning(string updaterExePath)
     {
         var updaterName = Path.GetFileNameWithoutExtension(updaterExePath);

@@ -1,5 +1,4 @@
-﻿
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -9,11 +8,12 @@
              x:Class="Atomos.UI.Views.UpdatePromptView"
              x:DataType="viewModels:UpdatePromptViewModel">
 
-    <!-- Semi-transparent backdrop -->
     <Grid IsVisible="{Binding IsVisible}"
           Classes="updatePromptOverlay">
         
-        <Border Classes="updatePromptDialog">
+        <Border Classes="updatePromptDialog"
+                Classes.forced="{Binding IsForced}"
+                Classes.critical="{Binding HasCriticalUpdates}">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 
@@ -23,16 +23,62 @@
                         <StackPanel Orientation="Horizontal" 
                                     HorizontalAlignment="Center"
                                     Spacing="12">
-                            <Border Classes="updateIcon">
+                            <Border Classes="updateIcon"
+                                    Classes.forced="{Binding IsForced}"
+                                    Classes.critical="{Binding HasCriticalUpdates}">
                                 <TextBlock Classes="updateIconText" />
                             </Border>
                             
-                            <TextBlock Text="Update Available"
-                                       Classes="updateTitle" />
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Update Available"
+                                           Classes="updateTitle" />
+                                <StackPanel Orientation="Horizontal" Spacing="8"
+                                            IsVisible="{Binding HasCriticalUpdates}">
+                                    <Border Classes="criticalBadge">
+                                        <TextBlock Text="CRITICAL - UPDATE REQUIRED" Classes="criticalBadgeText" />
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
                         </StackPanel>
                         
                         <TextBlock Text="{Binding UpdateSubtitle}"
                                    Classes="updateSubtitle" />
+                        
+                        <!-- Critical update message -->
+                        <Border Classes="criticalMessage"
+                                IsVisible="{Binding HasCriticalUpdates}">
+                            <TextBlock Text="This is a critical security or stability update that must be installed immediately."
+                                       Classes="criticalMessageText" />
+                        </Border>
+                        
+                        <Border Classes="securityWarningMessage"
+                                IsVisible="{Binding HasSecurityWarning}">
+                            <StackPanel Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Classes="securityWarningIcon">
+                                        <TextBlock Text="🛡️" Classes="securityWarningIconText" />
+                                    </Border>
+                                    <TextBlock Text="Security Alert - Update Blocked" Classes="securityWarningTitle" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding SecurityWarningMessage}"
+                                           Classes="securityWarningText" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Cancellation disabled message -->
+                        <Border Classes="cancelDisabledMessage"
+                                IsVisible="{Binding !CanCancel}">
+                            <StackPanel Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Classes="warningIcon">
+                                        <TextBlock Text="⚠️" Classes="warningIconText" />
+                                    </Border>
+                                    <TextBlock Text="Update Cannot Be Cancelled" Classes="cancelDisabledTitle" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding CancelDisabledMessage}"
+                                           Classes="cancelDisabledText" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -53,7 +99,8 @@
                                 </StackPanel>
                                 
                                 <!-- Arrow -->
-                                <Border Grid.Column="1" Grid.Row="0" Classes="versionArrow">
+                                <Border Grid.Column="1" Grid.Row="0" Classes="versionArrow"
+                                        Classes.critical="{Binding HasCriticalUpdates}">
                                     <TextBlock Classes="versionArrowText" />
                                 </Border>
                                 
@@ -62,7 +109,8 @@
                                     <TextBlock Text="LATEST"
                                                Classes="versionLabel newVersionLabel" />
                                     <TextBlock Text="{Binding TargetVersion}"
-                                               Classes="versionText newVersionText" />
+                                               Classes="versionText newVersionText"
+                                               Classes.critical="{Binding HasCriticalUpdates}" />
                                 </StackPanel>
                                 
                                 <!-- Version count indicator -->
@@ -271,9 +319,16 @@
                                 HorizontalAlignment="Center"
                                 Spacing="12">
                         
+                        <!-- Cancel button only shows when cancellation is allowed -->
+                        <Button Content="Cancel"
+                                Command="{Binding CancelCommand}"
+                                Classes="cancelButton"
+                                IsVisible="{Binding CanCancel}" />
+                        
                         <Button Content="{Binding UpdateButtonText}"
                                 Command="{Binding UpdateCommand}"
-                                Classes="updateButton" />
+                                Classes="updateButton critical"
+                                Classes.critical="{Binding HasCriticalUpdates}" />
                     </StackPanel>
                 </Border>
             </Grid>

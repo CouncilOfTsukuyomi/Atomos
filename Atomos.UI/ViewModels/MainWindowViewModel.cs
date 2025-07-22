@@ -57,6 +57,8 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     }
         
     public bool IsCheckingForUpdates => _updateManager.IsCheckingForUpdates;
+    public bool HasUpdateAvailable => _updateManager.HasUpdateAvailable;
+    public string UpdateAvailableText => _updateManager.UpdateAvailableText;
 
     public bool ShowCustomTitleBar => !RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
@@ -104,6 +106,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
 
     public ICommand NavigateToSettingsCommand { get; private set; } = null!;
     public ICommand NavigateToAboutCommand { get; private set; } = null!;
+    public ICommand ShowUpdatePromptCommand { get; private set; } = null!;
 
     public MainWindowViewModel(
         IServiceProvider serviceProvider,
@@ -213,6 +216,8 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             () => ActivatorUtilities.CreateInstance<SettingsViewModel>(_serviceProvider));
 
         _tutorialManager.NavigationRequested += OnTutorialTabNavigationRequested;
+        
+        // Update checking status events
         _updateManager.IsCheckingForUpdatesChanged += isChecking =>
         {
             if (Dispatcher.UIThread.CheckAccess())
@@ -224,6 +229,28 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
                 Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(IsCheckingForUpdates)));
             }
         };
+
+        // Update available status events
+        _updateManager.HasUpdateAvailableChanged += hasUpdate =>
+        {
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                this.RaisePropertyChanged(nameof(HasUpdateAvailable));
+                this.RaisePropertyChanged(nameof(UpdateAvailableText));
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(() => 
+                {
+                    this.RaisePropertyChanged(nameof(HasUpdateAvailable));
+                    this.RaisePropertyChanged(nameof(UpdateAvailableText));
+                });
+            }
+        };
+
+        // Handle user clicking the update indicator
+        _updateManager.ShowUpdatePromptRequested += OnShowUpdatePromptRequested;
+        
         _sentryManager.SentryChoiceMade += OnSentryChoiceMade;
     }
 
@@ -281,6 +308,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             SelectedMenuItem = null;
             CurrentPage = new AboutViewModel();
         });
+
+        // New command for showing the update prompt when user clicks the update indicator
+        ShowUpdatePromptCommand = ReactiveCommand.Create(() => _updateManager.ShowUpdatePrompt());
     }
 
     private async Task InitializeAsync(int port)
@@ -307,6 +337,23 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         catch (Exception ex)
         {
             _logger.Error(ex, "Error handling Sentry choice completion");
+        }
+    }
+
+    private async void OnShowUpdatePromptRequested()
+    {
+        _logger.Debug("Update prompt requested by user click");
+        
+        try
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                await UpdatePromptViewModel.CheckForUpdatesAsync(_currentVersion, isForced: false);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error showing update prompt on user request");
         }
     }
 
@@ -347,6 +394,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         _tutorialManager?.Dispose();
         _initializationManager?.Dispose();
+        _updateManager?.Dispose();
         _sentryManager?.Dispose();
     }
 }
