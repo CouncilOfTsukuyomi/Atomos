@@ -15,9 +15,6 @@ inputs:
         description: 'Whether to run tests'
         required: false
         default: 'true'
-    sentry_dsn:
-        description: 'Sentry DSN for error tracking'
-        required: false
 outputs:
     artifact_name:
         description: 'Name of the uploaded artifact'
@@ -64,8 +61,6 @@ runs:
 
         - name: Publish Solution Components
           shell: pwsh
-          env:
-              SENTRY_DSN: ${{ inputs.sentry_dsn }}
           run: |
               # Create main publish directory
               New-Item -ItemType Directory -Path "./publish/Atomos-win-x64" -Force
@@ -90,6 +85,18 @@ runs:
                   -r win-x64 `
                   -o $tempDir `
                   -f net9.0
+              
+                # Create appsettings.Production.json with Sentry DSN (if available)
+                if ("${{ secrets.SENTRY_DSN }}" -ne "") {
+                  $productionConfig = @{
+                      "SENTRY_DSN" = "${{ secrets.SENTRY_DSN }}"
+                  } | ConvertTo-Json -Depth 3
+              
+                  $productionConfig | Out-File -FilePath "$tempDir/appsettings.Production.json" -Encoding UTF8
+                  Write-Host "Created appsettings.Production.json for $project"
+                } else {
+                  Write-Host "No SENTRY_DSN secret found, skipping Sentry configuration for $project"
+                }
               
                 # Move files to main directory
                 Copy-Item -Path "$tempDir/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force

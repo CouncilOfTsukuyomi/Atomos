@@ -15,9 +15,6 @@ inputs:
         description: 'Whether to run tests'
         required: false
         default: 'true'
-    sentry_dsn:
-        description: 'Sentry DSN for error tracking'
-        required: false
 outputs:
     artifact_name:
         description: 'Name of the uploaded artifact'
@@ -64,8 +61,6 @@ runs:
 
         - name: Publish Solution Components
           shell: bash
-          env:
-              SENTRY_DSN: ${{ inputs.sentry_dsn }}
           run: |
               # Create main publish directory
               mkdir -p "./publish/Atomos-linux-x64"
@@ -86,13 +81,25 @@ runs:
                   -o "$temp_dir" \
                   -f net9.0
               
+                # Create appsettings.Production.json with Sentry DSN (if available)
+                if [ -n "${{ secrets.SENTRY_DSN }}" ]; then
+                  cat > "$temp_dir/appsettings.Production.json" << EOF
+              {
+                "SENTRY_DSN": "${{ secrets.SENTRY_DSN }}"
+              }
+              EOF
+                  echo "Created appsettings.Production.json for $project"
+                else
+                  echo "No SENTRY_DSN secret found, skipping Sentry configuration for $project"
+                fi
+              
                 # Move files to main directory
                 cp -r "$temp_dir/"* "./publish/Atomos-linux-x64/"
               
                 # Clean up temp directory
                 rm -rf "$temp_dir"
               done
-              
+
         - name: Validate Executables
           shell: bash
           run: |
