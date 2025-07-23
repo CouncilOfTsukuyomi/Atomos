@@ -164,21 +164,24 @@ public static class DependencyInjection
         Logging.ConfigureLogging(services, "UI");
     }
     
+
     public static void EnableSentryLogging()
     {
         var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile("appsettings.Production.json", optional: true)
             .AddUserSecrets<Program>()
             .AddEnvironmentVariables()
             .Build();
 
-        var sentryDns = configuration["SENTRY_DSN"];
-        if (string.IsNullOrWhiteSpace(sentryDns))
+        var sentryDsn = configuration["SENTRY_DSN"];
+        if (string.IsNullOrWhiteSpace(sentryDsn))
         {
             Console.WriteLine("No SENTRY_DSN provided. Skipping Sentry enablement.");
             return;
         }
 
-        MergedSentryLogging.MergeSentryLogging(sentryDns, "UI");
+        MergedSentryLogging.MergeSentryLogging(sentryDsn, "UI");
     }
 
     public static void DisableSentryLogging()

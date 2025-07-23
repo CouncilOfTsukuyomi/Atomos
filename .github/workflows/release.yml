@@ -69,6 +69,7 @@ jobs:
                   echo "⚠️  This will:"
                   echo "   • Update version numbers"
                   echo "   • Create version update PR"
+                  echo "   • Run tests once"
                   echo "   • Build Windows and Linux releases"
                   echo "   • Create GitHub release"
                   echo ""
@@ -213,16 +214,49 @@ jobs:
                   echo "major=${{ steps.gitversion.outputs.major }}" >> $GITHUB_OUTPUT
                   echo "minor=${{ steps.gitversion.outputs.minor }}" >> $GITHUB_OUTPUT
                   echo "patch=${{ steps.gitversion.outputs.patch }}" >> $GITHUB_OUTPUT
-    
-    build-windows:
+
+    run-tests:
         needs: [release-approval, version-update]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  submodules: recursive
+                  ref: ${{ needs.version-update.outputs.source_branch }}
+
+            - name: Cache NuGet packages
+              uses: actions/cache@v4
+              with:
+                  path: ~/.nuget/packages
+                  key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-nuget-
+
+            - name: Set Up .NET (v9)
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: 9.x
+
+            - name: Restore Dependencies
+              run: dotnet restore
+
+            - name: Build Solution
+              run: dotnet build --configuration Release --verbosity minimal
+
+            - name: Run Tests
+              run: dotnet test --configuration Release --no-build --verbosity normal
+
+    build-windows:
+        needs: [release-approval, version-update, run-tests]
         runs-on: windows-latest
         outputs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
             zip_filename: ${{ steps.build.outputs.zip_filename }}
         steps:
-            -   name: Checkout repository
-                uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v4
             - name: Build Windows
               id: build
               uses: ./.github/workflows/templates/BuildWindows
@@ -230,18 +264,17 @@ jobs:
                   source_branch: ${{ needs.version-update.outputs.source_branch }}
                   version: ${{ needs.version-update.outputs.version }}
                   configuration: 'Release'
-                  run_tests: 'true'
-                  sentry_dsn: ${{ secrets.SENTRY_DSN }}
+                  run_tests: 'false'
 
     build-linux:
-        needs: [release-approval, version-update]
+        needs: [release-approval, version-update, run-tests]
         runs-on: ubuntu-latest
         outputs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
             zip_filename: ${{ steps.build.outputs.zip_filename }}
         steps:
-            -   name: Checkout repository
-                uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v4
             - name: Build Linux
               id: build
               uses: ./.github/workflows/templates/BuildLinux
@@ -249,8 +282,7 @@ jobs:
                   source_branch: ${{ needs.version-update.outputs.source_branch }}
                   version: ${{ needs.version-update.outputs.version }}
                   configuration: 'Release'
-                  run_tests: 'true'
-                  sentry_dsn: ${{ secrets.SENTRY_DSN }}
+                  run_tests: 'false'
     
     create-release:
         needs: [release-approval, version-update, build-windows, build-linux]
