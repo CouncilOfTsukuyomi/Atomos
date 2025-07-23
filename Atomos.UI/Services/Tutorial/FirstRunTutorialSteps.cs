@@ -35,7 +35,7 @@ public static class FirstRunTutorialSteps
             {
                 Id = "download-path",
                 Title = "Set Download Path",
-                Description = "First, let's set up where Atomos will look for your downloaded mods. Click the 'Add Path' button under to 'Download Path' and select a folder on your computer. This is where Atomos will search for mod files when you are downloading.",
+                Description = "First, let's set up where Atomos will look for your downloaded mods. Click the 'Add Path' button under to 'Download Path' and select a folder on your computer, this has been highlighted in yellow for you. This is where Atomos will search for mod files when you are downloading.",
                 TargetElementName = "DownloadPathSetting",
                 Position = TutorialPosition.Top,
                 IsRequired = true,
@@ -87,7 +87,7 @@ public static class FirstRunTutorialSteps
             {
                 Id = "file-linking",
                 Title = "File Association (Optional)",
-                Description = "Enable 'Double Click File Support' if you want to open mod files directly with Atomos by double-clicking them in Windows Explorer. This is optional but convenient for managing your mods.",
+                Description = "Enable 'Double Click File Support' if you want to open mod files directly with Atomos by double-clicking them in Windows Explorer, this has been highlighted in yellow for you. This is optional but convenient for managing your mods.",
                 TargetElementName = "FileLinkingEnabled",
                 Position = TutorialPosition.Top,
                 IsRequired = false
@@ -97,7 +97,7 @@ public static class FirstRunTutorialSteps
             {
                 Id = "auto-start",
                 Title = "Auto-Start Options (Optional)",
-                Description = "You can configure Atomos to start automatically when your computer boots or when FFXIV launches. These settings are optional and can be changed later if needed.",
+                Description = "You can configure Atomos to start automatically when your computer boots or when FFXIV launches, this has been highlighted in yellow for you. These settings are optional and can be changed later if needed.",
                 TargetElementName = "StartOnBoot",
                 Position = TutorialPosition.Top,
                 IsRequired = false
