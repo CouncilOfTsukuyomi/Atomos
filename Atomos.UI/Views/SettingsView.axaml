@@ -170,6 +170,42 @@
                              Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
+            
+            <!-- Export Configuration Section -->
+            <Border Classes="settingsCard" Margin="0,0,0,24">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                    <Border Grid.Column="0" Classes="settingsHeaderIcon" Background="#1BFF9800" Width="48" Height="48">
+                        <Path Data="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,17L17,12H14V8H10V12H7L12,17Z" 
+                              Fill="White" 
+                              Stretch="Uniform" 
+                              Width="24" 
+                              Height="24"
+                              HorizontalAlignment="Center" 
+                              VerticalAlignment="Center"/>
+                    </Border>
+        
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock Text="Export Configuration" Classes="settingLabel"/>
+                        <TextBlock Text="Save your current settings to a JSON file" 
+                                   Classes="settingDescription"/>
+                    </StackPanel>
+        
+                    <Button Grid.Column="2"
+                            Classes="modernButton"
+                            Command="{Binding ExportConfigurationCommand}"
+                            VerticalAlignment="Center"
+                            MinWidth="120">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Data="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,17L17,12H14V8H10V12H7L12,17Z" 
+                                  Fill="White" 
+                                  Stretch="Uniform" 
+                                  Width="16" 
+                                  Height="16"/>
+                            <TextBlock Text="Export"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
 
             <TabControl x:Name="SettingsTabControl" 
                         ItemsSource="{Binding FilteredGroups}"
