@@ -15,6 +15,10 @@ inputs:
         description: 'Whether to run tests'
         required: false
         default: 'true'
+    sentry_dsn:
+        description: 'Sentry DSN for error tracking'
+        required: false
+        default: ''
 outputs:
     artifact_name:
         description: 'Name of the uploaded artifact'
@@ -87,15 +91,15 @@ runs:
                   -f net9.0
               
                 # Create appsettings.Production.json with Sentry DSN (if available)
-                if ("${{ secrets.SENTRY_DSN }}" -ne "") {
+                if ("${{ inputs.sentry_dsn }}" -ne "") {
                   $productionConfig = @{
-                      "SENTRY_DSN" = "${{ secrets.SENTRY_DSN }}"
+                      "SENTRY_DSN" = "${{ inputs.sentry_dsn }}"
                   } | ConvertTo-Json -Depth 3
               
                   $productionConfig | Out-File -FilePath "$tempDir/appsettings.Production.json" -Encoding UTF8
                   Write-Host "Created appsettings.Production.json for $project"
                 } else {
-                  Write-Host "No SENTRY_DSN secret found, skipping Sentry configuration for $project"
+                  Write-Host "No SENTRY_DSN provided, skipping Sentry configuration for $project"
                 }
               
                 # Move files to main directory

@@ -15,6 +15,10 @@ inputs:
         description: 'Whether to run tests'
         required: false
         default: 'true'
+    sentry_dsn:
+        description: 'Sentry DSN for error tracking'
+        required: false
+        default: ''
 outputs:
     artifact_name:
         description: 'Name of the uploaded artifact'
@@ -82,15 +86,15 @@ runs:
                   -f net9.0
               
                 # Create appsettings.Production.json with Sentry DSN (if available)
-                if [ -n "${{ secrets.SENTRY_DSN }}" ]; then
+                if [ -n "${{ inputs.sentry_dsn }}" ]; then
                   cat > "$temp_dir/appsettings.Production.json" << EOF
               {
-                "SENTRY_DSN": "${{ secrets.SENTRY_DSN }}"
+                "SENTRY_DSN": "${{ inputs.sentry_dsn }}"
               }
               EOF
                   echo "Created appsettings.Production.json for $project"
                 else
-                  echo "No SENTRY_DSN secret found, skipping Sentry configuration for $project"
+                  echo "No SENTRY_DSN provided, skipping Sentry configuration for $project"
                 fi
               
                 # Move files to main directory
