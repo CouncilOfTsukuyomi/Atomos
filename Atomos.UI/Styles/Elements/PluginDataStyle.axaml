@@ -1,0 +1,130 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <!-- Add Controls for Previewer Here -->
+        </Border>
+    </Design.PreviewWith>
+
+    <!-- Mod Grid View ItemsControl Style -->
+    <Style Selector="ItemsControl.ModGridView">
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" 
+                          ItemWidth="220" 
+                          ItemHeight="300"/>
+            </ItemsPanelTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="ItemsControl.ModGridView > ContentPresenter">
+        <Setter Property="Margin" Value="0,0,12,12"/>
+    </Style>
+
+    <!-- Mod Grid Card Container -->
+    <Style Selector="Border.ModGridCard">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="Width" Value="220"/>
+        <Setter Property="Height" Value="300"/>
+    </Style>
+
+    <Style Selector="Border.ModGridCard:pointerover">
+        <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+    </Style>
+
+    <!-- Mod Image Container -->
+    <Style Selector="Border.ModImageContainer">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Height" Value="140"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+
+    <!-- Mod Details Container -->
+    <Style Selector="StackPanel.ModDetails">
+        <Setter Property="Spacing" Value="4"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+    </Style>
+
+    <!-- Mod Title -->
+    <Style Selector="TextBlock.ModTitle">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="MaxLines" Value="2"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+
+    <!-- Mod Publisher -->
+    <Style Selector="TextBlock.ModPublisher">
+        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+        <Setter Property="FontStyle" Value="Italic"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+
+    <!-- Mod Source -->
+    <Style Selector="TextBlock.ModSource">
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="FontSize" Value="9"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+
+    <!-- Mod Date -->
+    <Style Selector="TextBlock.ModDate">
+        <Setter Property="Foreground" Value="{StaticResource DisabledTextBrush}"/>
+        <Setter Property="FontSize" Value="8"/>
+    </Style>
+
+    <!-- Mod Action Buttons Container -->
+    <Style Selector="StackPanel.ModActions">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Spacing" Value="4"/>
+        <Setter Property="Margin" Value="0,8,0,0"/>
+    </Style>
+
+    <!-- Base Mod Action Button -->
+    <Style Selector="Button.ModActionButton">
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="6,4"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Width" Value="35"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- View Button -->
+    <Style Selector="Button.ModViewButton">
+        <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <!-- Download Button -->
+    <Style Selector="Button.ModDownloadButton">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <!-- Image Loading States -->
+    <Style Selector="StackPanel.ImageLoadingIndicator">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Spacing" Value="4"/>
+    </Style>
+
+    <Style Selector="StackPanel.ImageFallback">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Spacing" Value="4"/>
+    </Style>
+</Styles>

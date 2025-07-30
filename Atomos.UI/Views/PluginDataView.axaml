@@ -240,36 +240,17 @@
                     </StackPanel>
                   </Border>
                   
-                  <!-- Mods List -->
+                  <!-- Mods Grid -->
                   <ItemsControl ItemsSource="{Binding Mods}"
+                                Classes="ModGridView"
                                 IsVisible="{Binding !IsLoading}">
-                    
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate DataType="pluginModels:PluginMod">
-                        <Border Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Margin="0,0,0,12"
-                                Padding="15">
-                          <Border.Styles>
-                            <Style Selector="Border:pointerover">
-                              <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
-                              <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                            </Style>
-                          </Border.Styles>
-                          
-                          <StackPanel Spacing="12">
-                            <!-- Main content with image and details -->
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                              <!-- Mod Image with fallback overlay -->
-                              <Border CornerRadius="6"
-                                      Width="120"
-                                      Height="90"
-                                      ClipToBounds="True"
-                                      Background="{StaticResource BackgroundBrush}"
-                                      BorderBrush="{StaticResource BorderBrush}"
-                                      BorderThickness="1">
+                      
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="pluginModels:PluginMod">
+                          <Border Classes="ModGridCard">
+                            <Grid RowDefinitions="140,*,Auto">
+                              <!-- Mod Image (Top/Center) -->
+                              <Border Grid.Row="0" Classes="ModImageContainer">
                                 <Grid>
                                   <!-- Main image -->
                                   <asyncImageLoader:AdvancedImage 
@@ -280,24 +261,20 @@
                                        IsVisible="{Binding #ModImage.CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                   
                                   <!-- Loading indicator -->
-                                  <StackPanel HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"
-                                              Spacing="6"
+                                  <StackPanel Classes="ImageLoadingIndicator"
                                               IsVisible="{Binding #ModImage.IsLoading}">
                                     <ProgressBar IsIndeterminate="True" 
                                                  Width="60" 
-                                                 Height="4"
+                                                 Height="3"
                                                  Foreground="{StaticResource AccentBrush}"/>
                                     <TextBlock Text="Loading..." 
-                                               FontSize="10" 
+                                               FontSize="9" 
                                                HorizontalAlignment="Center"
                                                Foreground="{StaticResource DisabledTextBrush}"/>
                                   </StackPanel>
                                   
-                                  <!-- Fallback content when image fails to load or is null -->
-                                  <StackPanel HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"
-                                              Spacing="4">
+                                  <!-- Fallback content -->
+                                  <StackPanel Classes="ImageFallback">
                                     <StackPanel.IsVisible>
                                       <MultiBinding Converter="{x:Static BoolConverters.And}">
                                         <Binding Path="#ModImage.IsLoading" Converter="{x:Static BoolConverters.Not}"/>
@@ -305,78 +282,60 @@
                                       </MultiBinding>
                                     </StackPanel.IsVisible>
                                     <TextBlock Text="🖼️" 
-                                               FontSize="24" 
+                                               FontSize="20" 
                                                HorizontalAlignment="Center"
                                                Foreground="{StaticResource DisabledTextBrush}"/>
                                     <TextBlock Text="Image unavailable" 
-                                               FontSize="9" 
+                                               FontSize="8" 
                                                HorizontalAlignment="Center"
                                                Foreground="{StaticResource DisabledTextBrush}"
                                                TextAlignment="Center"
-                                               MaxWidth="100"
                                                TextWrapping="Wrap"/>
                                   </StackPanel>
                                 </Grid>
                               </Border>
-                              
-                              <!-- Mod Details -->
-                              <StackPanel Spacing="6" VerticalAlignment="Top">
-                                <TextBlock
-                                    Text="{Binding Name}"
-                                    Foreground="{StaticResource TextBrush}"
-                                    FontWeight="Bold"
-                                    FontSize="14"
-                                    TextWrapping="Wrap"
-                                    MaxWidth="300"/>
-                                
-                                <TextBlock
-                                    Text="{Binding Publisher}"
-                                    Foreground="{StaticResource PrimaryBrush}"
-                                    FontStyle="Italic"
-                                    FontSize="12"/>
-                                
-                                <TextBlock
-                                    Text="{Binding PluginSource, StringFormat=Source: \{0\}}"
-                                    Foreground="{StaticResource AccentBrush}"
-                                    FontSize="11"/>
-                                
-                                <TextBlock
-                                    Text="{Binding UploadDate, StringFormat=Published: \{0:MM/dd/yyyy\}}"
-                                    Foreground="{StaticResource DisabledTextBrush}"
-                                    FontSize="10"/>
-                              </StackPanel>
-                            </StackPanel>
 
-                            <!-- Action Buttons Row -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                              <Button
-                                  Content="🔗 View Page"
-                                  Tag="{Binding ModUrl}"
-                                  Click="OnViewModClicked"
-                                  Background="{StaticResource SecondaryBrush}"
-                                  Foreground="{StaticResource TextBrush}"
-                                  BorderThickness="0"
-                                  Padding="8,4"
-                                  CornerRadius="4"
-                                  FontSize="11"
-                                  IsVisible="{Binding ModUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                              
-                              <Button
-                                  Content="⬇️ Download"
-                                  Tag="{Binding DownloadUrl}"
-                                  Click="OnDownloadModClicked"
-                                  Background="{StaticResource AccentBrush}"
-                                  Foreground="{StaticResource TextBrush}"
-                                  BorderThickness="0"
-                                  Padding="8,4"
-                                  CornerRadius="4"
-                                  FontSize="11"
-                                  IsVisible="{Binding DownloadUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-                          </StackPanel>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
+                              <!-- Mod Details (Middle) -->
+                              <StackPanel Grid.Row="1" Classes="ModDetails">
+                                <TextBlock Classes="ModTitle"
+                                           Text="{Binding Name}"
+                                           ToolTip.Tip="{Binding Name}"/>
+                                
+                                <TextBlock Classes="ModPublisher"
+                                           Text="{Binding Publisher}"
+                                           ToolTip.Tip="{Binding Publisher}"/>
+                                
+                                <TextBlock Classes="ModSource"
+                                           Text="{Binding PluginSource, StringFormat=Source: \{0\}}"/>
+                                
+                                <TextBlock Classes="ModDate"
+                                           Text="{Binding UploadDate, StringFormat=Published: \{0:MM/dd/yyyy\}}"/>
+                              </StackPanel>
+
+                              <!-- Action Buttons (Bottom) -->
+                              <StackPanel Grid.Row="2" Classes="ModActions">
+                                <Button Classes="ModActionButton ModViewButton"
+                                        Content="🔗"
+                                        Tag="{Binding ModUrl}"
+                                        Click="OnViewModClicked"
+                                        ToolTip.Tip="View Page"
+                                        IsVisible="{Binding ModUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                
+                                <Button Classes="ModActionButton ModDownloadButton"
+                                        Content="⬇️"
+                                        Tag="{Binding DownloadUrl}"
+                                        Click="OnDownloadModClicked"
+                                        ToolTip.Tip="Download"
+                                        IsVisible="{Binding DownloadUrl, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                
+                                <!-- Spacer -->
+                                <Rectangle Fill="Transparent" 
+                                           HorizontalAlignment="Stretch"/>
+                              </StackPanel>
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
                   </ItemsControl>
                   
                   <!-- No Mods Message -->
