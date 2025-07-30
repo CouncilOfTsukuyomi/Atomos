@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Atomos.UI.Helpers;
 using Atomos.UI.Interfaces;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommonLib.Attributes;
 using CommonLib.Interfaces;
 using CommonLib.Models;
@@ -24,6 +29,7 @@ public class SettingsViewModel : ViewModelBase
     private readonly IConfigurationService _configurationService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IWebSocketClient _webSocketClient;
+    private readonly INotificationService _notificationService;
     
     // Dictionary to map property names to tutorial-friendly names
     private readonly Dictionary<string, string> _tutorialNameMap = new()
@@ -54,6 +60,17 @@ public class SettingsViewModel : ViewModelBase
         get => _filteredGroups;
         set => this.RaiseAndSetIfChanged(ref _filteredGroups, value);
     }
+    
+    public ReactiveCommand<Unit, Unit> ExportConfigurationCommand { get; }
+    
+    private bool _isExporting;
+    public bool IsExporting
+    {
+        get => _isExporting;
+        private set => this.RaiseAndSetIfChanged(ref _isExporting, value);
+    }
+
+
 
     private ConfigurationGroup? _selectedGroup;
     public ConfigurationGroup? SelectedGroup
@@ -76,14 +93,84 @@ public class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         IConfigurationService configurationService,
         IFileDialogService fileDialogService,
-        IWebSocketClient webSocketClient)
+        IWebSocketClient webSocketClient, INotificationService notificationService)
     {
         _configurationService = configurationService;
         _fileDialogService = fileDialogService;
         _webSocketClient = webSocketClient;
+        _notificationService = notificationService;
+
+        ExportConfigurationCommand = ReactiveCommand.CreateFromTask(
+            ExportConfigurationAsync,
+            this.WhenAnyValue(x => x.IsExporting, isExporting => !isExporting));
+
 
         LoadConfigurationSettings();
     }
+    
+        private async Task ExportConfigurationAsync()
+    {
+        try
+        {
+            IsExporting = true;
+            _logger.Info("Starting configuration export");
+
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                var mainWindow = desktop.MainWindow;
+                if (mainWindow != null)
+                {
+                    var storageProvider = mainWindow.StorageProvider;
+                    
+                    var suggestedFileName = $"atomos_config_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+                    
+                    var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                    {
+                        Title = "Export Configuration",
+                        DefaultExtension = "json",
+                        SuggestedFileName = suggestedFileName,
+                        FileTypeChoices = new[]
+                        {
+                            new FilePickerFileType("JSON Configuration Files")
+                            {
+                                Patterns = new[] { "*.json" },
+                                MimeTypes = new[] { "application/json" }
+                            },
+                            new FilePickerFileType("All Files")
+                            {
+                                Patterns = new[] { "*" }
+                            }
+                        }
+                    });
+
+                    if (file != null)
+                    {
+                        var exportPath = await _configurationService.ExportToFileAsync(file.Path.LocalPath);
+                        
+                        _logger.Info("Configuration exported successfully to: {Path}", exportPath);
+
+                        await _notificationService.ShowNotification("Configuration Exported",
+                            $"Settings exported successfully to:\n{Path.GetFileName(exportPath)}");
+                    }
+                    else
+                    {
+                        _logger.Debug("Export cancelled by user");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to export configuration");
+            await _notificationService.ShowNotification("Export Failed",
+                $"Failed to export configuration: {ex.Message}");
+        }
+        finally
+        {
+            IsExporting = false;
+        }
+    }
+
 
     private void LoadConfigurationSettings()
     {
