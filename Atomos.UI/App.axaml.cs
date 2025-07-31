@@ -3,6 +3,7 @@ using Atomos.UI.ViewModels;
 using Atomos.UI.Views;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
@@ -31,6 +32,8 @@ public partial class App : Avalonia.Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.ShutdownRequested += OnShutdownRequested;
+            
             bool isInitialized = Environment.GetEnvironmentVariable("WATCHDOG_INITIALIZED") == "true";
             _logger.Debug("Application initialized by watchdog: {IsInitialized}", isInitialized);
 
@@ -61,14 +64,9 @@ public partial class App : Avalonia.Application
                 try
                 {
                     var mainWindow = ActivatorUtilities.CreateInstance<MainWindow>(_serviceProvider);
-                    
-                    // Set the MainWindow first so it's available for any services that need it
                     desktop.MainWindow = mainWindow;
-                    
-                    // Now create the ViewModel - this way MainWindow is available if needed
                     var mainViewModel = ActivatorUtilities.CreateInstance<MainWindowViewModel>(_serviceProvider, port);
                     mainWindow.DataContext = mainViewModel;
-                    
                     _logger.Info("Main window and view model created successfully");
                 }
                 catch (Exception ex)
@@ -80,5 +78,29 @@ public partial class App : Avalonia.Application
         }
         
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    {
+        _logger.Info("Application shutdown requested - flushing configuration changes...");
+        
+        try
+        {
+            var configService = _serviceProvider.GetService<IConfigurationService>();
+            if (configService != null)
+            {
+                _logger.Info("Flushing pending configuration changes before UI shutdown...");
+                configService.FlushPendingChangesSync();
+                _logger.Info("Configuration flush completed successfully");
+            }
+            else
+            {
+                _logger.Warn("Configuration service not available during shutdown");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error flushing configuration during UI shutdown");
+        }
     }
 }

@@ -1,4 +1,5 @@
 using Atomos.BackgroundWorker.Interfaces;
+using CommonLib.Interfaces;
 using NLog;
 
 namespace Atomos.BackgroundWorker;
@@ -9,6 +10,7 @@ public class Worker : BackgroundService
 
     private readonly IWebSocketServer _webSocketServer;
     private readonly IStartupService _startupService;
+    private readonly IConfigurationService _configurationService;
     private readonly int _port;
     private readonly IHostApplicationLifetime _lifetime;
     private bool _initialized;
@@ -16,11 +18,13 @@ public class Worker : BackgroundService
     public Worker(
         IWebSocketServer webSocketServer,
         IStartupService startupService,
+        IConfigurationService configurationService,
         int port,
         IHostApplicationLifetime lifetime)
     {
         _webSocketServer = webSocketServer;
         _startupService = startupService;
+        _configurationService = configurationService;
         _port = port;
         _lifetime = lifetime;
     }
@@ -31,11 +35,9 @@ public class Worker : BackgroundService
         _webSocketServer.Start(_port);
 
         _logger.Info("Launching file watcher...");
-
-        // Begin listening for a "shutdown" command in parallel
+        
         _ = Task.Run(() => ListenForShutdownCommand(cancellationToken), cancellationToken);
-
-        // Proceed with normal startup
+        
         await base.StartAsync(cancellationToken);
     }
 
@@ -63,25 +65,47 @@ public class Worker : BackgroundService
             _logger.Error(ex, "Error occurred in worker");
             throw;
         }
+        finally
+        {
+            try
+            {
+                _logger.Info("Flushing configuration changes before shutdown...");
+                _configurationService?.FlushPendingChangesSync();
+                _logger.Info("Configuration flush completed");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error flushing configuration during shutdown");
+            }
+        }
     }
 
     private async Task ListenForShutdownCommand(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            // Only proceed if there's input available
             if (Console.In.Peek() > -1)
             {
                 var line = await Console.In.ReadLineAsync();
                 if (line != null && line.Equals("shutdown", StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.Info("Received 'shutdown' command via standard input, stopping application...");
+                    
+                    try
+                    {
+                        _logger.Info("Flushing configuration changes before shutdown command...");
+                        _configurationService?.FlushPendingChangesSync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, "Error flushing configuration during shutdown command");
+                    }
+                    
                     _lifetime.StopApplication();
                     break;
                 }
             }
-
-            // Wait briefly before checking again
+            
             await Task.Delay(500, stoppingToken);
         }
     }
