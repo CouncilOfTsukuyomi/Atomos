@@ -39,6 +39,15 @@ public class StartupService : IStartupService
         {
             DependencyInjection.DisableSentryLogging();
         }
+
+        if ((bool) _configurationService.ReturnConfigValue(c => c.AdvancedOptions.EnableDebugLogs))
+        {
+            DependencyInjection.EnableDebugLogging();
+        }
+        else
+        {
+            DependencyInjection.DisableDebugLogging();
+        }
         
         _logger.Info("Initializing startup checks...");
         await CheckTexToolsInstallation();

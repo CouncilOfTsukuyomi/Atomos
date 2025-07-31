@@ -1,0 +1,153 @@
+﻿name: 'Build Windows'
+description: 'Build Atomos for Windows x64'
+inputs:
+    source_branch:
+        description: 'Source branch to checkout'
+        required: true
+    version:
+        description: 'Version string for the build'
+        required: true
+    configuration:
+        description: 'Build configuration (Release/Debug)'
+        required: false
+        default: 'Release'
+    run_tests:
+        description: 'Whether to run tests'
+        required: false
+        default: 'true'
+    sentry_dsn:
+        description: 'Sentry DSN for error tracking'
+        required: false
+        default: ''
+outputs:
+    artifact_name:
+        description: 'Name of the uploaded artifact'
+        value: ${{ steps.set-outputs.outputs.artifact_name }}
+    zip_filename:
+        description: 'Name of the created zip file'
+        value: ${{ steps.set-outputs.outputs.zip_filename }}
+runs:
+    using: 'composite'
+    steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
+          with:
+              fetch-depth: 0
+              submodules: recursive
+              ref: ${{ inputs.source_branch }}
+
+        - name: Cache NuGet packages
+          uses: actions/cache@v4
+          with:
+              path: ~/.nuget/packages
+              key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+              restore-keys: |
+                  ${{ runner.os }}-nuget-
+
+        - name: Set Up .NET (v9)
+          uses: actions/setup-dotnet@v4
+          with:
+              dotnet-version: 9.x
+
+        - name: Restore Dependencies
+          shell: pwsh
+          run: dotnet restore
+
+        - name: Build Solution
+          shell: pwsh
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal
+
+        - name: Run Tests
+          if: ${{ inputs.run_tests == 'true' }}
+          shell: pwsh
+          run: dotnet test --configuration ${{ inputs.configuration }} --no-build --verbosity normal
+          continue-on-error: true
+
+        - name: Publish Solution Components
+          shell: pwsh
+          run: |
+              # Create main publish directory
+              New-Item -ItemType Directory -Path "./publish/Atomos-win-x64" -Force
+              
+              $projects = @(
+                "Atomos.ConsoleTooling",
+                "Atomos.UI", 
+                "Atomos.BackgroundWorker",
+                "Atomos.Watchdog"
+              )
+              
+              foreach ($project in $projects) {
+                $tempDir = "./publish/temp-$($project.ToLower())-win-x64"
+              
+                Write-Host "Publishing $project..."
+                dotnet publish $project `
+                  -c ${{ inputs.configuration }} `
+                  -p:PublishSingleFile=true `
+                  -p:PublishReadyToRun=true `
+                  --self-contained=true `
+                  -p:DebugType=None -p:DebugSymbols=false `
+                  -r win-x64 `
+                  -o $tempDir `
+                  -f net9.0
+              
+                # Create appsettings.Production.json with Sentry DSN (if available)
+                if ("${{ inputs.sentry_dsn }}" -ne "") {
+                  $productionConfig = @{
+                      "SENTRY_DSN" = "${{ inputs.sentry_dsn }}"
+                  } | ConvertTo-Json -Depth 3
+              
+                  $productionConfig | Out-File -FilePath "$tempDir/appsettings.Production.json" -Encoding UTF8
+                  Write-Host "Created appsettings.Production.json for $project"
+                } else {
+                  Write-Host "No SENTRY_DSN provided, skipping Sentry configuration for $project"
+                }
+              
+                # Move files to main directory
+                Copy-Item -Path "$tempDir/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
+              
+                # Clean up temp directory
+                Remove-Item -Path $tempDir -Recurse -Force
+              }
+
+        - name: Validate Executables
+          shell: pwsh
+          run: |
+              $exeFiles = Get-ChildItem -Path "./publish/Atomos-win-x64/" -Filter "*.exe"
+              if ($exeFiles.Count -eq 0) {
+                Write-Error "No executable files found!"
+                exit 1
+              }
+              
+              foreach ($exe in $exeFiles) {
+                if ($exe.Length -eq 0) {
+                  Write-Error "Error: $($exe.Name) is empty"
+                  exit 1
+                }
+                $sizeKB = [math]::Round($exe.Length / 1KB, 2)
+                Write-Host "✓ $($exe.Name) - $sizeKB KB"
+              }
+
+        - name: Create Release ZIP
+          shell: pwsh
+          run: |
+              Set-Location "./publish"
+              $zipName = "Atomos-Windows-x64.v${{ inputs.version }}.zip"
+              Compress-Archive -Path "Atomos-win-x64/*" -DestinationPath $zipName
+              Set-Location ".."
+
+        - name: Set Outputs
+          id: set-outputs
+          shell: pwsh
+          run: |
+              $artifactName = "Atomos-Windows-x64-v${{ inputs.version }}"
+              $zipFileName = "Atomos-Windows-x64.v${{ inputs.version }}.zip"
+              
+              echo "artifact_name=$artifactName" >> $env:GITHUB_OUTPUT
+              echo "zip_filename=$zipFileName" >> $env:GITHUB_OUTPUT
+
+        - name: Upload Build Artifacts
+          uses: actions/upload-artifact@v4
+          with:
+              name: ${{ steps.set-outputs.outputs.artifact_name }}
+              path: ./publish/${{ steps.set-outputs.outputs.zip_filename }}
+              retention-days: 6

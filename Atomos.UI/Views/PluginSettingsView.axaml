@@ -1,5 +1,4 @@
-﻿
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -98,11 +97,47 @@
                                       IsChecked="{Binding BooleanValue}"
                                       Classes="configurationItemBooleanInput"/>
                         
-                        <!-- Choice Input -->
-                        <ComboBox IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Choice}"
-                                  ItemsSource="{Binding Choices}"
-                                  SelectedItem="{Binding Value}"
-                                  Classes="configurationItemChoiceInput"/>
+                        <!-- Single Select Enum Input -->
+                        <ComboBox IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=Enum}"
+                                  ItemsSource="{Binding EnumOptions}"
+                                  SelectedItem="{Binding SelectedEnumOption}"
+                                  Classes="configurationItemEnumInput">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="models:EnumOption">
+                              <TextBlock Text="{Binding Title}"/>
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+  
+                        <!-- Multi-Select Enum Input -->
+                        <Border IsVisible="{Binding Type, Converter={x:Static conv:EnumToBoolConverter.Instance}, ConverterParameter=MultiSelectEnum}"
+                                Classes="configurationItemMultiSelectEnumInput">
+                          <StackPanel>
+                            <TextBlock Text="Select options:" Margin="0,0,0,8"/>
+    
+                            <!-- Dropdown Toggle Button -->
+                            <ToggleButton x:Name="MultiSelectDropdown"
+                                          Content="{Binding SelectedOptionsText}"
+                                          Classes="configurationItemMultiSelectDropdown"/>
+    
+                            <!-- Dropdown Panel -->
+                            <Border IsVisible="{Binding #MultiSelectDropdown.IsChecked}"
+                                    Classes="configurationItemMultiSelectDropdownPanel">
+                              <ScrollViewer MaxHeight="200">
+                                <ItemsControl ItemsSource="{Binding CheckableEnumOptions}">
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="models:CheckableEnumOption">
+                                      <CheckBox Content="{Binding EnumOption.Title}" 
+                                                IsChecked="{Binding IsChecked}"
+                                                Classes="multiSelectDropdownCheckBox"
+                                                Margin="0,2"/>
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                              </ScrollViewer>
+                            </Border>
+                          </StackPanel>
+                        </Border>
                         
                       </Grid>
 

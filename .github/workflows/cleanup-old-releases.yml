@@ -1,0 +1,297 @@
+﻿name: Cleanup Old Releases
+
+on:
+    schedule:
+        # Run monthly on the 1st at 2 AM UTC
+        - cron: '0 2 1 * *'
+    workflow_dispatch:
+
+permissions:
+    contents: write
+    actions: write
+
+jobs:
+    cleanup:
+        runs-on: ubuntu-latest
+        
+        steps:
+            - name: Generate GitHub App Token
+              id: app-token
+              uses: actions/create-github-app-token@v1
+              with:
+                  app-id: ${{ vars.APP_ID }}
+                  private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  token: ${{ steps.app-token.outputs.token }}
+
+            - name: Install GitHub CLI
+              run: |
+                  type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+                  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+                  && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+                  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+                  && sudo apt update \
+                  && sudo apt install gh -y
+
+            - name: Set Git User
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            - name: Cleanup old releases and tags
+              env:
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+                  REPO: ${{ github.repository }}
+              run: |
+                  #!/bin/bash
+                  
+                  echo "🧹 Starting cleanup of old releases and tags..."
+                  echo "📦 Targeting 200MB+ releases - keeping optimal storage balance"
+                  
+                  # Initialize counters
+                  releases_deleted=0
+                  tags_deleted=0
+                  declare -a deleted_releases_list
+                  declare -a deleted_tags_list
+                  declare -a failed_operations
+                  
+                  # Get all releases sorted by creation date (newest first)
+                  echo "📋 Fetching all releases..."
+                  releases=$(gh release list --repo "$REPO" --limit 1000 --json tagName,createdAt,isPrerelease | jq -r 'sort_by(.createdAt) | reverse | .[].tagName')
+                  
+                  if [ -z "$releases" ]; then
+                    echo "ℹ️  No releases found. Exiting."
+                    exit 0
+                  fi
+                  
+                  # Convert to array
+                  release_array=($releases)
+                  total_releases=${#release_array[@]}
+                  
+                  echo "📊 Found $total_releases total releases (~$(($total_releases * 200))MB total storage)"
+                  
+                  # Get current major version from latest release
+                  latest_release="${release_array[0]}"
+                  current_major=$(echo "$latest_release" | sed 's/^v//' | cut -d. -f1)
+                  echo "🔖 Current major version: $current_major"
+                  
+                  # Get production releases (non-prerelease) sorted by creation date
+                  echo "🔍 Fetching production releases..."
+                  production_releases=$(gh release list --repo "$REPO" --limit 1000 --json tagName,createdAt,isPrerelease | jq -r 'sort_by(.createdAt) | reverse | map(select(.isPrerelease == false)) | .[].tagName')
+                  
+                  if [ -z "$production_releases" ]; then
+                    echo "ℹ️  No production releases found. Keeping all releases."
+                    echo "📊 Deletion Summary: 0 releases deleted, 0 tags deleted"
+                    exit 0
+                  fi
+                  
+                  # Convert to array
+                  prod_release_array=($production_releases)
+                  total_prod_releases=${#prod_release_array[@]}
+                  
+                  echo "📊 Found $total_prod_releases production releases"
+                  
+                  # Determine what to keep based on multiple criteria
+                  if [ $total_prod_releases -gt 8 ]; then
+                    echo "🎯 Applying retention policy:"
+                    echo "   • Keep latest 8 production releases"
+                    echo "   • Keep all releases from current major version (v$current_major.x.x)"
+                    echo "   • Keep all releases from last 6 months"
+                  
+                    # Calculate 6 months ago
+                    six_months_ago=$(date -d "6 months ago" --iso-8601)
+                    echo "📅 Six months ago: $six_months_ago"
+                  
+                    # Get the 8th newest production release
+                    eighth_newest_prod="${prod_release_array[7]}"
+                    echo "🎯 Eighth newest production release: $eighth_newest_prod"
+                  
+                    # Get the creation date of the 8th newest production release
+                    eighth_newest_date=$(gh release view "$eighth_newest_prod" --repo "$REPO" --json createdAt | jq -r '.createdAt')
+                    echo "📅 Eighth newest production release date: $eighth_newest_date"
+                  
+                    # Get all releases with complex filtering
+                    echo "🔍 Identifying releases to delete..."
+                    releases_to_delete=""
+                  
+                    for release in $releases; do
+                      # Get release info
+                      release_info=$(gh release view "$release" --repo "$REPO" --json createdAt,tagName | jq -r '"\(.createdAt)|\(.tagName)"')
+                      release_date=$(echo "$release_info" | cut -d'|' -f1)
+                      release_tag=$(echo "$release_info" | cut -d'|' -f2)
+                  
+                      # Extract version parts
+                      version_no_v=$(echo "$release_tag" | sed 's/^v//')
+                      release_major=$(echo "$version_no_v" | cut -d. -f1)
+                  
+                      # Check if this release should be deleted
+                      should_delete=true
+                  
+                      # Keep if from current major version
+                      if [ "$release_major" = "$current_major" ]; then
+                        should_delete=false
+                        echo "💾 Keeping $release_tag (current major version v$current_major.x.x)"
+                      fi
+                  
+                      # Keep if newer than 6 months
+                      if [ "$release_date" \> "$six_months_ago" ]; then
+                        should_delete=false
+                        echo "💾 Keeping $release_tag (within 6 months)"
+                      fi
+                  
+                      # Keep if it's in the top 8 production releases
+                      for prod_release in "${prod_release_array[@]:0:8}"; do
+                        if [ "$release_tag" = "$prod_release" ]; then
+                          should_delete=false
+                          echo "💾 Keeping $release_tag (top 8 production releases)"
+                          break
+                        fi
+                      done
+                  
+                      # Add to deletion list if it should be deleted
+                      if [ "$should_delete" = true ]; then
+                        releases_to_delete="$releases_to_delete $release_tag"
+                      fi
+                    done
+                  
+                    # Process deletions
+                    if [ -n "$releases_to_delete" ]; then
+                      echo ""
+                      echo "🗑️  Releases to delete:"
+                      for tag in $releases_to_delete; do
+                        echo "  - $tag"
+                      done
+                  
+                      # Calculate storage savings
+                      deletion_count=$(echo $releases_to_delete | wc -w)
+                      storage_savings=$((deletion_count * 200))
+                      echo "💾 Estimated storage savings: ${storage_savings}MB"
+                  
+                      echo ""
+                      echo "🔄 Starting deletion process..."
+                  
+                      for tag in $releases_to_delete; do
+                        echo "🗑️  Processing: $tag"
+                  
+                        # Delete the release
+                        if gh release view "$tag" --repo "$REPO" >/dev/null 2>&1; then
+                          if gh release delete "$tag" --repo "$REPO" --yes 2>/dev/null; then
+                            echo "✅ Deleted release: $tag"
+                            deleted_releases_list+=("$tag")
+                            ((releases_deleted++))
+                          else
+                            echo "❌ Failed to delete release: $tag"
+                            failed_operations+=("Failed to delete release: $tag")
+                          fi
+                        else
+                          echo "⚠️  Release $tag not found, skipping release deletion"
+                        fi
+                  
+                        # Delete the tag
+                        tag_deleted=false
+                  
+                        # Delete local tag if it exists (with error handling)
+                        if git tag -l | grep -q "^$tag$" 2>/dev/null; then
+                          if git tag -d "$tag" >/dev/null 2>&1; then
+                            echo "🏷️  Deleted local tag: $tag"
+                          else
+                            echo "⚠️  Failed to delete local tag: $tag"
+                          fi
+                        fi
+                  
+                        # Delete remote tag (with error handling)
+                        if git push origin --delete "$tag" >/dev/null 2>&1; then
+                          echo "✅ Deleted remote tag: $tag"
+                          if [ "$tag_deleted" = false ]; then
+                            deleted_tags_list+=("$tag")
+                            ((tags_deleted++))
+                            tag_deleted=true
+                          fi
+                        else
+                          # Check if tag actually exists on remote
+                          if git ls-remote --tags origin | grep -q "refs/tags/$tag$" 2>/dev/null; then
+                            echo "❌ Failed to delete remote tag: $tag (exists but deletion failed)"
+                            failed_operations+=("Failed to delete remote tag: $tag")
+                          else
+                            echo "⚠️  Tag $tag not found on remote or already deleted"
+                          fi
+                        fi
+                      done
+                  
+                      echo ""
+                      echo "🎉 Cleanup completed!"
+                      echo ""
+                      echo "📊 DELETION SUMMARY:"
+                      echo "├── Releases deleted: $releases_deleted"
+                      echo "├── Tags deleted: $tags_deleted"
+                      echo "├── Storage saved: ~$((releases_deleted * 200))MB"
+                      echo ""
+                  
+                      if [ $releases_deleted -gt 0 ]; then
+                        echo "🗑️  Deleted Releases:"
+                        for release in "${deleted_releases_list[@]}"; do
+                          echo "├── $release"
+                        done
+                        echo ""
+                      fi
+                  
+                      if [ $tags_deleted -gt 0 ]; then
+                        echo "🏷️  Deleted Tags:"
+                        for tag in "${deleted_tags_list[@]}"; do
+                          echo "├── $tag"
+                        done
+                        echo ""
+                      fi
+                  
+                      if [ ${#failed_operations[@]} -gt 0 ]; then
+                        echo "⚠️  Failed Operations:"
+                        for failure in "${failed_operations[@]}"; do
+                          echo "├── $failure"
+                        done
+                        echo ""
+                      fi
+                  
+                    else
+                      echo "ℹ️  No releases found that meet deletion criteria."
+                      echo "📊 Deletion Summary: 0 releases deleted, 0 tags deleted"
+                    fi
+                  else
+                    echo "ℹ️  Only $total_prod_releases production releases found. Keeping all releases."
+                    echo "📦 Minimum 8 production releases required for cleanup to begin."
+                    echo "📊 Deletion Summary: 0 releases deleted, 0 tags deleted"
+                  fi
+                  
+                  # Final verification and summary
+                  echo ""
+                  echo "📋 Final summary - Current releases:"
+                  remaining_releases=$(gh release list --repo "$REPO" --limit 20 --json tagName,createdAt,isPrerelease | jq -r 'sort_by(.createdAt) | reverse | length')
+                  echo "├── Total remaining releases: $remaining_releases"
+                  echo "├── Estimated storage usage: ~$((remaining_releases * 200))MB"
+                  echo ""
+                  
+                  if ! gh release list --repo "$REPO" --limit 10 --json tagName,createdAt,isPrerelease | jq -r 'sort_by(.createdAt) | reverse | .[] | "\(.tagName) - \(.createdAt) - \(if .isPrerelease then "Beta" else "Production" end)"'; then
+                    echo "⚠️  Could not fetch final release list for verification"
+                  fi
+                  
+                  # Exit with success even if some operations failed
+                  if [ ${#failed_operations[@]} -gt 0 ]; then
+                    echo "⚠️  Some operations failed, but cleanup completed with partial success"
+                    exit 0
+                  else
+                    echo "✅ All operations completed successfully!"
+                    exit 0
+                  fi
+
+            - name: Summary
+              run: |
+                  echo "✅ Cleanup job completed successfully!"
+                  echo "📝 Retention Policy Applied:"
+                  echo "   • Latest 8 production releases"
+                  echo "   • All releases from current major version"
+                  echo "   • All releases from last 6 months"
+                  echo "   • All beta releases newer than above criteria"
+                  echo "⏰ Next scheduled run: Monthly on the 1st at 2 AM UTC"

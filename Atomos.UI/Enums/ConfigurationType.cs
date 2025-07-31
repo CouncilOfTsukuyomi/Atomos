@@ -6,6 +6,8 @@ public enum ConfigurationType
     TextArea,
     Number,
     Boolean,
+    Enum,
+    MultiSelectEnum,
     Choice,
     Url,
     FilePath,

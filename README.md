@@ -20,7 +20,7 @@ Download the latest release from the GitHub repository and run `Launcher.exe`. A
 
 ### Support
 
-If you encounter any issues, please report them in the **Penumbra Mod Forwarder** category on [our Discord server](https://discord.gg/rtGXwMn7pX).
+If you encounter any issues, please report them in the **Atomos Mod Forwarder** category on [our Discord server](https://discord.gg/rtGXwMn7pX).
 
 ## Features
 
@@ -72,9 +72,13 @@ To access NSFW mods on XIV Mod Archive, you'll need to provide your authenticati
 #### Security Note
 **Your cookie is only used for authenticated requests to XMA and is stored locally on your machine.**
 
+## IMPORTANT
+**A cookie is like a password, never share this with anyone!**
+--
+
 #### Step-by-Step Setup
 
-1. **Install a cookie editor extension** for your browser:
+1. **Install a cookie editor extension** for your browser (This can be skipped if you don't want to download an extension):
     - Recommended: [Cookie Editor](https://cookie-editor.com/)
     - Available for Chrome, Firefox, and other browsers
 
@@ -83,7 +87,11 @@ To access NSFW mods on XIV Mod Archive, you'll need to provide your authenticati
     - Sign in with your account
 
 3. **Extract your authentication cookie**
-    - Open the cookie editor extension
+    - If you've downloaded an extension open the cookie editor extension
+    - If you've not downloaded an extension you can find the cookie by
+      - Opening inspect element
+      - Navigating to Storage
+      - Select Cookies
     - Find the cookie named `connect.sid`
     - Copy its value (this is your authentication token)
 

@@ -1,0 +1,57 @@
+﻿name: Close Stale Issues and PRs
+
+on:
+    schedule:
+        # Run daily at 2 AM UTC
+        - cron: '0 2 * * *'
+    workflow_dispatch:
+
+permissions:
+    issues: write
+    pull-requests: write
+
+jobs:
+    stale:
+        runs-on: ubuntu-latest
+        
+        steps:
+            - name: Generate GitHub App Token
+              id: app-token
+              uses: actions/create-github-app-token@v1
+              with:
+                  app-id: ${{ vars.APP_ID }}
+                  private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+            - uses: actions/stale@v9
+              with:
+                  repo-token: ${{ steps.app-token.outputs.token }}
+                  
+                  days-before-stale: 7
+                  days-before-close: 2
+                  
+                  stale-issue-message: |
+                      This issue has been automatically marked as stale because it has not had recent activity. 
+                      It will be closed in 2 days if no further activity occurs. 
+                      If this issue is still relevant, please add a comment or remove the stale label.
+                  
+                  stale-pr-message: |
+                      This pull request has been automatically marked as stale because it has not had recent activity. 
+                      It will be closed in 2 days if no further activity occurs. 
+                      If this PR is still relevant, please add a comment or remove the stale label.
+                  
+                  close-issue-message: |
+                      This issue has been automatically closed due to inactivity. 
+                      If you believe this issue is still relevant, please reopen it or create a new issue.
+                  
+                  close-pr-message: |
+                      This pull request has been automatically closed due to inactivity. 
+                      If you believe this PR is still relevant, please reopen it or update it.
+                  
+                  stale-issue-label: 'stale'
+                  stale-pr-label: 'stale'
+                  
+                  exempt-issue-labels: 'pinned,security,bug,enhancement,critical'
+                  exempt-pr-labels: 'pinned,security,work-in-progress,critical'
+                  
+                  operations-per-run: 100
+                  remove-stale-when-updated: true

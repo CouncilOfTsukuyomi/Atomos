@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -50,10 +49,8 @@ public class DownloadManagerService : IDownloadManagerService
             _logger.Info("Starting download for mod: {ModName} from plugin source: {PluginSource}", 
                 pluginMod.Name, pluginMod.PluginSource);
 
-            // Report initial progress
             progress?.Report(new DownloadProgress { Status = "Preparing download..." });
 
-            // Get the plugin that provided this mod
             var plugin = _pluginService.GetPlugin(pluginMod.PluginSource);
             if (plugin == null)
             {
@@ -70,7 +67,6 @@ public class DownloadManagerService : IDownloadManagerService
             
             progress?.Report(new DownloadProgress { Status = "Converting download URL..." });
             
-            // Convert the download URL to a direct download URL
             string directDownloadUrl = await ConvertToDirectDownloadUrlAsync(pluginMod.DownloadUrl);
             
             if (string.IsNullOrWhiteSpace(directDownloadUrl))
@@ -96,7 +92,6 @@ public class DownloadManagerService : IDownloadManagerService
                 SoundType.GeneralChime
             );
 
-            // Get configured download path
             var configuredPaths = _configurationService.ReturnConfigValue(cfg => cfg.BackgroundWorker.DownloadPath)
                 as System.Collections.Generic.List<string>;
 
@@ -122,14 +117,12 @@ public class DownloadManagerService : IDownloadManagerService
 
             progress?.Report(new DownloadProgress { Status = "Starting download...", PercentComplete = 0 });
 
-            // Create a progress wrapper that includes notifications for major milestones
             IProgress<DownloadProgress>? wrappedProgress = null;
             if (progress != null)
             {
                 wrappedProgress = new Progress<DownloadProgress>(p => OnDownloadProgressChanged(p, pluginMod.Name, progress));
             }
 
-            // Download the file with retry logic
             var result = await DownloadWithRetryAsync(directDownloadUrl, downloadPath, pluginMod.Name, ct, wrappedProgress);
 
             if (result)
@@ -184,7 +177,6 @@ public class DownloadManagerService : IDownloadManagerService
         _logger.Debug("Speed: {FormattedSpeed}", downloadProgress.FormattedSpeed);
         _logger.Debug("Size: {FormattedSize}", downloadProgress.FormattedSize);
 
-        // Create enhanced status message like your updater
         var enhancedProgress = new DownloadProgress
         {
             Status = CreateRichStatusMessage(downloadProgress, modName),
@@ -195,10 +187,8 @@ public class DownloadManagerService : IDownloadManagerService
             DownloadedBytes = downloadProgress.DownloadedBytes
         };
 
-        // Also send updates to notification service for websocket clients if available
         if (downloadProgress.PercentComplete > 0 && !string.IsNullOrEmpty(downloadProgress.FormattedSpeed))
         {
-            // This might trigger websocket updates like your updater does
             _ = Task.Run(async () =>
             {
                 try
@@ -217,7 +207,6 @@ public class DownloadManagerService : IDownloadManagerService
             });
         }
 
-        // Report to the original progress handler
         originalProgress.Report(enhancedProgress);
         
         _logger.Debug("=== END DOWNLOAD PROGRESS UPDATE ===");
@@ -262,68 +251,71 @@ public class DownloadManagerService : IDownloadManagerService
             var uri = new Uri(originalUrl);
             var host = uri.Host.ToLowerInvariant();
 
-            // Google Drive conversion
+            // TODO: These should be moved to their own services
             if (host.Contains("drive.google.com") || host.Contains("docs.google.com"))
             {
-                return ConvertGoogleDriveUrl(originalUrl);
+                return await ConvertGoogleDriveUrl(originalUrl);
             }
 
-            // Mega.nz conversion
             if (host.Contains("mega.nz") || host.Contains("mega.co.nz"))
             {
                 return await ConvertMegaUrlAsync(originalUrl);
             }
 
-            // Patreon conversion
             if (host.Contains("patreon.com") || host.Contains("patreonusercontent.com"))
             {
                 return await ConvertPatreonUrlAsync(originalUrl);
             }
 
-            // If it's already a direct URL or unknown platform, return as-is
+            if (host.Contains("heliosphere.app"))
+            {
+                return await ConvertHeliosphereAsync(originalUrl);
+            }
+
             return originalUrl;
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error converting URL: {Url}", originalUrl);
-            return originalUrl; // Fallback to original URL
+            return originalUrl;
         }
     }
 
-    private string ConvertGoogleDriveUrl(string url)
+    private async Task<string> ConvertHeliosphereAsync(string url)
     {
         try
         {
-            // Convert Google Drive share URLs to direct download
-            // From: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
-            // To: https://drive.google.com/uc?export=download&id=FILE_ID
+            _logger.Debug("Heliosphere URL conversion not yet implemented: {Url}", url);
+            await _notificationService.ShowNotification(
+                "Download error",
+                $"Heliosphere URL conversion not yet implemented: {url}",
+                SoundType.GeneralChime
+            );
+            return string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error converting Heliosphere URL: {Url}", url);
+            return string.Empty;
+        }
+    }
 
-            var fileIdMatch = Regex.Match(url, @"/file/d/([a-zA-Z0-9_-]+)");
-            if (fileIdMatch.Success)
-            {
-                var fileId = fileIdMatch.Groups[1].Value;
-                var directUrl = $"https://drive.google.com/uc?export=download&id={fileId}";
-                _logger.Debug("Converted Google Drive URL: {Original} -> {Direct}", url, directUrl);
-                return directUrl;
-            }
-
-            // Handle other Google Drive URL formats
-            var idMatch = Regex.Match(url, @"[?&]id=([a-zA-Z0-9_-]+)");
-            if (idMatch.Success)
-            {
-                var fileId = idMatch.Groups[1].Value;
-                var directUrl = $"https://drive.google.com/uc?export=download&id={fileId}";
-                _logger.Debug("Converted Google Drive URL: {Original} -> {Direct}", url, directUrl);
-                return directUrl;
-            }
-
-            _logger.Warn("Could not extract file ID from Google Drive URL: {Url}", url);
-            return url;
+    private async Task<string> ConvertGoogleDriveUrl(string url)
+    {
+        try
+        {
+            _logger.Debug("Google URL conversion not yet implemented: {Url}", url);
+            await _notificationService.ShowNotification(
+                "Download error",
+                $"Google URL conversion not yet implemented: {url}",
+                SoundType.GeneralChime
+            );
+            return string.Empty;
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error converting Google Drive URL: {Url}", url);
-            return url;
+            return string.Empty;
         }
     }
 
@@ -331,25 +323,18 @@ public class DownloadManagerService : IDownloadManagerService
     {
         try
         {
-            // For Mega.nz, you might need to use their API or SDK
-            // This is a placeholder - you'll need to implement the actual Mega API integration
-            // The Mega API requires cryptographic operations to get direct download links
-            
             _logger.Debug("Mega URL conversion not yet implemented: {Url}", url);
             await _notificationService.ShowNotification(
                 "Download error",
                 $"Mega URL conversion not yet implemented: {url}",
                 SoundType.GeneralChime
             );
-            
-            // For now, return the original URL
-            // You'll need to integrate with Mega's .NET SDK or API
-            return url;
+            return string.Empty;
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error converting Mega URL: {Url}", url);
-            return url;
+            return string.Empty;
         }
     }
 
@@ -357,14 +342,11 @@ public class DownloadManagerService : IDownloadManagerService
     {
         try
         {
-            // If it's already a direct Patreon CDN URL, return as-is
             if (url.Contains("patreonusercontent.com"))
             {
                 return url;
             }
 
-            // For Patreon post URLs, you might need to scrape or use their API
-            // This is a placeholder - implement based on your needs
             _logger.Debug("Patreon URL conversion not yet implemented: {Url}", url);
             await _notificationService.ShowNotification(
                 "Download error",
@@ -372,13 +354,12 @@ public class DownloadManagerService : IDownloadManagerService
                 SoundType.GeneralChime
             );
             
-            // For now, return the original URL
-            return url;
+            return string.Empty;
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error converting Patreon URL: {Url}", url);
-            return url;
+            return string.Empty;
         }
     }
 

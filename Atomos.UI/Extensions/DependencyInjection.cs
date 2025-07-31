@@ -1,10 +1,14 @@
-﻿using System;
+﻿
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Atomos.Statistics.Services;
 using Atomos.UI.Controllers;
 using Atomos.UI.Interfaces;
+using Atomos.UI.Interfaces.Tutorial;
 using Atomos.UI.Services;
+using Atomos.UI.Services.Tutorial;
 using Atomos.UI.ViewModels;
 using Atomos.UI.Views;
 using Avalonia;
@@ -33,11 +37,13 @@ public static class DependencyInjection
         
         services.AddSingleton<ConfigurationModel>();
         
+        // Core services
         services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
         services.AddSingleton<ISoundManagerService, SoundManagerService>();
         services.AddSingleton<IAria2Service>(_ => new Aria2Service(AppContext.BaseDirectory));
         services.AddSingleton<IRegistryHelper, RegistryHelper>();
         services.AddSingleton<IFileLinkingService, FileLinkingService>();
+        services.AddSingleton<ISystemNotificationService, SystemNotificationService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IDownloadManagerService, DownloadManagerService>();
         services.AddSingleton<IWebSocketClient, WebSocketClient>();
@@ -50,22 +56,39 @@ public static class DependencyInjection
         services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
         services.AddSingleton<IRunUpdater, RunUpdater>();
+        services.AddSingleton<IPluginDataService, PluginDataService>();
+        
+        // Tutorial services
+        services.AddSingleton<ITutorialService, TutorialService>();
+        services.AddSingleton<IElementHighlightService, ElementHighlightService>();
+        
+        services.AddSingleton<ITutorialManager, TutorialManager>();
+        services.AddSingleton<IApplicationInitializationManager, ApplicationInitializationManager>();
+        services.AddSingleton<IUpdateManager, UpdateManager>();
+        services.AddSingleton<ISentryManager, SentryManager>();
+        
+        // Register IFileDialogService with lazy initialisation to avoid MainWindow dependency issues
         services.AddSingleton<IFileDialogService>(provider =>
         {
-            var applicationLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
-            var mainWindow = applicationLifetime?.MainWindow;
-
-            if (mainWindow == null)
+            return new LazyFileDialogService(() =>
             {
-                throw new InvalidOperationException("MainWindow is not initialized.");
-            }
+                var applicationLifetime = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+                var mainWindow = applicationLifetime?.MainWindow;
 
-            return new FileDialogService(mainWindow);
+                if (mainWindow == null)
+                {
+                    throw new InvalidOperationException("MainWindow is not initialized.");
+                }
+
+                return new FileDialogService(mainWindow);
+            });
         });
+        
         services.AddSingleton<ITrayIconController, TrayIconController>();
         services.AddSingleton<ITrayIconManager, TrayIconManager>();
         services.AddSingleton<ITaskbarFlashService, TaskbarFlashService>();
         
+        // ViewModels
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ErrorWindowViewModel>();
         services.AddSingleton<SettingsViewModel>();
@@ -74,14 +97,11 @@ public static class DependencyInjection
         services.AddScoped<PluginViewModel>();
         services.AddTransient<PluginDataViewModel>();
         
+        // Views
         services.AddSingleton<MainWindow>();
-        services.AddSingleton<ErrorWindowViewModel>();
-        services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<ModsViewModel>();
-        services.AddSingleton<HomeViewModel>();
+        services.AddSingleton<TutorialOverlayView>();
         services.AddScoped<PluginView>();
         
-        // Replace the individual plugin service registrations with the comprehensive method
         services.AddPluginServicesWithUpdates(options =>
         {
             options.RegistryUrl = "https://raw.githubusercontent.com/CouncilOfTsukuyomi/StaticResources/refs/heads/main/plugins.json";
@@ -110,25 +130,7 @@ public static class DependencyInjection
                 {
                     logger?.LogInformation("Starting background plugin installation and updates...");
                     
-                    if (notificationService != null)
-                    {
-                        await notificationService.ShowNotification(
-                            "Setting Up Plugins", 
-                            "Checking for new plugins and updates...", 
-                            null, 
-                            3);
-                    }
-                    
                     await serviceProvider.InitializePluginServicesAsync();
-                    
-                    if (notificationService != null)
-                    {
-                        await notificationService.ShowNotification(
-                            "Plugins Ready", 
-                            "All plugins have been installed and updated successfully, refresh to view.", 
-                            null, 
-                            5);
-                    }
 
                     logger?.LogInformation("Background plugin installation and updates completed successfully");
                 }
@@ -162,21 +164,24 @@ public static class DependencyInjection
         Logging.ConfigureLogging(services, "UI");
     }
     
+
     public static void EnableSentryLogging()
     {
         var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile("appsettings.Production.json", optional: true)
             .AddUserSecrets<Program>()
             .AddEnvironmentVariables()
             .Build();
 
-        var sentryDns = configuration["SENTRY_DSN"];
-        if (string.IsNullOrWhiteSpace(sentryDns))
+        var sentryDsn = configuration["SENTRY_DSN"];
+        if (string.IsNullOrWhiteSpace(sentryDsn))
         {
             Console.WriteLine("No SENTRY_DSN provided. Skipping Sentry enablement.");
             return;
         }
 
-        MergedSentryLogging.MergeSentryLogging(sentryDns, "UI");
+        MergedSentryLogging.MergeSentryLogging(sentryDsn, "UI");
     }
 
     public static void DisableSentryLogging()
@@ -193,5 +198,24 @@ public static class DependencyInjection
     {
         MergedDebugLogging.DisableDebugLogging();
     }
+}
 
+public class LazyFileDialogService : IFileDialogService
+{
+    private readonly Lazy<IFileDialogService> _lazyService;
+
+    public LazyFileDialogService(Func<IFileDialogService> serviceFactory)
+    {
+        _lazyService = new Lazy<IFileDialogService>(serviceFactory);
+    }
+
+    public Task<string> OpenFolderAsync(string initialDirectory, string title)
+    {
+        return _lazyService.Value.OpenFolderAsync(initialDirectory, title);
+    }
+
+    public Task<IEnumerable<string>> OpenFoldersAsync(string initialDirectory, string title)
+    {
+        return _lazyService.Value.OpenFoldersAsync(initialDirectory, title);
+    }
 }

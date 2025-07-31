@@ -1,7 +1,7 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Atomos.UI.Extensions;
@@ -39,18 +39,36 @@ public class Program
 
             try
             {
+                _logger.Info("Starting application on platform: {Platform}, Runtime: {Runtime}", 
+                    Environment.OSVersion.Platform, 
+                    RuntimeInformation.FrameworkDescription);
+
                 var services = new ServiceCollection();
                 services.AddApplicationServices();
 
                 ServiceProvider = services.BuildServiceProvider();
-
-                InitializeServicesAsync().GetAwaiter().GetResult();
-
-                BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+                
+                BuildAvaloniaApp()
+                    .AfterSetup(builder =>
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await InitializeServicesAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Error(ex, "Failed to initialize services after setup");
+                            }
+                        });
+                    })
+                    .StartWithClassicDesktopLifetime(args);
             }
             catch (Exception ex)
             {
                 _logger.Fatal(ex, "Application failed to start");
+                Console.WriteLine($"Application failed to start: {ex.Message}");
                 Environment.Exit(1);
             }
         }
@@ -62,7 +80,6 @@ public class Program
         {
             _logger.Info("Initializing application services...");
             
-            // Use the new comprehensive initialisation method that includes early plugin updates
             await ServiceProvider.InitializeApplicationServicesAsync();
             
             _logger.Info("Application services initialized successfully");
@@ -70,7 +87,7 @@ public class Program
         catch (Exception ex)
         {
             _logger.Error(ex, "Failed to initialize application services");
-            throw; // Re-throw to prevent the app from continuing in a bad state
+            throw;
         }
     }
 

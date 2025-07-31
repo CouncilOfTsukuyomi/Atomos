@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Atomos.UI.Helpers;
 using Atomos.UI.Interfaces;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommonLib.Attributes;
 using CommonLib.Interfaces;
 using CommonLib.Models;
@@ -24,6 +29,28 @@ public class SettingsViewModel : ViewModelBase
     private readonly IConfigurationService _configurationService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IWebSocketClient _webSocketClient;
+    private readonly INotificationService _notificationService;
+    
+    // Dictionary to map property names to tutorial-friendly names
+    private readonly Dictionary<string, string> _tutorialNameMap = new()
+    {
+        { "DownloadPath", "DownloadPathSetting" },
+        { "StartOnBoot", "StartOnBoot" },
+        { "FileLinkingEnabled", "FileLinkingEnabled" },
+        { "EnableSentry", "EnableSentry" },
+        { "EnableDebugLogs", "EnableDebugLogs" }
+    };
+    
+    // Dictionary to map tutorial element names to their group names
+    private readonly Dictionary<string, string> _tutorialElementToGroupMap = new()
+    {
+        { "DownloadPathSetting", "Pathing" },
+        { "StartOnBoot", "General" },
+        { "FileLinkingEnabled", "General" },
+        { "EnableSentry", "General" },
+        { "EnableDebugLogs", "Advanced" } 
+    };
+
     
     public ObservableCollection<ConfigurationGroup> AllGroups { get; } = new();
         
@@ -33,8 +60,26 @@ public class SettingsViewModel : ViewModelBase
         get => _filteredGroups;
         set => this.RaiseAndSetIfChanged(ref _filteredGroups, value);
     }
+    
+    public ReactiveCommand<Unit, Unit> ExportConfigurationCommand { get; }
+    
+    private bool _isExporting;
+    public bool IsExporting
+    {
+        get => _isExporting;
+        private set => this.RaiseAndSetIfChanged(ref _isExporting, value);
+    }
 
-    private string _searchTerm;
+
+
+    private ConfigurationGroup? _selectedGroup;
+    public ConfigurationGroup? SelectedGroup
+    {
+        get => _selectedGroup;
+        set => this.RaiseAndSetIfChanged(ref _selectedGroup, value);
+    }
+
+    private string _searchTerm = string.Empty;
     public string SearchTerm
     {
         get => _searchTerm;
@@ -48,23 +93,134 @@ public class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         IConfigurationService configurationService,
         IFileDialogService fileDialogService,
-        IWebSocketClient webSocketClient)
+        IWebSocketClient webSocketClient, INotificationService notificationService)
     {
         _configurationService = configurationService;
         _fileDialogService = fileDialogService;
         _webSocketClient = webSocketClient;
+        _notificationService = notificationService;
+
+        ExportConfigurationCommand = ReactiveCommand.CreateFromTask(
+            ExportConfigurationAsync,
+            this.WhenAnyValue(x => x.IsExporting, isExporting => !isExporting));
+
 
         LoadConfigurationSettings();
     }
+    
+        private async Task ExportConfigurationAsync()
+    {
+        try
+        {
+            IsExporting = true;
+            _logger.Info("Starting configuration export");
+
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                var mainWindow = desktop.MainWindow;
+                if (mainWindow != null)
+                {
+                    var storageProvider = mainWindow.StorageProvider;
+                    
+                    var suggestedFileName = $"atomos_config_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+                    
+                    var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                    {
+                        Title = "Export Configuration",
+                        DefaultExtension = "json",
+                        SuggestedFileName = suggestedFileName,
+                        FileTypeChoices = new[]
+                        {
+                            new FilePickerFileType("JSON Configuration Files")
+                            {
+                                Patterns = new[] { "*.json" },
+                                MimeTypes = new[] { "application/json" }
+                            },
+                            new FilePickerFileType("All Files")
+                            {
+                                Patterns = new[] { "*" }
+                            }
+                        }
+                    });
+
+                    if (file != null)
+                    {
+                        var exportPath = await _configurationService.ExportToFileAsync(file.Path.LocalPath);
+                        
+                        _logger.Info("Configuration exported successfully to: {Path}", exportPath);
+
+                        await _notificationService.ShowNotification("Configuration Exported",
+                            $"Settings exported successfully to:\n{Path.GetFileName(exportPath)}");
+                    }
+                    else
+                    {
+                        _logger.Debug("Export cancelled by user");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to export configuration");
+            await _notificationService.ShowNotification("Export Failed",
+                $"Failed to export configuration: {ex.Message}");
+        }
+        finally
+        {
+            IsExporting = false;
+        }
+    }
+
 
     private void LoadConfigurationSettings()
     {
         var configurationModel = _configurationService.GetConfiguration();
-        // Populate AllGroups instead of Groups:
         LoadPropertiesFromModel(configurationModel);
-
-        // After loading is done, sync AllGroups to FilteredGroups.
         FilteredGroups = new ObservableCollection<ConfigurationGroup>(AllGroups);
+        
+        // Set the first group as selected by default
+        if (FilteredGroups.Any())
+        {
+            SelectedGroup = FilteredGroups.First();
+        }
+    }
+
+    public void NavigateToElement(string elementName)
+    {
+        _logger.Debug("NavigateToElement called for: {ElementName}", elementName);
+        
+        // Clear search term to show all groups
+        SearchTerm = string.Empty;
+        
+        // Find the group that contains this element
+        if (_tutorialElementToGroupMap.TryGetValue(elementName, out var groupName))
+        {
+            var targetGroup = AllGroups.FirstOrDefault(g => g.GroupName == groupName);
+            if (targetGroup != null)
+            {
+                _logger.Debug("Switching to group: {GroupName}", groupName);
+                SelectedGroup = targetGroup;
+                return;
+            }
+        }
+        
+        // Fallback: search through all groups for the element
+        foreach (var group in AllGroups)
+        {
+            var hasElement = group.Properties.Any(p => 
+                p.TutorialName == elementName || 
+                (p.TutorialName == null && _tutorialNameMap.ContainsValue(elementName) && 
+                 _tutorialNameMap.FirstOrDefault(kvp => kvp.Value == elementName).Key == p.PropertyInfo.Name));
+            
+            if (hasElement)
+            {
+                _logger.Debug("Found element {ElementName} in group: {GroupName}", elementName, group.GroupName);
+                SelectedGroup = group;
+                return;
+            }
+        }
+        
+        _logger.Warn("Could not find group for element: {ElementName}", elementName);
     }
 
     private void LoadPropertiesFromModel(
@@ -118,6 +274,13 @@ public class SettingsViewModel : ViewModelBase
                 };
 
                 descriptor.Value = prop.GetValue(model);
+
+                // Set tutorial name if available
+                if (_tutorialNameMap.TryGetValue(prop.Name, out var tutorialName))
+                {
+                    descriptor.TutorialName = tutorialName;
+                    _logger.Debug("Assigned tutorial name '{TutorialName}' to property '{PropertyName}'", tutorialName, prop.Name);
+                }
 
                 // If the property is a path, attach a "BrowseCommand"
                 if ((prop.PropertyType == typeof(string) || prop.PropertyType == typeof(List<string>)) &&
@@ -264,10 +427,6 @@ public class SettingsViewModel : ViewModelBase
         return string.Join(".", pathSegments);
     }
 
-    /// <summary>
-    /// Filters AllGroups into FilteredGroups, matching the property’s DisplayName
-    /// or Description against the SearchTerm.
-    /// </summary>
     private void FilterSettings()
     {
         if (string.IsNullOrWhiteSpace(SearchTerm))
@@ -281,15 +440,12 @@ public class SettingsViewModel : ViewModelBase
         var newGroups = new List<ConfigurationGroup>();
         foreach (var group in AllGroups)
         {
-            // Filter properties in each group
             var matchingProperties = group.Properties
                 .Where(pd => MatchesSearch(pd, term))
                 .ToList();
 
-            // Only add group if there is at least one matching property
             if (matchingProperties.Any())
             {
-                // Create a shallow copy of the group with filtered properties
                 var newGroup = new ConfigurationGroup(group.GroupName);
                 foreach (var match in matchingProperties)
                 {

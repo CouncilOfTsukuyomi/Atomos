@@ -262,7 +262,7 @@
                           <StackPanel Spacing="12">
                             <!-- Main content with image and details -->
                             <StackPanel Orientation="Horizontal" Spacing="12">
-                              <!-- Mod Image -->
+                              <!-- Mod Image with fallback overlay -->
                               <Border CornerRadius="6"
                                       Width="120"
                                       Height="90"
@@ -270,10 +270,53 @@
                                       Background="{StaticResource BackgroundBrush}"
                                       BorderBrush="{StaticResource BorderBrush}"
                                       BorderThickness="1">
-                                <asyncImageLoader:AdvancedImage 
-                                     Source="{Binding ImageUrl}"
-                                     Stretch="UniformToFill"
-                                     StretchDirection="Both"/>
+                                <Grid>
+                                  <!-- Main image -->
+                                  <asyncImageLoader:AdvancedImage 
+                                       x:Name="ModImage"
+                                       Source="{Binding ImageUrl}"
+                                       Stretch="UniformToFill"
+                                       StretchDirection="Both"
+                                       IsVisible="{Binding #ModImage.CurrentImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                  
+                                  <!-- Loading indicator -->
+                                  <StackPanel HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"
+                                              Spacing="6"
+                                              IsVisible="{Binding #ModImage.IsLoading}">
+                                    <ProgressBar IsIndeterminate="True" 
+                                                 Width="60" 
+                                                 Height="4"
+                                                 Foreground="{StaticResource AccentBrush}"/>
+                                    <TextBlock Text="Loading..." 
+                                               FontSize="10" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DisabledTextBrush}"/>
+                                  </StackPanel>
+                                  
+                                  <!-- Fallback content when image fails to load or is null -->
+                                  <StackPanel HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"
+                                              Spacing="4">
+                                    <StackPanel.IsVisible>
+                                      <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="#ModImage.IsLoading" Converter="{x:Static BoolConverters.Not}"/>
+                                        <Binding Path="#ModImage.CurrentImage" Converter="{x:Static ObjectConverters.IsNull}"/>
+                                      </MultiBinding>
+                                    </StackPanel.IsVisible>
+                                    <TextBlock Text="🖼️" 
+                                               FontSize="24" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DisabledTextBrush}"/>
+                                    <TextBlock Text="Image unavailable" 
+                                               FontSize="9" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DisabledTextBrush}"
+                                               TextAlignment="Center"
+                                               MaxWidth="100"
+                                               TextWrapping="Wrap"/>
+                                  </StackPanel>
+                                </Grid>
                               </Border>
                               
                               <!-- Mod Details -->

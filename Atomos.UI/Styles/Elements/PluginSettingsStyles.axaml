@@ -166,6 +166,114 @@
         <Setter Property="HorizontalAlignment" Value="Left"/>
     </Style>
 
+    <!-- Configuration Item Enum Input -->
+    <Style Selector="ComboBox.configurationItemEnumInput">
+        <Setter Property="MinWidth" Value="150"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+
+    <!-- Configuration Item Multi-Select Enum Input Container -->
+    <Style Selector="Border.configurationItemMultiSelectEnumInput">
+        <Setter Property="MinWidth" Value="200"/>
+        <Setter Property="MaxWidth" Value="400"/>
+    </Style>
+
+    <!-- Multi-Select Enum Input StackPanel -->
+    <Style Selector="Border.configurationItemMultiSelectEnumInput StackPanel">
+        <Setter Property="Spacing" Value="8"/>
+    </Style>
+
+    <!-- Multi-Select Enum Input Label -->
+    <Style Selector="Border.configurationItemMultiSelectEnumInput TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+    </Style>
+
+    <!-- Multi-Select Enum Dropdown Button -->
+    <Style Selector="ToggleButton.configurationItemMultiSelectDropdown">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ContentPresenter Grid.Column="0"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="▼"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource DisabledTextBrush}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Right"
+                                   IsVisible="{Binding !$parent[ToggleButton].IsChecked}"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="▲"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource DisabledTextBrush}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Right"
+                                   IsVisible="{Binding $parent[ToggleButton].IsChecked}"/>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="ToggleButton.configurationItemMultiSelectDropdown:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+    </Style>
+
+    <Style Selector="ToggleButton.configurationItemMultiSelectDropdown:checked">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+    </Style>
+
+    <!-- Multi-Select Enum Dropdown Panel -->
+    <Style Selector="Border.configurationItemMultiSelectDropdownPanel">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="BoxShadow" Value="0 4 12 0 #20000000"/>
+    </Style>
+
+    <!-- Multi-Select Enum Dropdown CheckBox -->
+    <Style Selector="CheckBox.multiSelectDropdownCheckBox">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Padding" Value="8,6"/>
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Multi-Select Enum Dropdown CheckBox Hover -->
+    <Style Selector="CheckBox.multiSelectDropdownCheckBox:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+    </Style>
+
+    <!-- Multi-Select Enum Dropdown CheckBox Checked -->
+    <Style Selector="CheckBox.multiSelectDropdownCheckBox:checked">
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
     <!-- Configuration Item Choice Input -->
     <Style Selector="ComboBox.configurationItemChoiceInput">
         <Setter Property="MinWidth" Value="150"/>

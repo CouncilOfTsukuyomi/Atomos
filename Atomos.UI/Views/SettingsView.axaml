@@ -1,7 +1,7 @@
-﻿<UserControl
+﻿
+<UserControl
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:system="clr-namespace:System;assembly=netstandard"
     xmlns:vm="clr-namespace:Atomos.UI.ViewModels"
     xmlns:helpers="clr-namespace:Atomos.UI.Helpers"
     xmlns:converters="clr-namespace:Atomos.UI.Converters"
@@ -10,10 +10,11 @@
     Foreground="{StaticResource TextBrush}">
 
     <UserControl.Resources>
+        <converters:PropertyNameToSettingNameConverter x:Key="PropertyNameToSettingNameConverter"/>
 
-        <!-- Boolean Template -->
         <DataTemplate x:Key="BooleanTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,16">
+            <Border Classes="settingCard" Margin="0,0,0,16"
+                    Name="{Binding TutorialName, FallbackValue={Binding PropertyInfo.Name, Converter={StaticResource PropertyNameToSettingNameConverter}}}">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
@@ -31,9 +32,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- String Template -->
         <DataTemplate x:Key="StringTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,16">
+            <Border Classes="settingCard" Margin="0,0,0,16"
+                    Name="{Binding TutorialName, FallbackValue={Binding PropertyInfo.Name, Converter={StaticResource PropertyNameToSettingNameConverter}}}">
                 <StackPanel Spacing="12">
                     <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
@@ -48,9 +49,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- Integer Template -->
         <DataTemplate x:Key="IntegerTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,16">
+            <Border Classes="settingCard" Margin="0,0,0,16"
+                    Name="{Binding TutorialName, FallbackValue={Binding PropertyInfo.Name, Converter={StaticResource PropertyNameToSettingNameConverter}}}">
                 <StackPanel Spacing="12">
                     <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
@@ -67,9 +68,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- Path Template -->
         <DataTemplate x:Key="PathTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,16">
+            <Border Classes="settingCard" Margin="0,0,0,16"
+                    Name="{Binding TutorialName, FallbackValue={Binding PropertyInfo.Name, Converter={StaticResource PropertyNameToSettingNameConverter}}}">
                 <StackPanel Spacing="12">
                     <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
@@ -92,9 +93,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- Multi-Path Template -->
         <DataTemplate x:Key="MultiPathTemplate" x:DataType="helpers:ConfigurationPropertyDescriptor">
-            <Border Classes="settingCard" Margin="0,0,0,16">
+            <Border Classes="settingCard" Margin="0,0,0,16"
+                    Name="{Binding TutorialName, FallbackValue={Binding PropertyInfo.Name, Converter={StaticResource PropertyNameToSettingNameConverter}}}">
                 <StackPanel Spacing="16">
                     <StackPanel Spacing="4">
                         <TextBlock Text="{Binding DisplayName}"
@@ -131,7 +132,6 @@
             </Border>
         </DataTemplate>
 
-        <!-- Converter -->
         <converters:TypeToControlTemplateConverter x:Key="TypeToControlTemplateConverter"
                                                    BooleanTemplate="{StaticResource BooleanTemplate}"
                                                    StringTemplate="{StaticResource StringTemplate}"
@@ -143,7 +143,6 @@
     <ScrollViewer>
         <StackPanel Spacing="0" MaxWidth="1400" HorizontalAlignment="Center" Margin="40,30">
             
-            <!-- Header Section -->
             <Border Classes="settingsCard headerCard" Margin="0,0,0,32">
                 <StackPanel Spacing="20">
                     <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
@@ -162,8 +161,8 @@
                         </StackPanel>
                     </StackPanel>
                     
-                    <!-- Search Box -->
-                    <TextBox Classes="modernSearchBox"
+                    <TextBox x:Name="SettingsSearchBox"
+                             Classes="modernSearchBox"
                              Width="400"
                              HorizontalAlignment="Center"
                              Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
@@ -171,9 +170,47 @@
                              Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
+            
+            <!-- Export Configuration Section -->
+            <Border Classes="settingsCard" Margin="0,0,0,24">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                    <Border Grid.Column="0" Classes="settingsHeaderIcon" Background="#1BFF9800" Width="48" Height="48">
+                        <Path Data="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,17L17,12H14V8H10V12H7L12,17Z" 
+                              Fill="White" 
+                              Stretch="Uniform" 
+                              Width="24" 
+                              Height="24"
+                              HorizontalAlignment="Center" 
+                              VerticalAlignment="Center"/>
+                    </Border>
+        
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock Text="Export Configuration" Classes="settingLabel"/>
+                        <TextBlock Text="Save your current settings to a JSON file" 
+                                   Classes="settingDescription"/>
+                    </StackPanel>
+        
+                    <Button Grid.Column="2"
+                            Classes="modernButton"
+                            Command="{Binding ExportConfigurationCommand}"
+                            VerticalAlignment="Center"
+                            MinWidth="120">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Data="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,17L17,12H14V8H10V12H7L12,17Z" 
+                                  Fill="White" 
+                                  Stretch="Uniform" 
+                                  Width="16" 
+                                  Height="16"/>
+                            <TextBlock Text="Export"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
 
-            <!-- Settings Content -->
-            <TabControl ItemsSource="{Binding FilteredGroups}" Classes="modernTabControl">
+            <TabControl x:Name="SettingsTabControl" 
+                        ItemsSource="{Binding FilteredGroups}"
+                        SelectedItem="{Binding SelectedGroup}"
+                        Classes="modernTabControl">
                 <TabControl.ItemTemplate>
                     <DataTemplate x:DataType="helpers:ConfigurationGroup">
                         <TextBlock Text="{Binding GroupName}"
@@ -196,7 +233,6 @@
                 </TabControl.ContentTemplate>
             </TabControl>
 
-            <!-- Empty State -->
             <Border Classes="settingsCard emptyStateCard" IsVisible="{Binding !FilteredGroups.Count}" Margin="0,40,0,0">
                 <StackPanel Spacing="20" HorizontalAlignment="Center">
                     <Path Data="{StaticResource SettingsIcon}" 
