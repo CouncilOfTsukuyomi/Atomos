@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using System.Timers;
 using Atomos.UI.Events;
 using Atomos.UI.Interfaces;
 using Atomos.UI.Views;
@@ -36,8 +37,12 @@ public class InstallViewModel : ViewModelBase, IDisposable
     private bool _isSelectionVisible;
     private bool _areAllSelected;
     private bool _showSelectAll;
+    private int _timeoutSeconds = 300;
+    private string _timeoutMessage = "5:00";
+    private bool _isTimeoutWarning;
 
     private StandaloneInstallWindow _standaloneWindow;
+    private Timer _timeoutTimer;
 
     public ObservableCollection<FileItemViewModel> Files { get; } = new();
     
@@ -71,12 +76,31 @@ public class InstallViewModel : ViewModelBase, IDisposable
         get => _showSelectAll;
         set => this.RaiseAndSetIfChanged(ref _showSelectAll, value);
     }
+
+    public int TimeoutSeconds
+    {
+        get => _timeoutSeconds;
+        set => this.RaiseAndSetIfChanged(ref _timeoutSeconds, value);
+    }
+
+    public string TimeoutMessage
+    {
+        get => _timeoutMessage;
+        set => this.RaiseAndSetIfChanged(ref _timeoutMessage, value);
+    }
+
+    public bool IsTimeoutWarning
+    {
+        get => _isTimeoutWarning;
+        set => this.RaiseAndSetIfChanged(ref _isTimeoutWarning, value);
+    }
     
     public bool HasSelectedFiles => Files.Any(f => f.IsSelected);
 
     public ReactiveCommand<Unit, Unit> InstallCommand { get; }
     public ReactiveCommand<Unit, Unit> CancelCommand { get; }
     public ReactiveCommand<Unit, Unit> SelectAllCommand { get; }
+    public ReactiveCommand<FileItemViewModel, Unit> ToggleFileSelectionCommand { get; }
 
     public InstallViewModel(
         IWebSocketClient webSocketClient,
@@ -91,6 +115,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
         InstallCommand = ReactiveCommand.CreateFromTask(ExecuteInstallCommand, canInstall);
         CancelCommand = ReactiveCommand.CreateFromTask(ExecuteCancelCommand);
         SelectAllCommand = ReactiveCommand.Create(ExecuteSelectAllCommand);
+        ToggleFileSelectionCommand = ReactiveCommand.Create<FileItemViewModel>(ExecuteToggleFileSelection);
 
         _webSocketClient.FileSelectionRequested += OnFileSelectionRequested;
         
@@ -100,6 +125,67 @@ public class InstallViewModel : ViewModelBase, IDisposable
             UpdateShowSelectAllProperty();
             UpdateHasSelectedFilesProperty();
         };
+
+        InitializeTimeoutTimer();
+    }
+
+    private void InitializeTimeoutTimer()
+    {
+        _timeoutTimer = new Timer(1000);
+        _timeoutTimer.Elapsed += OnTimeoutTimerElapsed;
+    }
+
+    private async void OnTimeoutTimerElapsed(object sender, ElapsedEventArgs e)
+    {
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            TimeoutSeconds--;
+            
+            var minutes = TimeoutSeconds / 60;
+            var seconds = TimeoutSeconds % 60;
+            TimeoutMessage = $"{minutes}:{seconds:D2}";
+            
+            IsTimeoutWarning = TimeoutSeconds <= 60;
+            
+            if (TimeoutSeconds <= 0)
+            {
+                _timeoutTimer?.Stop();
+                _logger.Warn("File selection timeout reached for task {TaskId}", _currentRequest?.TaskId);
+                
+                _ = Task.Run(async () =>
+                {
+                    await ExecuteCancelCommand();
+                });
+            }
+        });
+    }
+
+    private void StartTimeoutTimer()
+    {
+        TimeoutSeconds = 300;
+        var minutes = TimeoutSeconds / 60;
+        var seconds = TimeoutSeconds % 60;
+        TimeoutMessage = $"{minutes}:{seconds:D2}";
+        IsTimeoutWarning = false;
+        
+        _timeoutTimer?.Start();
+        _logger.Info("Started 5-minute timeout timer for file selection");
+    }
+
+    private void StopTimeoutTimer()
+    {
+        _timeoutTimer?.Stop();
+        IsTimeoutWarning = false;
+        _logger.Debug("Stopped timeout timer");
+    }
+
+    private void ExecuteToggleFileSelection(FileItemViewModel fileItem)
+    {
+        if (fileItem != null)
+        {
+            fileItem.IsSelected = !fileItem.IsSelected;
+            _logger.Debug("Toggled file selection for {FileName}: {IsSelected}", fileItem.FileName, fileItem.IsSelected);
+        }
     }
 
     private void OnFileSelectionRequested(object sender, FileSelectionRequestedEventArgs e)
@@ -146,12 +232,15 @@ public class InstallViewModel : ViewModelBase, IDisposable
             _currentRequest = request;
             Files.Clear();
 
+            var commonRoot = FindCommonRootPath(request.AvailableFiles);
+
             foreach (var file in request.AvailableFiles)
             {
-                var fileName = Path.GetFileName(file);
+                var displayPath = GetRelativeDisplayPath(file, commonRoot);
+                
                 var fileItem = new FileItemViewModel
                 {
-                    FileName = fileName,
+                    FileName = displayPath,
                     FilePath = file,
                     IsSelected = false
                 };
@@ -166,7 +255,8 @@ public class InstallViewModel : ViewModelBase, IDisposable
                 };
 
                 Files.Add(fileItem);
-                _logger.Info("Added file {FileName} for task {TaskId}", fileName, request.TaskId);
+                _logger.Info("Added file {DisplayPath} (full: {FullPath}) for task {TaskId}", 
+                    displayPath, file, request.TaskId);
             }
 
             _logger.Info("Processing file selection for task {TaskId} with {FileCount} files", 
@@ -176,6 +266,8 @@ public class InstallViewModel : ViewModelBase, IDisposable
             UpdateShowSelectAllProperty();
             UpdateHasSelectedFilesProperty();
             IsSelectionVisible = true;
+            
+            StartTimeoutTimer();
 
             _taskbarFlashService.FlashTaskbar();
 
@@ -197,6 +289,64 @@ public class InstallViewModel : ViewModelBase, IDisposable
         await WaitForUserInteraction();
     }
 
+    private string FindCommonRootPath(List<string> filePaths)
+    {
+        if (filePaths.Count == 0) return string.Empty;
+        if (filePaths.Count == 1) return Path.GetDirectoryName(filePaths[0]) ?? string.Empty;
+
+        var firstPath = filePaths[0];
+        var commonPath = Path.GetDirectoryName(firstPath) ?? string.Empty;
+
+        foreach (var path in filePaths.Skip(1))
+        {
+            var currentDir = Path.GetDirectoryName(path) ?? string.Empty;
+            commonPath = GetCommonPath(commonPath, currentDir);
+            if (string.IsNullOrEmpty(commonPath)) break;
+        }
+
+        return commonPath;
+    }
+
+    private string GetCommonPath(string path1, string path2)
+    {
+        var parts1 = path1.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var parts2 = path2.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var commonParts = new List<string>();
+        var minLength = Math.Min(parts1.Length, parts2.Length);
+
+        for (int i = 0; i < minLength; i++)
+        {
+            if (string.Equals(parts1[i], parts2[i], StringComparison.OrdinalIgnoreCase))
+            {
+                commonParts.Add(parts1[i]);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return string.Join(Path.DirectorySeparatorChar.ToString(), commonParts);
+    }
+
+    private string GetRelativeDisplayPath(string fullPath, string commonRoot)
+    {
+        if (string.IsNullOrEmpty(commonRoot))
+        {
+            return fullPath;
+        }
+
+        var relativePath = Path.GetRelativePath(commonRoot, fullPath);
+        
+        if (relativePath.StartsWith(".."))
+        {
+            return fullPath;
+        }
+
+        return relativePath;
+    }
+
     private TaskCompletionSource<bool> _userInteractionTcs;
 
     private async Task WaitForUserInteraction()
@@ -207,6 +357,7 @@ public class InstallViewModel : ViewModelBase, IDisposable
 
     private void CompleteUserInteraction()
     {
+        StopTimeoutTimer();
         _userInteractionTcs?.SetResult(true);
     }
 
@@ -307,6 +458,9 @@ public class InstallViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         _webSocketClient.FileSelectionRequested -= OnFileSelectionRequested;
+        
+        StopTimeoutTimer();
+        _timeoutTimer?.Dispose();
         
         if (_standaloneWindow != null)
         {
