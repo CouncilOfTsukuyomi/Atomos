@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddHostedService(provider => new Worker(
             provider.GetRequiredService<IWebSocketServer>(),
             provider.GetRequiredService<IStartupService>(),
+            provider.GetRequiredService<IConfigurationService>(),
             port,
             provider.GetRequiredService<IHostApplicationLifetime>()
         ));

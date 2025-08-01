@@ -41,6 +41,7 @@
         <StyleInclude Source="/Styles/Elements/InstallViewStyle.axaml"/>
         <StyleInclude Source="/Styles/Elements/PluginSettingsStyles.axaml"/>
         <StyleInclude Source="/Styles/Elements/UpdatePromptStyle.axaml"/>
+        <StyleInclude Source="/Styles/Elements/PluginDataStyle.axaml"/>
         <StyleInclude Source="avares://AsyncImageLoader.Avalonia/AdvancedImage.axaml" />
     </Application.Styles>
     
