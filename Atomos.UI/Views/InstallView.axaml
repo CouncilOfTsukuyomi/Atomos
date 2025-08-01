@@ -5,8 +5,8 @@
              x:DataType="vm:InstallViewModel">
     <Grid IsVisible="{Binding IsSelectionVisible}" Background="#80000000">
         <Border Classes="installDialog"
-                Width="520"
-                MaxHeight="620"
+                Width="680"
+                MaxHeight="720"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
             <StackPanel Spacing="20">
@@ -17,6 +17,42 @@
                                FontSize="22"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Timeout Warning -->
+                <Border Classes="timeoutWarning" IsVisible="{Binding IsTimeoutWarning}">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Selection will timeout in"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="#FF6B47"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TimeoutMessage}"
+                                   FontSize="14"
+                                   FontWeight="Bold"
+                                   Foreground="#FF6B47"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Timeout Display -->
+                <StackPanel Orientation="Horizontal" 
+                            Spacing="8" 
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding !IsTimeoutWarning}">
+                    <TextBlock Text="🕒" FontSize="14" VerticalAlignment="Center" Opacity="0.7"/>
+                    <TextBlock Text="Time remaining:"
+                               FontSize="13"
+                               Foreground="{StaticResource TextBrush}"
+                               Opacity="0.7"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding TimeoutMessage}"
+                               FontSize="13"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource TextBrush}"
+                               Opacity="0.8"
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
@@ -34,13 +70,40 @@
 
                 <!-- Files List -->
                 <Border Classes="fileListContainer">
-                    <ScrollViewer MaxHeight="380">
+                    <ScrollViewer MaxHeight="480">
                         <ItemsControl ItemsSource="{Binding Files}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding FileName}"
-                                              IsChecked="{Binding IsSelected}"
-                                              Classes="fileCheckBox"/>
+                                <DataTemplate DataType="{x:Type vm:FileItemViewModel}">
+                                    <Button Classes="fileItemButton" 
+                                            Command="{Binding $parent[ItemsControl].((vm:InstallViewModel)DataContext).ToggleFileSelectionCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            Padding="0">
+                                        <Border Classes="fileItem">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <CheckBox Grid.Column="0"
+                                                          IsChecked="{Binding IsSelected}"
+                                                          VerticalAlignment="Top"
+                                                          Margin="0,2,12,0"
+                                                          IsHitTestVisible="False"/>
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock Text="{Binding FileName}"
+                                                               TextWrapping="Wrap"
+                                                               FontFamily="Consolas, monospace"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               Foreground="{StaticResource TextBrush}"/>
+                                                    <TextBlock Text="{Binding FilePath}"
+                                                               TextWrapping="Wrap"
+                                                               FontFamily="Consolas, monospace"
+                                                               FontSize="11"
+                                                               Opacity="0.7"
+                                                               Foreground="{StaticResource TextBrush}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
