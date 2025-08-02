@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
+using Atomos.UI.Interfaces;
 using Atomos.UI.Interfaces.Tutorial;
 using Atomos.UI.Models.Tutorial;
 using ReactiveUI;
 using NLog;
+using CommonLib.Interfaces;
 
 namespace Atomos.UI.Services.Tutorial;
 
@@ -17,13 +21,15 @@ public class TutorialService : ReactiveObject, ITutorialService
     private readonly Subject<TutorialStep> _stepChanged = new();
     private readonly Subject<Unit> _tutorialCompleted = new();
     private readonly Subject<Unit> _tutorialCancelled = new();
+    private readonly IConfigurationService _configurationService;
+    private readonly CompositeDisposable _disposables = new();
     
     private int _currentStepIndex = -1;
     private bool _isFirstRun = false;
 
-    public IObservable<TutorialStep> StepChanged => _stepChanged;
-    public IObservable<Unit> TutorialCompleted => _tutorialCompleted;
-    public IObservable<Unit> TutorialCancelled => _tutorialCancelled;
+    public IObservable<TutorialStep> StepChanged => _stepChanged.AsObservable();
+    public IObservable<Unit> TutorialCompleted => _tutorialCompleted.AsObservable();
+    public IObservable<Unit> TutorialCancelled => _tutorialCancelled.AsObservable();
 
     public TutorialStep? CurrentStep => _currentStepIndex >= 0 && _currentStepIndex < _steps.Count 
         ? _steps[_currentStepIndex] : null;
@@ -35,6 +41,60 @@ public class TutorialService : ReactiveObject, ITutorialService
 
     public event Func<string, Task>? NavigationRequested;
     public event Action<string>? TabNavigationRequested;
+    public event Action? CanProceedChanged;
+
+    public TutorialService(IConfigurationService configurationService, IConfigurationChangeStream configChangeStream)
+    {
+        _configurationService = configurationService;
+        
+        configChangeStream.ConfigurationChanges
+            .Where(_ => CurrentStep?.CanProceed != null)
+            .Where(e => IsRelevantConfigurationChange(e.PropertyName))
+            .Do(e => _logger.Debug("Configuration changed for property: {PropertyName}, re-evaluating CanProceed for step: {StepId}", 
+                e.PropertyName, CurrentStep?.Id))
+            .Throttle(TimeSpan.FromMilliseconds(500))
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(async _ => 
+            {
+                _logger.Debug("Debounced configuration change - waiting for pending operations to complete");
+                
+                try
+                {
+                    var maxWaitTime = TimeSpan.FromSeconds(3);
+                    var startTime = DateTime.UtcNow;
+                    
+                    while (_configurationService.GetPendingOperationCount() > 0 && 
+                           DateTime.UtcNow - startTime < maxWaitTime)
+                    {
+                        await Task.Delay(50);
+                    }
+                    
+                    var waitTime = DateTime.UtcNow - startTime;
+                    _logger.Debug("Waited {WaitTime:F1}ms for configuration operations to complete. Pending: {PendingCount}", 
+                        waitTime.TotalMilliseconds, _configurationService.GetPendingOperationCount());
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Error waiting for configuration operations to complete");
+                }
+                
+                _logger.Debug("Updating UI state after configuration change");
+                CanProceedChanged?.Invoke();
+                this.RaisePropertyChanged(nameof(CanProceedToNext));
+            })
+            .DisposeWith(_disposables);
+    }
+
+    private bool IsRelevantConfigurationChange(string propertyName)
+    {
+        return CurrentStep?.Id switch
+        {
+            "download-path" => propertyName.Contains("DownloadPath"),
+            "file-linking" => propertyName.Contains("FileLinking") || propertyName.Contains("DoubleClick"),
+            "auto-start" => propertyName.Contains("StartOnBoot") || propertyName.Contains("AutoStart"),
+            _ => false
+        };
+    }
 
     public void StartTutorial(List<TutorialStep> steps, bool isFirstRun = false)
     {
@@ -78,27 +138,22 @@ public class TutorialService : ReactiveObject, ITutorialService
         
         try
         {
-            // Handle page navigation first
             switch (step.Id)
             {
                 case "welcome":
-                    // Welcome step - navigate to settings after this step
                     break;
                 case "download-path":
                 case "file-linking":
                 case "auto-start":
                 case "settings-search":
-                    // These are settings steps - make sure we're on settings page
                     if (NavigationRequested != null)
                     {
                         await NavigationRequested("settings");
-                        // Small delay to ensure navigation completes
                         await Task.Delay(100);
                     }
                     break;
                 case "navigation":
                 case "home-overview":
-                    // These are for home page
                     if (NavigationRequested != null)
                     {
                         await NavigationRequested("home");
@@ -107,22 +162,21 @@ public class TutorialService : ReactiveObject, ITutorialService
                     break;
             }
 
-            // Handle tab navigation for settings elements
             if (step.TargetElementName != null && IsSettingsElement(step.TargetElementName))
             {
                 _logger.Debug("Requesting tab navigation for element: {ElementName}", step.TargetElementName);
                 TabNavigationRequested?.Invoke(step.TargetElementName);
-                // Small delay to ensure tab switch completes
                 await Task.Delay(200);
             }
 
-            // Now emit the step change
             _stepChanged.OnNext(step);
+            
+            await Task.Delay(100);
+            this.RaisePropertyChanged(nameof(CanProceedToNext));
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error handling navigation for step: {StepId}", step.Id);
-            // Still emit the step change even if navigation fails
             _stepChanged.OnNext(step);
         }
     }
@@ -156,6 +210,16 @@ public class TutorialService : ReactiveObject, ITutorialService
 
     public bool CanProceedToNext()
     {
-        return CurrentStep?.CanProceed?.Invoke() ?? true;
+        var canProceed = CurrentStep?.CanProceed?.Invoke() ?? true;
+        _logger.Debug("CanProceedToNext evaluated for step {StepId}: {CanProceed}", CurrentStep?.Id, canProceed);
+        return canProceed;
+    }
+
+    public void Dispose()
+    {
+        _disposables?.Dispose();
+        _stepChanged?.Dispose();
+        _tutorialCompleted?.Dispose();
+        _tutorialCancelled?.Dispose();
     }
 }

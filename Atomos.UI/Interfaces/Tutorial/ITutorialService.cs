@@ -20,6 +20,7 @@ public interface ITutorialService
     
     event Func<string, Task>? NavigationRequested;
     event Action<string>? TabNavigationRequested;
+    event Action? CanProceedChanged;
     
     void StartTutorial(List<TutorialStep> steps, bool isFirstRun = false);
     void NextStep();

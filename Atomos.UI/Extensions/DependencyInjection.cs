@@ -57,6 +57,7 @@ public static class DependencyInjection
         services.AddSingleton<IDownloadUpdater, DownloadUpdater>();
         services.AddSingleton<IRunUpdater, RunUpdater>();
         services.AddSingleton<IPluginDataService, PluginDataService>();
+        services.AddSingleton<IConfigurationChangeStream, ConfigurationChangeStream>();
         
         // Tutorial services
         services.AddSingleton<ITutorialService, TutorialService>();
