@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,6 +28,9 @@ public class ElementHighlightService : IElementHighlightService
     private double _originalOpacity;
     private Canvas? _arrowCanvas;
     private Visual? _rootVisual;
+    private Path? _currentArrow;
+    private ScrollViewer? _trackedScrollViewer;
+    private bool _isTrackingScroll;
 
     public void HighlightElement(string elementName, Visual? rootVisual = null)
     {
@@ -72,10 +74,91 @@ public class ElementHighlightService : IElementHighlightService
             await ScrollToElementSmoothly(element, rootVisual);
             await Task.Delay(100);
             ShowArrow(element, rootVisual);
+            StartTrackingScroll(element);
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Error in scroll and show arrow sequence");
+        }
+    }
+
+    private void StartTrackingScroll(Control element)
+    {
+        try
+        {
+            if (_isTrackingScroll) return;
+
+            _trackedScrollViewer = FindScrollViewerAncestor(element);
+            if (_trackedScrollViewer == null) return;
+
+            _trackedScrollViewer.ScrollChanged += OnScrollChanged;
+            _isTrackingScroll = true;
+
+            _logger.Debug("Started tracking scroll changes for element");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error starting scroll tracking");
+        }
+    }
+
+    private void StopTrackingScroll()
+    {
+        try
+        {
+            if (!_isTrackingScroll || _trackedScrollViewer == null) return;
+
+            _trackedScrollViewer.ScrollChanged -= OnScrollChanged;
+            _trackedScrollViewer = null;
+            _isTrackingScroll = false;
+
+            _logger.Debug("Stopped tracking scroll changes");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error stopping scroll tracking");
+        }
+    }
+
+    private void OnScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        try
+        {
+            if (_highlightedElement == null || _currentArrow == null) return;
+
+            // Update arrow position when scrolling occurs
+            UpdateArrowPosition(_highlightedElement, _rootVisual);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error handling scroll change");
+        }
+    }
+
+    private void UpdateArrowPosition(Control element, Visual? rootVisual = null)
+    {
+        try
+        {
+            if (_currentArrow == null) return;
+
+            var mainWindow = GetMainWindow(rootVisual);
+            if (mainWindow == null) return;
+
+            var elementPosition = element.TranslatePoint(new Point(0, 0), mainWindow);
+            if (!elementPosition.HasValue) return;
+
+            var elementBounds = new Rect(elementPosition.Value, element.Bounds.Size);
+            var (arrowX, arrowY, rotation) = CalculateArrowPosition(elementBounds, mainWindow);
+
+            Canvas.SetLeft(_currentArrow, arrowX);
+            Canvas.SetTop(_currentArrow, arrowY);
+            _currentArrow.RenderTransform = new RotateTransform(rotation);
+
+            _logger.Debug("Updated arrow position to ({X}, {Y}) with rotation {Rotation}", arrowX, arrowY, rotation);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error updating arrow position");
         }
     }
 
@@ -97,14 +180,14 @@ public class ElementHighlightService : IElementHighlightService
                 IsHitTestVisible = false
             };
 
-            var arrow = CreateArrowPath();
+            _currentArrow = CreateArrowPath();
             var (arrowX, arrowY, rotation) = CalculateArrowPosition(elementBounds, mainWindow);
 
-            Canvas.SetLeft(arrow, arrowX);
-            Canvas.SetTop(arrow, arrowY);
-            arrow.RenderTransform = new RotateTransform(rotation);
+            Canvas.SetLeft(_currentArrow, arrowX);
+            Canvas.SetTop(_currentArrow, arrowY);
+            _currentArrow.RenderTransform = new RotateTransform(rotation);
 
-            _arrowCanvas.Children.Add(arrow);
+            _arrowCanvas.Children.Add(_currentArrow);
             
             if (mainWindow.Content is Grid grid)
             {
@@ -117,7 +200,7 @@ public class ElementHighlightService : IElementHighlightService
                 panel.Children.Add(_arrowCanvas);
             }
 
-            AnimateArrow(arrow);
+            AnimateArrow(_currentArrow);
 
             _logger.Debug("Arrow shown pointing to element at ({X}, {Y}) with rotation {Rotation}", arrowX, arrowY, rotation);
         }
@@ -427,6 +510,7 @@ public class ElementHighlightService : IElementHighlightService
 
         try
         {
+            StopTrackingScroll();
             RestoreOriginalStyles(_highlightedElement);
             RemoveArrow();
 
@@ -436,6 +520,7 @@ public class ElementHighlightService : IElementHighlightService
             _originalBorderThickness = new Thickness(0);
             _originalOpacity = 1.0;
             _rootVisual = null;
+            _currentArrow = null;
         }
         catch (Exception ex)
         {
