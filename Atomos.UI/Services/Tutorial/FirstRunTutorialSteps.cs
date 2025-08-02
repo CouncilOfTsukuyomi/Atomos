@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Atomos.UI.Enums.Tutorial;
@@ -30,7 +31,6 @@ public static class FirstRunTutorialSteps
                 }
             },
 
-
             new TutorialStep
             {
                 Id = "download-path",
@@ -43,41 +43,87 @@ public static class FirstRunTutorialSteps
                 {
                     try
                     {
-                        var downloadPathValue = configurationService.ReturnConfigValue(c => c.BackgroundWorker.DownloadPath);
+                        _logger.Debug("Starting download path validation...");
                         
-                        if (downloadPathValue is List<string> pathList)
+                        var downloadPathValue = configurationService.ReturnConfigValue(c => c.BackgroundWorker.DownloadPath);
+
+                        _logger.Debug("Download path validation - Raw value type: {ValueType}, Value: {Value}", 
+                            downloadPathValue?.GetType()?.Name ?? "null", downloadPathValue);
+                        
+                        // Add more detailed logging about the actual value content
+                        if (downloadPathValue != null)
                         {
-                            var hasValidPath = pathList.Any(path => !string.IsNullOrWhiteSpace(path));
-                            
-                            if (hasValidPath)
+                            if (downloadPathValue is List<string> list)
                             {
-                                _logger.Debug("Download path validation passed: {PathCount} paths configured", pathList.Count);
+                                _logger.Debug("Value is List<string> with {Count} items: [{Items}]", 
+                                    list.Count, string.Join(", ", list.Select(x => $"'{x}'")));
+                            }
+                            else if (downloadPathValue is IEnumerable enumerable && !(downloadPathValue is string))
+                            {
+                                var items = enumerable.Cast<object>().Select(x => $"'{x}'").ToList();
+                                _logger.Debug("Value is IEnumerable with {Count} items: [{Items}]", 
+                                    items.Count, string.Join(", ", items));
                             }
                             else
                             {
-                                _logger.Debug("Download path validation failed: no valid paths in list");
+                                _logger.Debug("Value is {Type}: '{Value}'", downloadPathValue.GetType().Name, downloadPathValue);
                             }
+                        }
+                        
+                        if (downloadPathValue == null)
+                        {
+                            _logger.Debug("Download path is null, returning false");
+                            return false;
+                        }
+                        
+                        if (downloadPathValue is List<string> pathList)
+                        {
+                            _logger.Debug("Processing as List<string> with {Count} items", pathList.Count);
                             
+                            var validPaths = pathList.Where(path => 
+                            {
+                                var trimmed = path?.Trim();
+                                var isValid = !string.IsNullOrWhiteSpace(trimmed);
+                                _logger.Debug("Path '{Path}' -> Trimmed: '{Trimmed}' -> Valid: {IsValid}", path, trimmed, isValid);
+                                return isValid;
+                            }).ToList();
+                            
+                            var hasValidPath = validPaths.Any();
+
+                            _logger.Debug("Download path validation (List<string>) - PathCount: {PathCount}, ValidPathCount: {ValidPathCount}, HasValidPath: {HasValidPath}, Paths: [{Paths}]", 
+                                pathList.Count, validPaths.Count, hasValidPath, string.Join(", ", validPaths));
+
                             return hasValidPath;
                         }
                         
-                        var downloadPath = downloadPathValue?.ToString() ?? string.Empty;
-                        var hasPath = !string.IsNullOrEmpty(downloadPath);
-                        
-                        if (hasPath)
+                        if (downloadPathValue is IEnumerable enumerable2 && !(downloadPathValue is string))
                         {
-                            _logger.Debug("Download path validation passed: {DownloadPath}", downloadPath);
-                        }
-                        else
-                        {
-                            _logger.Debug("Download path validation failed: path is empty");
+                            _logger.Debug("Processing as IEnumerable (not string)");
+                            
+                            var enumerablePaths = enumerable2.Cast<object>()
+                                .Select(x => x?.ToString()?.Trim() ?? string.Empty)
+                                .Where(path => !string.IsNullOrWhiteSpace(path))
+                                .ToList();
+                            var hasValidPath = enumerablePaths.Any();
+
+                            _logger.Debug("Download path validation (IEnumerable) - PathCount: {PathCount}, HasValidPath: {HasValidPath}, Paths: [{Paths}]", 
+                                enumerablePaths.Count, hasValidPath, string.Join(", ", enumerablePaths));
+
+                            return hasValidPath;
                         }
                         
+                        _logger.Debug("Processing as string");
+                        var downloadPath = downloadPathValue?.ToString()?.Trim() ?? string.Empty;
+                        var hasPath = !string.IsNullOrWhiteSpace(downloadPath);
+
+                        _logger.Debug("Download path validation (string) - HasPath: {HasPath}, DownloadPath: '{DownloadPath}'", 
+                            hasPath, downloadPath);
+
                         return hasPath;
                     }
                     catch (Exception ex)
                     {
-                        _logger.Debug(ex, "Download path validation failed with exception");
+                        _logger.Error(ex, "Download path validation failed with exception");
                         return false;
                     }
                 }

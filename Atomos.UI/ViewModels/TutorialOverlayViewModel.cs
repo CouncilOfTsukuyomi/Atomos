@@ -38,6 +38,12 @@ public class TutorialOverlayViewModel : ReactiveObject, IActivatableViewModel
         _tutorialService = tutorialService;
         _highlightService = highlightService;
         Activator = new ViewModelActivator();
+        
+        _tutorialService.CanProceedChanged += () =>
+        {
+            _logger.Debug("TutorialService.CanProceedChanged event received, triggering refresh");
+            RefreshCanProceed();
+        };
             
         NextCommand = ReactiveCommand.Create(
             () => {
@@ -98,31 +104,41 @@ public class TutorialOverlayViewModel : ReactiveObject, IActivatableViewModel
                 }
             })
             .ToProperty(this, x => x.CanGoPrevious, scheduler: RxApp.MainThreadScheduler);
-
-        _canGoNext = this.WhenAnyValue(x => x.CurrentStep)
-            .CombineLatest(_refreshTrigger.StartWith(Unit.Default), (step, _) => step)
-            .Select(step => 
+        
+        _canGoNext = Observable.CombineLatest(
+            this.WhenAnyValue(x => x.CurrentStep),
+            _refreshTrigger.StartWith(Unit.Default),
+            (step, _) => new { Step = step })
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Select(x => 
             {
                 try 
                 {
-                    if (step == null) return false;
+                    var step = x.Step;
+                    if (step == null) 
+                    {
+                        _logger.Debug("CanGoNext: No current step, returning false");
+                        return false;
+                    }
                         
                     if (!step.IsRequired)
                     {
-                        _logger.Debug("Step {StepId} is not required, allowing proceed", step.Id);
+                        _logger.Debug("CanGoNext: Step {StepId} is not required, returning true", step.Id);
                         return true;
                     }
                         
                     var canProceed = _tutorialService?.CanProceedToNext() ?? true;
-                    _logger.Debug("Step {StepId} is required, CanProceed: {CanProceed}", step.Id, canProceed);
+                    _logger.Debug("CanGoNext: Step {StepId} is required, CanProceed: {CanProceed}", step.Id, canProceed);
                     return canProceed;
                 }
                 catch (Exception ex)
                 {
-                    _logger.Debug(ex, "Error evaluating CanProceedToNext, returning false");
+                    _logger.Error(ex, "Error evaluating CanProceedToNext, returning false");
                     return false;
                 }
             })
+            .DistinctUntilChanged()
+            .Do(canProceed => _logger.Debug("CanGoNext value changed to: {CanProceed}", canProceed))
             .ToProperty(this, x => x.CanGoNext, scheduler: RxApp.MainThreadScheduler);
 
         _nextButtonText = this.WhenAnyValue(x => x.CurrentStep)

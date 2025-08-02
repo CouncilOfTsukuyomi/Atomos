@@ -12,6 +12,7 @@ using CommonLib.Enums;
 using CommonLib.Interfaces;
 using System.Linq;
 using CommonLib.Models;
+using CommonLib.Events;
 using Newtonsoft.Json;
 using NLog;
 using WebSocketMessageType = System.Net.WebSockets.WebSocketMessageType;
@@ -38,6 +39,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
 
     public event EventHandler<FileSelectionRequestedEventArgs> FileSelectionRequested;
     public event EventHandler ModInstalled;
+    public event EventHandler<ConfigurationChangedEventArgs> ConfigurationChanged;
 
     public WebSocketClient(
         INotificationService notificationService,
@@ -381,7 +383,8 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         if (message.Type == CustomWebSocketMessageType.Status &&
             message.Status == "config_update")
         {
-            _logger.Info("Received config update: {Data}", message.Message);
+            _logger.Info("Received config update from source {SourceId}: {Data}", 
+                message.ClientId ?? "unknown", message.Message);
 
             try
             {
@@ -393,17 +396,66 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                 {
                     var propertyPath = updateData["PropertyPath"]?.ToString();
                     var newValue = updateData["Value"];
+                    var sourceId = $"websocket_{message.ClientId ?? "unknown"}";
 
-                    _configurationService.UpdateConfigFromExternal(propertyPath, newValue);
+                    _logger.Debug("Applying config update for property {PropertyPath} from source {SourceId}", 
+                        propertyPath, sourceId);
+
+                    _configurationService.UpdateConfigFromExternal(propertyPath, newValue, sourceId);
+
+                    var configChangedArgs = new ConfigurationChangedEventArgs(propertyPath, newValue, sourceId);
+                    ConfigurationChanged?.Invoke(this, configChangedArgs);
+
+                    _logger.Debug("Config update applied and event raised for property {PropertyPath} from source {SourceId}", 
+                        propertyPath, sourceId);
                 }
                 else
                 {
-                    _logger.Warn("Missing 'PropertyPath' or 'Value' in config update message.");
+                    _logger.Warn("Missing 'PropertyPath' or 'Value' in config update message from source {SourceId}.", 
+                        message.ClientId ?? "unknown");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error handling config update message.");
+                _logger.Error(ex, "Error handling config update message from source {SourceId}.", 
+                    message.ClientId ?? "unknown");
+            }
+        }
+        else if (message.Type == CustomWebSocketMessageType.Status &&
+                 message.Status == "config_changed")
+        {
+            _logger.Info("Received config change notification from background service: {Data}", message.Message);
+
+            try
+            {
+                var changeData = JsonConvert.DeserializeObject<Dictionary<string, object>>(message.Message);
+
+                if (changeData != null &&
+                    changeData.ContainsKey("PropertyPath") &&
+                    changeData.ContainsKey("NewValue") &&
+                    changeData.ContainsKey("SourceId"))
+                {
+                    var propertyPath = changeData["PropertyPath"]?.ToString();
+                    var newValue = changeData["NewValue"];
+                    var sourceId = changeData["SourceId"]?.ToString();
+
+                    _logger.Debug("Forwarding config change event for property {PropertyPath} from source {SourceId}", 
+                        propertyPath, sourceId);
+
+                    var configChangedArgs = new ConfigurationChangedEventArgs(propertyPath, newValue, sourceId);
+                    ConfigurationChanged?.Invoke(this, configChangedArgs);
+
+                    _logger.Debug("Config change event forwarded for property {PropertyPath} from source {SourceId}", 
+                        propertyPath, sourceId);
+                }
+                else
+                {
+                    _logger.Warn("Missing required fields in config change notification from background service");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error handling config change notification from background service");
             }
         }
         else

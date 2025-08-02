@@ -201,8 +201,10 @@ public class TutorialManager : ITutorialManager
             {
                 if (_isFirstRunTutorial)
                 {
-                    configModel.Common.FirstRunComplete = true;
-                    _configurationService.SaveConfiguration(configModel);
+                    _configurationService.UpdateConfigValue(
+                        config => config.Common.FirstRunComplete = true,
+                        "Common.FirstRunComplete",
+                        true);
                     _logger.Info("First run tutorial completed and saved to configuration");
                         
                     _ = Task.Run(async () =>
