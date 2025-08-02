@@ -22,7 +22,6 @@ public static class FirstRunTutorialSteps
                 Id = "welcome",
                 Title = "Welcome to Atomos!",
                 Description = "Welcome to Atomos Mod Forwarder! This quick setup will help you get started with managing your mods. We'll guide you through the essential configuration steps to ensure everything works smoothly.\n\nClick 'Next' to continue to the settings.",
-                TargetElementName = "SettingsButton",
                 Position = TutorialPosition.Center,
                 IsRequired = true,
                 OnStepCompleted = () =>
@@ -50,7 +49,6 @@ public static class FirstRunTutorialSteps
                         _logger.Debug("Download path validation - Raw value type: {ValueType}, Value: {Value}", 
                             downloadPathValue?.GetType()?.Name ?? "null", downloadPathValue);
                         
-                        // Add more detailed logging about the actual value content
                         if (downloadPathValue != null)
                         {
                             if (downloadPathValue is List<string> list)
@@ -188,7 +186,6 @@ public static class FirstRunTutorialSteps
                 Id = "complete",
                 Title = "You're All Set!",
                 Description = "Congratulations! You've completed the initial setup. Atomos is now ready to help you manage your mods. You can always access settings again from the gear icon, and remember to check the About section if you need help.",
-                TargetElementName = "NavigationPanel",
                 Position = TutorialPosition.Center,
                 IsRequired = false
             }
@@ -229,7 +226,7 @@ public static class FirstRunTutorialSteps
             }
         ];
     }
-
+    
     private static List<TutorialStep> GetPluginManagementSteps()
     {
         return
@@ -238,9 +235,45 @@ public static class FirstRunTutorialSteps
             {
                 Id = "plugin-list",
                 Title = "Plugin Management",
-                Description = "Plugins extend Atomos functionality. Here you can see installed plugins, configure their settings, and manage their status.",
-                TargetElementName = "PluginList",
+                Description = "This is your plugin hub! Plugins add new features and connect to different mod websites. You can view all your installed plugins, check their status, and manage their settings from here.",
+                TargetElementName = "PluginListContainer",
                 Position = TutorialPosition.Top
+            },
+            
+            new TutorialStep
+            {
+                Id = "plugin-config",
+                Title = "Plugin Settings",
+                Description = "Each plugin has its own settings that you can customise. Click this button to open the settings panel and configure how the plugin works.",
+                TargetElementName = "PluginSettingsButton",
+                Position = TutorialPosition.Center
+            },
+            
+            new TutorialStep
+            {
+                Id = "plugin-status",
+                Title = "Plugin Status",
+                Description = "This shows whether a plugin is currently active or disabled. You can temporarily turn plugins on or off without uninstalling them",
+                TargetElementName = "PluginStatus",
+                Position = TutorialPosition.Center
+            },
+            
+            new TutorialStep
+            {
+                Id = "plugin-enable",
+                Title = "Enable/Disable Plugins",
+                Description = "Toggle plugins on or off with this button. When enabled, the plugin will start working and you can modify its settings. When disabled, it won't affect your mod downloads.",
+                TargetElementName = "PluginEnableButton",
+                Position = TutorialPosition.Center
+            },
+            
+            new TutorialStep
+            {
+                Id = "plugin-view-mods",
+                Title = "Browse Plugin Mods",
+                Description = "Ready to find some mods? Each plugin connects to different mod websites. Click 'Plugin Data' in the menu to browse and download mods from the websites your plugins support.",
+                TargetElementName = "PluginDataMenuItem",
+                Position = TutorialPosition.Center
             }
         ];
     }

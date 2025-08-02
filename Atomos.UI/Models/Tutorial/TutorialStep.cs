@@ -12,6 +12,7 @@ public class TutorialStep : ReactiveObject
     public string TargetElementName { get; set; } = string.Empty;
     public TutorialPosition Position { get; set; } = TutorialPosition.Bottom;
     public bool IsRequired { get; set; } = false;
+    public bool ShowArrow { get; set; } = true;
     public Func<bool>? CanProceed { get; set; }
     public Action? OnStepCompleted { get; set; }
 }

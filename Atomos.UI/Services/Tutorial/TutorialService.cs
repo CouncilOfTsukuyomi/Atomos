@@ -160,6 +160,13 @@ public class TutorialService : ReactiveObject, ITutorialService
                         await Task.Delay(100);
                     }
                     break;
+                case "plugin-view-mods":
+                    if (NavigationRequested != null)
+                    {
+                        await NavigationRequested("Plugin Data");
+                        await Task.Delay(100);
+                    }
+                    break;
             }
 
             if (step.TargetElementName != null && IsSettingsElement(step.TargetElementName))

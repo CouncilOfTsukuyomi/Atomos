@@ -20,6 +20,7 @@
             
             <converters:ProgressVisibilityConverter x:Key="ProgressVisibilityConverter"/>
             <converters:BoolToGridLengthConverter x:Key="BoolToGridLengthConverter"/>
+            <converters:MenuItemNameConverter x:Key="MenuItemNameConverter"/>
         </ResourceDictionary>
     </Application.Resources>
     

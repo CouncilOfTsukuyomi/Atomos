@@ -121,14 +121,15 @@
                     </StackPanel>
 
                     <ListBox Grid.Row="1" 
-                            x:Name="HomeMenuItem"
-                            Classes="navItems" 
-                            ItemsSource="{Binding MenuItems}" 
-                            SelectedItem="{Binding SelectedMenuItem}"
-                            Cursor="Hand">
+                             x:Name="HomeMenuItem"
+                             Classes="navItems" 
+                             ItemsSource="{Binding MenuItems}" 
+                             SelectedItem="{Binding SelectedMenuItem}"
+                             Cursor="Hand">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="models:MenuItem">
-                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                <StackPanel Orientation="Horizontal" Spacing="16" 
+                                            Name="{Binding Label, Converter={StaticResource MenuItemNameConverter}}">
                                     <PathIcon Data="{Binding Icon}"/>
                                     <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
                                 </StackPanel>
