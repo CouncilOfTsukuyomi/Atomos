@@ -86,8 +86,8 @@
     
     <!-- Update Check Badge -->
     <Style Selector="Border.updateCheckBadge">
-        <Setter Property="Background" Value="#20FFFFFF"/>
-        <Setter Property="BorderBrush" Value="#40FFFFFF"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="Padding" Value="8,4"/>
@@ -124,7 +124,7 @@
     <Style Selector="Ellipse.updateCheckDot">
         <Setter Property="Width" Value="8"/>
         <Setter Property="Height" Value="8"/>
-        <Setter Property="Fill" Value="White"/>
+        <Setter Property="Fill" Value="{DynamicResource TextBrush}"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
@@ -132,7 +132,7 @@
     <!-- Update Check Text -->
     <Style Selector="TextBlock.updateCheckText">
         <Setter Property="FontSize" Value="11"/>
-        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="FontWeight" Value="Medium"/>
     </Style>
@@ -177,6 +177,58 @@
                 </KeyFrame>
             </Animation>
         </Style.Animations>
+    </Style>
+
+    <!-- Update Available Button -->
+    <Style Selector="Button.updateAvailableButton">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.updateAvailableButton:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
+        <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+
+    <Style Selector="Button.updateAvailableButton:pressed">
+        <Setter Property="Background" Value="{DynamicResource SecondaryBrush}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <!-- Update Available Icon Container -->
+    <Style Selector="Border.updateAvailableIcon">
+        <Setter Property="Background" Value="#20FFFFFF"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Update Available Icon Text -->
+    <Style Selector="TextBlock.updateAvailableIconText">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Update Available Text -->
+    <Style Selector="TextBlock.updateAvailableText">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="Medium"/>
     </Style>
 
 </Styles>
