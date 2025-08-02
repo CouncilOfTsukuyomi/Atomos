@@ -217,7 +217,6 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
 
         _tutorialManager.NavigationRequested += OnTutorialTabNavigationRequested;
         
-        // Update checking status events
         _updateManager.IsCheckingForUpdatesChanged += isChecking =>
         {
             if (Dispatcher.UIThread.CheckAccess())
@@ -229,8 +228,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
                 Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(IsCheckingForUpdates)));
             }
         };
-
-        // Update available status events
+        
         _updateManager.HasUpdateAvailableChanged += hasUpdate =>
         {
             if (Dispatcher.UIThread.CheckAccess())
@@ -247,8 +245,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
                 });
             }
         };
-
-        // Handle user clicking the update indicator
+        
         _updateManager.ShowUpdatePromptRequested += OnShowUpdatePromptRequested;
         
         _sentryManager.SentryChoiceMade += OnSentryChoiceMade;
@@ -308,8 +305,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             SelectedMenuItem = null;
             CurrentPage = new AboutViewModel();
         });
-
-        // New command for showing the update prompt when user clicks the update indicator
+        
         ShowUpdatePromptCommand = ReactiveCommand.Create(() => _updateManager.ShowUpdatePrompt());
     }
 
