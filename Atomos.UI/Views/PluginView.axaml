@@ -51,7 +51,7 @@
     </Border>
 
     <!-- Plugin List -->
-    <ScrollViewer Grid.Row="1" Margin="20,0,20,10">
+    <ScrollViewer Grid.Row="1" Margin="20,0,20,10" x:Name="PluginListContainer">
       <ItemsControl ItemsSource="{Binding FilteredPlugins}">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="models:PluginInfo">
@@ -79,7 +79,7 @@
                              FontWeight="SemiBold"/>
                   
                   <!-- Status Badge -->
-                  <Border Grid.Column="1" 
+                  <Border Grid.Column="1" x:Name="PluginStatus"
                           Classes="StatusBadge"
                           CornerRadius="12"
                           Padding="8,4">
@@ -157,13 +157,15 @@
                             Spacing="10">
                   
                   <!-- Settings Button -->
-                  <Button Command="{Binding $parent[UserControl].((vm:PluginViewModel)DataContext).OpenSettingsCommand}"
+                  <Button x:Name="PluginSettingsButton"
+                          Command="{Binding $parent[UserControl].((vm:PluginViewModel)DataContext).OpenSettingsCommand}"
                           CommandParameter="{Binding}"
                           Content="⚙️ Settings"
                           IsEnabled="{Binding HasConfigurableSettings}"/>
                   
                   <!-- Enable/Disable Toggle -->
-                  <ToggleButton Classes="ToggleSwitch"
+                  <ToggleButton x:Name="PluginEnableButton"
+                                Classes="ToggleSwitch"
                                 IsChecked="{Binding IsEnabled, Mode=OneWay}"
                                 Command="{Binding $parent[UserControl].((vm:PluginViewModel)DataContext).TogglePluginCommand}"
                                 CommandParameter="{Binding}">

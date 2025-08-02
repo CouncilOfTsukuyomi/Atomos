@@ -312,6 +312,10 @@ public class TutorialManager : ITutorialManager
                     var settingsPage = _navigateToSettings();
                     _setCurrentPage(settingsPage);
                     break;
+                case "Plugin Data":
+                    var pluginDataMenuItem = _getMenuItems().FirstOrDefault(m => m.Label == "Plugin Data");
+                    if (pluginDataMenuItem != null) _setSelectedMenuItem(pluginDataMenuItem);
+                    break;
                 default:
                     _logger.Warn("Unknown tutorial navigation destination: {Destination}", destination);
                     break;
