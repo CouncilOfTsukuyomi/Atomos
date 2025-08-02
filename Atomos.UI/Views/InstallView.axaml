@@ -9,9 +9,9 @@
                 MaxHeight="720"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
-            <StackPanel Spacing="20">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
                 <!-- Title with Icon -->
-                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,0,0,20">
                     <TextBlock Text="📦" FontSize="24" VerticalAlignment="Center"/>
                     <TextBlock Text="Select Files to Extract &amp; Install"
                                FontSize="22"
@@ -21,7 +21,7 @@
                 </StackPanel>
 
                 <!-- Timeout Warning -->
-                <Border Classes="timeoutWarning" IsVisible="{Binding IsTimeoutWarning}">
+                <Border Grid.Row="1" Classes="timeoutWarning" IsVisible="{Binding IsTimeoutWarning}" Margin="0,0,0,20">
                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                         <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center"/>
                         <TextBlock Text="Selection will timeout in"
@@ -38,10 +38,11 @@
                 </Border>
 
                 <!-- Timeout Display -->
-                <StackPanel Orientation="Horizontal" 
+                <StackPanel Grid.Row="2" Orientation="Horizontal" 
                             Spacing="8" 
                             HorizontalAlignment="Center"
-                            IsVisible="{Binding !IsTimeoutWarning}">
+                            IsVisible="{Binding !IsTimeoutWarning}"
+                            Margin="0,0,0,20">
                     <TextBlock Text="🕒" FontSize="14" VerticalAlignment="Center" Opacity="0.7"/>
                     <TextBlock Text="Time remaining:"
                                FontSize="13"
@@ -57,10 +58,10 @@
                 </StackPanel>
 
                 <!-- Select All Section -->
-                <StackPanel Orientation="Horizontal" 
+                <StackPanel Grid.Row="3" Orientation="Horizontal" 
                             Spacing="12" 
                             HorizontalAlignment="Left" 
-                            Margin="10,0"
+                            Margin="10,0,10,20"
                             IsVisible="{Binding ShowSelectAll}">
                     <CheckBox Content="Select All"
                               IsChecked="{Binding AreAllSelected}"
@@ -69,8 +70,8 @@
                 </StackPanel>
 
                 <!-- Files List -->
-                <Border Classes="fileListContainer">
-                    <ScrollViewer MaxHeight="480">
+                <Border Grid.Row="4" Classes="fileListContainer">
+                    <ScrollViewer>
                         <ItemsControl ItemsSource="{Binding Files}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:FileItemViewModel}">
@@ -111,9 +112,10 @@
                 </Border>
 
                 <!-- Buttons -->
-                <StackPanel Orientation="Horizontal"
+                <StackPanel Grid.Row="5" Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Spacing="12">
+                            Spacing="12"
+                            Margin="0,20,0,0">
                     <Button Content="Extract &amp; Install"
                             Command="{Binding InstallCommand}"
                             Width="160"
@@ -123,7 +125,7 @@
                             Width="100"
                             Classes="cancelButton"/>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>
