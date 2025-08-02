@@ -522,11 +522,15 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         {
             _logger.Info("Detected install completion on /status endpoint. Invoking ModInstalled event.");
 
-            await _notificationService.ShowNotification(
-                "Mod Installed",
-                message.Message,
-                SoundType.GeneralChime
-            );
+            if (!message.Message?.Contains("TexTools", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                await _notificationService.ShowNotification(
+                    "Mod Installed",
+                    message.Message,
+                    SoundType.GeneralChime
+                );
+            }
+
             ModInstalled?.Invoke(this, EventArgs.Empty);
             return;
         }
