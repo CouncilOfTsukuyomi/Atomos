@@ -6,7 +6,7 @@
         <PatchVersion>2</PatchVersion>
 
         <!-- Controls whether we're doing a beta build -->
-        <IsBeta>true</IsBeta>
+        <IsBeta>false</IsBeta>
     </PropertyGroup>
 
     <!-- If we're building a beta release, set the prerelease label to 'b' -->
