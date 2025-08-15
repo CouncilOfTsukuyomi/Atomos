@@ -71,6 +71,44 @@
         <Setter Property="FontSize" Value="10"/>
         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
+    
+    <!-- Mod Version -->
+    <Style Selector="TextBlock.ModVersion">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="{StaticResource SecondaryBrush}"/>
+        <Setter Property="Margin" Value="0,1,0,0"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    
+    <!-- Mod Tags Container -->
+    <Style Selector="ItemsControl.ModTagsContainer">
+        <Setter Property="Margin" Value="0,4,0,0"/>
+    </Style>
+
+    <Style Selector="ItemsControl.ModTagsContainer > ContentPresenter">
+        <Setter Property="Margin" Value="0,0,2,2"/>
+    </Style>
+
+    <!-- Individual Tag Style -->
+    <Style Selector="Border.ModTag">
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+
+    <Style Selector="Border.ModTag:pointerover">
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+
+    <!-- Tag Text -->
+    <Style Selector="TextBlock.ModTagText">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="FontSize" Value="8"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+    </Style>
 
     <!-- Mod Source -->
     <Style Selector="TextBlock.ModSource">
