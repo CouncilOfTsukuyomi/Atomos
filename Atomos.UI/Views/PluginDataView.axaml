@@ -300,16 +300,40 @@
                                 <TextBlock Classes="ModTitle"
                                            Text="{Binding Name}"
                                            ToolTip.Tip="{Binding Name}"/>
-                                
+
                                 <TextBlock Classes="ModPublisher"
                                            Text="{Binding Publisher}"
                                            ToolTip.Tip="{Binding Publisher}"/>
-                                
+
+                                <TextBlock Classes="ModVersion"
+                                           Text="{Binding Version, StringFormat=Version: \{0\}}"
+                                           IsVisible="{Binding Version, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
                                 <TextBlock Classes="ModSource"
                                            Text="{Binding PluginSource, StringFormat=Source: \{0\}}"/>
-                                
+
                                 <TextBlock Classes="ModDate"
                                            Text="{Binding UploadDate, StringFormat=Published: \{0:MM/dd/yyyy\}}"/>
+
+                                <!-- Tags Display -->
+                                <ItemsControl ItemsSource="{Binding Tags}"
+                                              Classes="ModTagsContainer"
+                                              IsVisible="{Binding Tags.Count}">
+                                  <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                      <WrapPanel Orientation="Horizontal" 
+                                                 MaxWidth="200"/>
+                                    </ItemsPanelTemplate>
+                                  </ItemsControl.ItemsPanel>
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                      <Border Classes="ModTag">
+                                        <TextBlock Text="{Binding}"
+                                                   Classes="ModTagText"/>
+                                      </Border>
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                               </StackPanel>
 
                               <!-- Action Buttons (Bottom) -->

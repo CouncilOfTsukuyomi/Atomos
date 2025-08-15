@@ -130,7 +130,6 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
                 };
                 
                 displayItem.Mods = mods;
-                displayItem.LastUpdated = DateTime.Now;
                 displayItem.IsLoading = false;
                 displayItem.ErrorMessage = null;
                 
