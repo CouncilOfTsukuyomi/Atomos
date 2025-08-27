@@ -72,8 +72,22 @@ public sealed class FileProcessor : IFileProcessor
                 var finalFilePath = relocateFiles ? MoveFile(filePath) : filePath;
                 
                 var archiveContents = await InspectArchiveAsync(finalFilePath, cancellationToken);
-                ArchiveContentsInspected?.Invoke(this, 
-                    new ArchiveContentsInspectedEventArgs(finalFilePath, archiveContents, taskId));
+                
+                if (archiveContents.Count == 1)
+                {
+                    _logger.Info(
+                        "Single mod file detected in archive {ArchiveFileName}. Auto-installing without prompt.",
+                        Path.GetFileName(finalFilePath)
+                    );
+
+                    var selected = new List<string> { archiveContents[0].RelativePath };
+                    await ExtractSelectedFilesAsync(finalFilePath, selected, cancellationToken, taskId);
+                }
+                else
+                {
+                    ArchiveContentsInspected?.Invoke(this,
+                        new ArchiveContentsInspectedEventArgs(finalFilePath, archiveContents, taskId));
+                }
             }
             else
             {
