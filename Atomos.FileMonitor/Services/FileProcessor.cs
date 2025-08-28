@@ -73,14 +73,17 @@ public sealed class FileProcessor : IFileProcessor
                 
                 var archiveContents = await InspectArchiveAsync(finalFilePath, cancellationToken);
                 
-                if (archiveContents.Count == 1)
+                var modFileCount = archiveContents.Count(f => f.IsModFile);
+                
+                if (modFileCount == 1)
                 {
                     _logger.Info(
                         "Single mod file detected in archive {ArchiveFileName}. Auto-installing without prompt.",
                         Path.GetFileName(finalFilePath)
                     );
 
-                    var selected = new List<string> { archiveContents[0].RelativePath };
+                    var modFile = archiveContents.First(f => f.IsModFile);
+                    var selected = new List<string> { modFile.RelativePath };
                     await ExtractSelectedFilesAsync(finalFilePath, selected, cancellationToken, taskId);
                 }
                 else
