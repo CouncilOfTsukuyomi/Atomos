@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddTransient<IFileWatcher, FileWatcher>();
         services.AddSingleton<IFileQueueProcessor, FileQueueProcessor>();
         services.AddSingleton<IFileProcessor, FileProcessor>();
+        services.AddSingleton<IMemoryMetricsService, MemoryMetricsService>();
             
         services.AddHttpClient<IModInstallService, ModInstallService>((serviceProvider, client) =>
         {

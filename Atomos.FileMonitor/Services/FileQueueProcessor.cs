@@ -326,14 +326,36 @@ public sealed class FileQueueProcessor : IFileQueueProcessor, IDisposable
         if (disposing)
         {
             _logger.Info("Disposing FileQueueProcessor...");
-            _cancellationTokenSource?.Cancel();
             try
             {
+                _fileProcessor.FileMoved -= OnFileMoved;
+                _fileProcessor.FilesExtracted -= OnFilesExtracted;
+            }
+            catch {}
+            
+            try
+            {
+                _cancellationTokenSource?.Cancel();
                 _processingTask?.Wait(TimeSpan.FromSeconds(5));
             }
-            catch { }
-            _processingTask = null;
-            _persistenceTimer?.Dispose();
+            catch {}
+            finally
+            {
+                _processingTask = null;
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
+            }
+            
+            try
+            {
+                _persistenceTimer?.Dispose();
+                _persistenceTimer = null;
+            }
+            catch {}
+            
+            _fileQueue.Clear();
+            _retryCounts.Clear();
+            _fileTaskIds.Clear();
         }
         _disposed = true;
     }

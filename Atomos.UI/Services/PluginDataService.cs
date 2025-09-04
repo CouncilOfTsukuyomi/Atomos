@@ -48,6 +48,41 @@ public class PluginDataService : IPluginDataService
             .DisposeWith(_disposables);
     }
     
+    public void ClearAllData()
+    {
+        try
+        {
+            _logger.Debug("Clearing all plugin data caches and notifying observers with empty collections");
+            _pluginModsCache.Clear();
+            _lastModsFetch.Clear();
+            _pluginModsSubject.OnNext(new Dictionary<string, List<PluginMod>>());
+            _pluginInfoSubject.OnNext(new List<PluginInfo>());
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to clear all plugin data");
+        }
+    }
+    
+    public void ClearPluginData(string pluginId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(pluginId)) return;
+            if (_pluginModsCache.Remove(pluginId))
+            {
+                _logger.Debug("Cleared cached mods for plugin {PluginId}", pluginId);
+            }
+            _lastModsFetch.Remove(pluginId);
+            // Emit updated state to observers so UI can drop references
+            _pluginModsSubject.OnNext(new Dictionary<string, List<PluginMod>>(_pluginModsCache));
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Failed to clear plugin data for {PluginId}", pluginId);
+        }
+    }
+    
     public async Task RefreshPluginInfoAsync()
     {
         try
