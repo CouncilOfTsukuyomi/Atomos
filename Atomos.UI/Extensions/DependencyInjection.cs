@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddSingleton<IRunUpdater, RunUpdater>();
         services.AddSingleton<IPluginDataService, PluginDataService>();
         services.AddSingleton<IConfigurationChangeStream, ConfigurationChangeStream>();
+        services.AddSingleton<IMemoryMetricsService, MemoryMetricsService>();
         
         // Tutorial services
         services.AddSingleton<ITutorialService, TutorialService>();
@@ -122,6 +123,21 @@ public static class DependencyInjection
     {
         try
         {
+            // Start memory metrics if debug logs are enabled
+            var configService = serviceProvider.GetService<IConfigurationService>();
+            var memoryMetrics = serviceProvider.GetService<IMemoryMetricsService>();
+            if (configService != null && memoryMetrics != null)
+            {
+                try
+                {
+                    if ((bool)configService.ReturnConfigValue(c => c.AdvancedOptions.EnableDebugLogs))
+                    {
+                        memoryMetrics.Start(TimeSpan.FromMinutes(5));
+                    }
+                }
+                catch { }
+            }
+
             _ = Task.Run(async () =>
             {
                 var logger = serviceProvider.GetService<ILogger<Program>>();

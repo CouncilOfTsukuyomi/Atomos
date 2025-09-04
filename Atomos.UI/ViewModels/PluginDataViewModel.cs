@@ -181,7 +181,11 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         try
         {
             IsLoading = true;
-            _logger.Debug("Manually refreshing all plugin data");
+            _logger.Debug("Manually refreshing all plugin data (clearing caches first)");
+            // Clear in-memory caches and UI-bound collections to release memory before reloading
+            _pluginDataService.ClearAllData();
+            // Proactively ask GC to reclaim memory after clearing, without blocking UI
+            _ = Task.Run(() => { try { GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true); } catch { } });
             await _pluginDataService.RefreshPluginInfoAsync();
             await _pluginDataService.RefreshPluginModsAsync();
         }
@@ -208,9 +212,15 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
             {
                 displayItem.IsLoading = true;
                 displayItem.ErrorMessage = null;
+                // Release references to the current mods list to free memory sooner
+                displayItem.Mods = new List<PluginMod>();
             }
 
-            _logger.Debug("Manually refreshing plugin data for {PluginId}", pluginId);
+            _logger.Debug("Manually refreshing plugin data for {PluginId} (clearing caches first)", pluginId);
+            _pluginDataService.ClearPluginData(pluginId);
+            // Proactively ask GC to reclaim memory after clearing, without blocking UI
+            _ = Task.Run(() => { try { GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true); } catch { } });
+
             await _pluginDataService.RefreshPluginModsForPlugin(pluginId);
         }
         catch (Exception ex)

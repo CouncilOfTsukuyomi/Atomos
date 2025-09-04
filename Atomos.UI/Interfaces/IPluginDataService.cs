@@ -14,4 +14,10 @@ public interface IPluginDataService : IDisposable
     Task RefreshPluginModsAsync();
     Task RefreshPluginModsForPlugin(string pluginId);
     List<PluginMod> GetCachedModsForPlugin(string pluginId);
+    
+    // Clears cached data and UI signals for a specific plugin
+    void ClearPluginData(string pluginId);
+    
+    // Clears all in-memory cached data and notifies observers with empty collections
+    void ClearAllData();
 }

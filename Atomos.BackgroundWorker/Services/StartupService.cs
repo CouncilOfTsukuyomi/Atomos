@@ -16,17 +16,22 @@ public class StartupService : IStartupService
     private readonly IFileWatcherService _fileWatcherService;
     private readonly IConfigurationService _configurationService;
     private readonly IConfigurationListener _configurationListener;
+    private readonly IMemoryMetricsService _memoryMetricsService;
 
     public StartupService(
         IWebSocketServer webSocketServer,
         ITexToolsHelper texToolsHelper,
-        IFileWatcherService fileWatcherService, IConfigurationService configurationService, IConfigurationListener configurationListener)
+        IFileWatcherService fileWatcherService,
+        IConfigurationService configurationService,
+        IConfigurationListener configurationListener,
+        IMemoryMetricsService memoryMetricsService)
     {
         _webSocketServer = webSocketServer;
         _texToolsHelper = texToolsHelper;
         _fileWatcherService = fileWatcherService;
         _configurationService = configurationService;
         _configurationListener = configurationListener;
+        _memoryMetricsService = memoryMetricsService;
     }
 
     public async Task InitializeAsync()
@@ -43,10 +48,12 @@ public class StartupService : IStartupService
         if ((bool) _configurationService.ReturnConfigValue(c => c.AdvancedOptions.EnableDebugLogs))
         {
             DependencyInjection.EnableDebugLogging();
+            _memoryMetricsService.Start(TimeSpan.FromMinutes(5));
         }
         else
         {
             DependencyInjection.DisableDebugLogging();
+            _memoryMetricsService.Stop();
         }
         
         _logger.Info("Initializing startup checks...");
