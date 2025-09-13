@@ -30,4 +30,8 @@
       <ProjectReference Include="..\Atomos.BackgroundWorker\Atomos.BackgroundWorker.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CommonLib\CommonLib\CommonLib.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -18,8 +18,6 @@ public static class DependencyInjection
         {
             cfg.AddProfile<ConvertConfiguration>();
         });
-        
-        services.SetupLogging();
         services.AddSingleton<ISoundManagerService, SoundManagerService>();
         services.AddSingleton<IInstallingService, InstallingService>();
         services.AddSingleton<IPenumbraService, PenumbraService>();
@@ -27,11 +25,16 @@ public static class DependencyInjection
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<IStatisticService, StatisticService>();
         services.AddSingleton<IPenumbraService, PenumbraService>();
+        services.AddSingleton<ITexToolsHelper, TexToolsHelper>();
+        services.AddSingleton<IRegistryHelper, RegistryHelper>();
+        services.AddSingleton<IFileSystemHelper, FileSystemHelper>();
 
         services.AddHttpClient<IModInstallService, ModInstallService>(client =>
         {
             client.BaseAddress = new Uri(ApiConsts.BaseApiUrl);
         });
+        
+        services.SetupLogging();
 
         return services;
     }
@@ -41,7 +44,6 @@ public static class DependencyInjection
         Logging.ConfigureLogging(services, "ConsoleTool");
     }
     
-
     public static void EnableSentryLogging()
     {
         var configuration = new ConfigurationBuilder()
