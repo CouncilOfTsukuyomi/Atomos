@@ -129,7 +129,8 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
                     IsExpanded = false
                 };
                 
-                displayItem.Mods = mods;
+                // Only attach heavy mods list if expanded; otherwise drop references to save memory
+                displayItem.Mods = displayItem.IsExpanded ? mods : new List<PluginMod>();
                 displayItem.IsLoading = false;
                 displayItem.ErrorMessage = null;
                 
@@ -151,10 +152,41 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
 
     private void TogglePluginExpand(PluginDisplayItem plugin)
     {
-        if (plugin != null)
+        if (plugin == null) return;
+
+        plugin.IsExpanded = !plugin.IsExpanded;
+        _logger.Debug("Toggled plugin {PluginId} expand state to {IsExpanded}", plugin.PluginId, plugin.IsExpanded);
+
+        if (plugin.IsExpanded)
         {
-            plugin.IsExpanded = !plugin.IsExpanded;
-            _logger.Debug("Toggled plugin {PluginId} expand state to {IsExpanded}", plugin.PluginId, plugin.IsExpanded);
+            // Populate from cache if available to immediately show content
+            var cached = _pluginDataService.GetCachedModsForPlugin(plugin.PluginId) ?? new List<PluginMod>();
+            plugin.Mods = cached;
+
+            // If nothing in cache, trigger a background fetch
+            if (cached.Count == 0)
+            {
+                plugin.IsLoading = true;
+                _ = _pluginDataService.RefreshPluginModsForPlugin(plugin.PluginId)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted && t.Exception != null)
+                        {
+                            _logger.Error(t.Exception, "Failed background fetch when expanding {PluginId}", plugin.PluginId);
+                        }
+                        RxApp.MainThreadScheduler.Schedule(Unit.Default, (sched, state) =>
+                        {
+                            plugin.IsLoading = false;
+                            return Disposable.Empty;
+                        });
+                    });
+            }
+        }
+        else
+        {
+            // Collapse: drop reference to heavy mods list to free memory and clear service cache
+            plugin.Mods = new List<PluginMod>();
+            _pluginDataService.ClearPluginData(plugin.PluginId);
         }
     }
 
@@ -172,8 +204,10 @@ public class PluginDataViewModel : ViewModelBase, IDisposable
         foreach (var plugin in PluginItems)
         {
             plugin.IsExpanded = false;
+            plugin.Mods = new List<PluginMod>();
+            _pluginDataService.ClearPluginData(plugin.PluginId);
         }
-        _logger.Debug("Collapsed all {Count} plugins", PluginItems.Count);
+        _logger.Debug("Collapsed all {Count} plugins and cleared caches", PluginItems.Count);
     }
 
     private async Task RefreshAllData()
