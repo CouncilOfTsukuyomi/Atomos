@@ -5,12 +5,14 @@
              xmlns:pluginModels="using:PluginManager.Core.Models"
              xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
              xmlns:converters="using:Atomos.UI.Converters"
+             xmlns:behaviours="using:Atomos.UI.Behaviours"
              x:Class="Atomos.UI.Views.PluginDataView"
              x:DataType="vm:PluginDataViewModel"
              Foreground="{StaticResource TextBrush}">
 
   <UserControl.Resources>
     <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+    <converters:ModsWhenExpandedConverter x:Key="ModsWhenExpandedConverter"/>
   </UserControl.Resources>
 
   <UserControl.Styles>
@@ -241,9 +243,14 @@
                   </Border>
                   
                   <!-- Mods Grid -->
-                  <ItemsControl ItemsSource="{Binding Mods}"
-                                Classes="ModGridView"
+                  <ItemsControl Classes="ModGridView"
                                 IsVisible="{Binding !IsLoading}">
+                      <ItemsControl.ItemsSource>
+                        <MultiBinding Converter="{StaticResource ModsWhenExpandedConverter}" ConverterParameter="50">
+                          <Binding Path="Mods"/>
+                          <Binding Path="IsExpanded"/>
+                        </MultiBinding>
+                      </ItemsControl.ItemsSource>
                       
                       <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="pluginModels:PluginMod">
@@ -255,6 +262,7 @@
                                   <!-- Main image -->
                                   <asyncImageLoader:AdvancedImage 
                                        x:Name="ModImage"
+                                       behaviours:AdvancedImageMemoryBehavior.EnableUnloadClear="True"
                                        Source="{Binding ImageUrl}"
                                        Stretch="UniformToFill"
                                        StretchDirection="Both"

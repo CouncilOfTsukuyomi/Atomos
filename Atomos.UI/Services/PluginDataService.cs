@@ -69,12 +69,11 @@ public class PluginDataService : IPluginDataService
         try
         {
             if (string.IsNullOrWhiteSpace(pluginId)) return;
-            if (_pluginModsCache.Remove(pluginId))
-            {
-                _logger.Debug("Cleared cached mods for plugin {PluginId}", pluginId);
-            }
+            // Replace cached list with an empty one to drop references without removing the key
+            _pluginModsCache[pluginId] = new List<PluginMod>();
             _lastModsFetch.Remove(pluginId);
-            // Emit updated state to observers so UI can drop references
+            _logger.Debug("Cleared cached mods for plugin {PluginId} by setting empty list", pluginId);
+            // Emit updated state to observers so UI can drop references but keep the card visible
             _pluginModsSubject.OnNext(new Dictionary<string, List<PluginMod>>(_pluginModsCache));
         }
         catch (Exception ex)

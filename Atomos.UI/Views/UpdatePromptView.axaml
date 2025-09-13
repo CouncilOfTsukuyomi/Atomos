@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Atomos.UI.ViewModels"
              xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+             xmlns:behaviours="clr-namespace:Atomos.UI.Behaviours"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Atomos.UI.Views.UpdatePromptView"
              x:DataType="viewModels:UpdatePromptViewModel">
@@ -199,7 +200,8 @@
                                                                         CommandParameter="{Binding}">
                                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                                         <Border Classes="authorAvatar">
-                                                                            <asyncImageLoader:AdvancedImage Source="{Binding AuthorAvatarUrl}"
+                                                                            <asyncImageLoader:AdvancedImage behaviours:AdvancedImageMemoryBehavior.EnableUnloadClear="True"
+                                                                                   Source="{Binding AuthorAvatarUrl}"
                                                                                    Stretch="UniformToFill"
                                                                                    Width="24"
                                                                                    Height="24" />
