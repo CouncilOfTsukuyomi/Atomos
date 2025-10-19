@@ -7,6 +7,8 @@ using Atomos.BackgroundWorker.Interfaces;
 using CommonLib.Events;
 using CommonLib.Interfaces;
 using CommonLib.Models;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
@@ -22,8 +24,7 @@ public class WebSocketServer : IWebSocketServer, IDisposable
     private readonly IConfigurationService _configurationService;
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<WebSocket, ConnectionInfo>> _endpoints;
     private readonly CancellationTokenSource _cancellationTokenSource;
-    private readonly HttpListener _httpListener;
-    private Task _listenerTask;
+    private IWebHost? _webHost;
     private bool _isStarted;
     private int _port;
     private readonly string _serverId;
@@ -40,7 +41,6 @@ public class WebSocketServer : IWebSocketServer, IDisposable
         _configurationService = configurationService;
         _endpoints = new ConcurrentDictionary<string, ConcurrentDictionary<WebSocket, ConnectionInfo>>();
         _cancellationTokenSource = new CancellationTokenSource();
-        _httpListener = new HttpListener();
 
         _serverId = Guid.NewGuid().ToString("N");
 
@@ -55,58 +55,39 @@ public class WebSocketServer : IWebSocketServer, IDisposable
         _port = port;
         try
         {
-            _httpListener.Prefixes.Add($"http://localhost:{_port}/");
-            _httpListener.Start();
+            _webHost = new WebHostBuilder()
+                .UseKestrel(options =>
+                {
+                    options.ListenLocalhost(_port);
+                })
+                .Configure(app =>
+                {
+                    app.UseWebSockets();
+                    app.Run(async context =>
+                    {
+                        if (context.WebSockets.IsWebSocketRequest)
+                        {
+                            var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                            var endpoint = context.Request.Path.ToString();
+                            await HandleConnectionAsync(webSocket, endpoint);
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 400;
+                        }
+                    });
+                })
+                .Build();
+
+            _webHost.Start();
             _isStarted = true;
 
             _logger.Info("WebSocket server started successfully on port {Port}", _port);
-
-            _listenerTask = StartListenerAsync();
-        }
-        catch (HttpListenerException ex)
-        {
-            _logger.Error(ex, "Failed to start WebSocket server");
-            throw;
-        }
-    }
-
-    private async Task StartListenerAsync()
-    {
-        try
-        {
-            while (_isStarted && !_cancellationTokenSource.Token.IsCancellationRequested)
-            {
-                try
-                {
-                    var context = await _httpListener.GetContextAsync();
-                    if (context.Request.IsWebSocketRequest)
-                    {
-                        var webSocketContext = await context.AcceptWebSocketAsync(null);
-                        _ = HandleConnectionAsync(webSocketContext.WebSocket, context.Request.RawUrl);
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                        context.Response.Close();
-                    }
-                }
-                catch (HttpListenerException) when (_cancellationTokenSource.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Error in WebSocket listener");
-                }
-            }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in StartListenerAsync");
+            _logger.Error(ex, "Failed to start WebSocket server");
+            throw;
         }
     }
 
@@ -383,11 +364,6 @@ public class WebSocketServer : IWebSocketServer, IDisposable
     {
         try
         {
-            if (_httpListener.IsListening)
-            {
-                _httpListener.Stop();
-            }
-
             _isStarted = false;
             _cancellationTokenSource.Cancel();
 
@@ -396,7 +372,9 @@ public class WebSocketServer : IWebSocketServer, IDisposable
                 .ToList();
 
             Task.WhenAll(closeTasks).Wait(TimeSpan.FromSeconds(5));
-            _httpListener.Close();
+
+            _webHost?.StopAsync(TimeSpan.FromSeconds(5)).Wait();
+            _webHost?.Dispose();
         }
         catch (Exception ex)
         {
