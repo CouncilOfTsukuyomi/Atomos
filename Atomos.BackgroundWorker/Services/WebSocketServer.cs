@@ -22,8 +22,7 @@ public class WebSocketServer : IWebSocketServer, IDisposable
     private readonly IConfigurationService _configurationService;
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<WebSocket, ConnectionInfo>> _endpoints;
     private readonly CancellationTokenSource _cancellationTokenSource;
-    private readonly HttpListener _httpListener;
-    private Task _listenerTask;
+    private IWebHost? _webHost;
     private bool _isStarted;
     private int _port;
     private readonly string _serverId;
@@ -33,14 +32,51 @@ public class WebSocketServer : IWebSocketServer, IDisposable
     private readonly ConcurrentDictionary<string, DateTime> _lastMessageTime = new();
     private readonly TimeSpan _messageDebounceInterval = TimeSpan.FromMilliseconds(100);
 
+    // Valid endpoint allowlist for security
+    private static readonly HashSet<string> ValidEndpoints = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/config",
+        "/error",
+        "/status",
+        "/notifications",
+        "/install"
+    };
+
     public event EventHandler<WebSocketMessageEventArgs> MessageReceived;
+
+    /// <summary>
+    /// Validates and sanitises the endpoint path to prevent log injection and path traversal attacks
+    /// </summary>
+    private static string SanitizeEndpoint(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+            return "/unknown";
+
+        // Normalise the path
+        endpoint = endpoint.Trim();
+
+        // Ensure it starts with /
+        if (!endpoint.StartsWith('/'))
+            endpoint = "/" + endpoint;
+
+        // Remove any dangerous characters that could be used for log injection
+        endpoint = endpoint.Replace("\r", "").Replace("\n", "").Replace("\t", "");
+
+        // Validate against allowlist
+        if (!ValidEndpoints.Contains(endpoint))
+        {
+            _logger.Warn("Attempted connection to non-whitelisted endpoint, rejecting");
+            return "/invalid";
+        }
+
+        return endpoint;
+    }
 
     public WebSocketServer(IConfigurationService configurationService)
     {
         _configurationService = configurationService;
         _endpoints = new ConcurrentDictionary<string, ConcurrentDictionary<WebSocket, ConnectionInfo>>();
         _cancellationTokenSource = new CancellationTokenSource();
-        _httpListener = new HttpListener();
 
         _serverId = Guid.NewGuid().ToString("N");
 
@@ -55,58 +91,51 @@ public class WebSocketServer : IWebSocketServer, IDisposable
         _port = port;
         try
         {
-            _httpListener.Prefixes.Add($"http://localhost:{_port}/");
-            _httpListener.Start();
+            _webHost = new WebHostBuilder()
+                .UseKestrel(options =>
+                {
+                    options.ListenLocalhost(_port);
+                })
+                .Configure(app =>
+                {
+                    app.UseWebSockets();
+                    app.Run(async context =>
+                    {
+                        if (context.WebSockets.IsWebSocketRequest)
+                        {
+                            var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                            var rawEndpoint = context.Request.Path.ToString();
+                            var sanitizedEndpoint = SanitizeEndpoint(rawEndpoint);
+
+                            // Reject invalid endpoints
+                            if (sanitizedEndpoint == "/invalid")
+                            {
+                                await webSocket.CloseAsync(
+                                    WebSocketCloseStatus.PolicyViolation,
+                                    "Invalid endpoint",
+                                    CancellationToken.None);
+                                return;
+                            }
+
+                            await HandleConnectionAsync(webSocket, sanitizedEndpoint);
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 400;
+                        }
+                    });
+                })
+                .Build();
+
+            _webHost.Start();
             _isStarted = true;
 
             _logger.Info("WebSocket server started successfully on port {Port}", _port);
-
-            _listenerTask = StartListenerAsync();
-        }
-        catch (HttpListenerException ex)
-        {
-            _logger.Error(ex, "Failed to start WebSocket server");
-            throw;
-        }
-    }
-
-    private async Task StartListenerAsync()
-    {
-        try
-        {
-            while (_isStarted && !_cancellationTokenSource.Token.IsCancellationRequested)
-            {
-                try
-                {
-                    var context = await _httpListener.GetContextAsync();
-                    if (context.Request.IsWebSocketRequest)
-                    {
-                        var webSocketContext = await context.AcceptWebSocketAsync(null);
-                        _ = HandleConnectionAsync(webSocketContext.WebSocket, context.Request.RawUrl);
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                        context.Response.Close();
-                    }
-                }
-                catch (HttpListenerException) when (_cancellationTokenSource.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Error in WebSocket listener");
-                }
-            }
         }
         catch (Exception ex)
         {
-            _logger.Error(ex, "Error in StartListenerAsync");
+            _logger.Error(ex, "Failed to start WebSocket server");
+            throw;
         }
     }
 
@@ -383,11 +412,6 @@ public class WebSocketServer : IWebSocketServer, IDisposable
     {
         try
         {
-            if (_httpListener.IsListening)
-            {
-                _httpListener.Stop();
-            }
-
             _isStarted = false;
             _cancellationTokenSource.Cancel();
 
@@ -396,7 +420,9 @@ public class WebSocketServer : IWebSocketServer, IDisposable
                 .ToList();
 
             Task.WhenAll(closeTasks).Wait(TimeSpan.FromSeconds(5));
-            _httpListener.Close();
+
+            _webHost?.StopAsync(TimeSpan.FromSeconds(5)).Wait();
+            _webHost?.Dispose();
         }
         catch (Exception ex)
         {
