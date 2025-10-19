@@ -7,8 +7,6 @@ using Atomos.BackgroundWorker.Interfaces;
 using CommonLib.Events;
 using CommonLib.Interfaces;
 using CommonLib.Models;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NLog;
@@ -34,7 +32,45 @@ public class WebSocketServer : IWebSocketServer, IDisposable
     private readonly ConcurrentDictionary<string, DateTime> _lastMessageTime = new();
     private readonly TimeSpan _messageDebounceInterval = TimeSpan.FromMilliseconds(100);
 
+    // Valid endpoint allowlist for security
+    private static readonly HashSet<string> ValidEndpoints = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/config",
+        "/error",
+        "/status",
+        "/notifications",
+        "/install"
+    };
+
     public event EventHandler<WebSocketMessageEventArgs> MessageReceived;
+
+    /// <summary>
+    /// Validates and sanitises the endpoint path to prevent log injection and path traversal attacks
+    /// </summary>
+    private static string SanitizeEndpoint(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+            return "/unknown";
+
+        // Normalise the path
+        endpoint = endpoint.Trim();
+
+        // Ensure it starts with /
+        if (!endpoint.StartsWith('/'))
+            endpoint = "/" + endpoint;
+
+        // Remove any dangerous characters that could be used for log injection
+        endpoint = endpoint.Replace("\r", "").Replace("\n", "").Replace("\t", "");
+
+        // Validate against allowlist
+        if (!ValidEndpoints.Contains(endpoint))
+        {
+            _logger.Warn("Attempted connection to non-whitelisted endpoint, rejecting");
+            return "/invalid";
+        }
+
+        return endpoint;
+    }
 
     public WebSocketServer(IConfigurationService configurationService)
     {
@@ -68,8 +104,20 @@ public class WebSocketServer : IWebSocketServer, IDisposable
                         if (context.WebSockets.IsWebSocketRequest)
                         {
                             var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                            var endpoint = context.Request.Path.ToString();
-                            await HandleConnectionAsync(webSocket, endpoint);
+                            var rawEndpoint = context.Request.Path.ToString();
+                            var sanitizedEndpoint = SanitizeEndpoint(rawEndpoint);
+
+                            // Reject invalid endpoints
+                            if (sanitizedEndpoint == "/invalid")
+                            {
+                                await webSocket.CloseAsync(
+                                    WebSocketCloseStatus.PolicyViolation,
+                                    "Invalid endpoint",
+                                    CancellationToken.None);
+                                return;
+                            }
+
+                            await HandleConnectionAsync(webSocket, sanitizedEndpoint);
                         }
                         else
                         {
