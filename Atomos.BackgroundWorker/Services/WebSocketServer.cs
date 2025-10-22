@@ -39,7 +39,9 @@ public class WebSocketServer : IWebSocketServer, IDisposable
         "/error",
         "/status",
         "/notifications",
-        "/install"
+        "/install",
+        "/currentTask",
+        "/extract"
     };
 
     public event EventHandler<WebSocketMessageEventArgs> MessageReceived;
