@@ -14,6 +14,7 @@ using CommonLib.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using PluginManager.Core.Extensions;
+using PluginManager.Core.Interfaces;
 using ReactiveUI;
 
 namespace Atomos.UI.Controllers
@@ -119,13 +120,24 @@ namespace Atomos.UI.Controllers
             try
             {
                 _logger.Info("Starting plugin refresh from TrayIconController");
-                
+
                 await _notificationService.ShowNotification(
-                    "Plugins", 
+                    "Plugins",
                     "Refreshing plugins...");
-                
-                await _serviceProvider.InitializePluginServicesAsync();
-                
+
+                // Use the new ReloadPluginsAsync method which properly disposes old plugins first
+                var pluginService = _serviceProvider.GetService<IPluginService>();
+                if (pluginService != null)
+                {
+                    _logger.Debug("Calling ReloadPluginsAsync on plugin service");
+                    await pluginService.ReloadPluginsAsync();
+                }
+                else
+                {
+                    _logger.Warn("IPluginService not found in service provider, falling back to InitializePluginServicesAsync");
+                    await _serviceProvider.InitializePluginServicesAsync();
+                }
+
                 var pluginViewModel = _serviceProvider.GetService<PluginViewModel>();
                 if (pluginViewModel != null)
                 {
@@ -138,16 +150,16 @@ namespace Atomos.UI.Controllers
                 }
 
                 await _notificationService.ShowNotification(
-                    "Plugins", 
+                    "Plugins",
                     "Plugins refreshed successfully!");
-                    
+
                 _logger.Info("Plugin refresh completed successfully");
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Failed to refresh plugins");
                 await _notificationService.ShowErrorNotification(
-                    "Plugin Refresh Failed", 
+                    "Plugin Refresh Failed",
                     "Could not refresh plugins");
             }
         }
