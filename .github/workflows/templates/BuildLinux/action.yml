@@ -32,7 +32,7 @@ runs:
         - name: Checkout Code
           uses: actions/checkout@v4
           with:
-              fetch-depth: 0
+              fetch-depth: 1
               submodules: recursive
               ref: ${{ inputs.source_branch }}
 
@@ -43,6 +43,17 @@ runs:
               key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
               restore-keys: |
                   ${{ runner.os }}-nuget-
+
+        - name: Cache build outputs
+          uses: actions/cache@v4
+          with:
+              path: |
+                  **/bin
+                  **/obj
+              key: ${{ runner.os }}-build-${{ inputs.configuration }}-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+              restore-keys: |
+                  ${{ runner.os }}-build-${{ inputs.configuration }}-
+                  ${{ runner.os }}-build-
 
         - name: Set Up .NET (v9)
           uses: actions/setup-dotnet@v4
@@ -55,7 +66,7 @@ runs:
 
         - name: Build Solution
           shell: bash
-          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore
 
         - name: Run Tests
           if: ${{ inputs.run_tests == 'true' }}
@@ -68,39 +79,50 @@ runs:
           run: |
               # Create main publish directory
               mkdir -p "./publish/Atomos-linux-x64"
-              
+
               projects=("Atomos.ConsoleTooling" "Atomos.UI" "Atomos.BackgroundWorker" "Atomos.Watchdog")
-              
-              for project in "${projects[@]}"; do
-                temp_dir="./publish/temp-$(echo $project | tr '[:upper:]' '[:lower:]')-linux-x64"
-              
+
+              # Function to publish a single project
+              publish_project() {
+                local project=$1
+                local configuration=$2
+                local sentry_dsn=$3
+                local temp_dir="./publish/temp-$(echo $project | tr '[:upper:]' '[:lower:]')-linux-x64"
+
                 echo "Publishing $project..."
                 dotnet publish "$project" \
-                  -c ${{ inputs.configuration }} \
+                  -c "$configuration" \
                   -p:PublishSingleFile=true \
                   -p:PublishReadyToRun=true \
                   --self-contained=true \
                   -p:DebugType=None -p:DebugSymbols=false \
                   -r linux-x64 \
                   -o "$temp_dir" \
-                  -f net9.0
-              
+                  -f net9.0 \
+                  --no-restore
+
                 # Create appsettings.Production.json with Sentry DSN (if available)
-                if [ -n "${{ inputs.sentry_dsn }}" ]; then
+                if [ -n "$sentry_dsn" ]; then
                   cat > "$temp_dir/appsettings.Production.json" << EOF
               {
-                "SENTRY_DSN": "${{ inputs.sentry_dsn }}"
+                "SENTRY_DSN": "$sentry_dsn"
               }
               EOF
                   echo "Created appsettings.Production.json for $project"
-                else
-                  echo "No SENTRY_DSN provided, skipping Sentry configuration for $project"
                 fi
-              
-                # Move files to main directory
+              }
+
+              # Export function and variables for parallel execution
+              export -f publish_project
+
+              # Publish all projects in parallel
+              printf '%s\n' "${projects[@]}" | xargs -P 4 -I {} bash -c 'publish_project "$@"' _ {} "${{ inputs.configuration }}" "${{ inputs.sentry_dsn }}"
+
+              # Move all published files to main directory
+              for project in "${projects[@]}"; do
+                temp_dir="./publish/temp-$(echo $project | tr '[:upper:]' '[:lower:]')-linux-x64"
+                echo "Moving files from $temp_dir..."
                 cp -r "$temp_dir/"* "./publish/Atomos-linux-x64/"
-              
-                # Clean up temp directory
                 rm -rf "$temp_dir"
               done
 
@@ -156,3 +178,4 @@ runs:
               name: ${{ steps.set-outputs.outputs.artifact_name }}
               path: ./publish/${{ steps.set-outputs.outputs.zip_filename }}
               retention-days: 6
+              compression-level: 0

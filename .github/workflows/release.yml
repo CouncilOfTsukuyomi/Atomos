@@ -95,7 +95,7 @@ jobs:
             - name: Checkout Code
               uses: actions/checkout@v4
               with:
-                  fetch-depth: 0
+                  fetch-depth: 1
                   submodules: recursive
                   token: ${{ steps.app-token.outputs.token }}
                   ref: ${{ needs.release-approval.outputs.source_branch }}
@@ -177,20 +177,27 @@ jobs:
               if: steps.create-pr.outputs.pull-request-number
               run: |
                   prNumber="${{ steps.create-pr.outputs.pull-request-number }}"
-                  maxAttempts=30
+                  maxAttempts=40
                   attempt=0
-                  
+
                   echo "⏳ Waiting for PR #$prNumber to be merged..."
-                  
+
                   while [ $attempt -lt $maxAttempts ]; do
-                      sleep 10
+                      if [ $attempt -lt 10 ]; then
+                          sleep 3
+                      elif [ $attempt -lt 20 ]; then
+                          sleep 5
+                      else
+                          sleep 10
+                      fi
+
                       attempt=$((attempt + 1))
-                  
+
                       prInfo=$(gh pr view $prNumber --json state,mergeable,mergeStateStatus --repo ${{ github.repository }})
                       prState=$(echo "$prInfo" | jq -r '.state')
-                  
+
                       echo "Attempt $attempt/$maxAttempts - PR State: $prState"
-                  
+
                       if [ "$prState" = "MERGED" ]; then
                           echo "✅ PR merged successfully!"
                           break
@@ -198,9 +205,9 @@ jobs:
                           echo "❌ PR was closed without merging"
                           exit 1
                       fi
-                  
+
                       if [ $attempt -ge $maxAttempts ]; then
-                          echo "❌ PR was not merged within expected time (5 minutes)"
+                          echo "❌ PR was not merged within expected time"
                           exit 1
                       fi
                   done
@@ -222,7 +229,7 @@ jobs:
             - name: Checkout Code
               uses: actions/checkout@v4
               with:
-                  fetch-depth: 0
+                  fetch-depth: 1
                   submodules: recursive
                   ref: ${{ needs.version-update.outputs.source_branch }}
 
@@ -243,13 +250,13 @@ jobs:
               run: dotnet restore
 
             - name: Build Solution
-              run: dotnet build --configuration Release --verbosity minimal
+              run: dotnet build --configuration Release --verbosity minimal --no-restore
 
             - name: Run Tests
               run: dotnet test --configuration Release --no-build --verbosity normal
 
     build-windows:
-        needs: [release-approval, version-update, run-tests]
+        needs: [release-approval, version-update]
         runs-on: windows-latest
         outputs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
@@ -268,7 +275,7 @@ jobs:
                   sentry_dsn: ${{ secrets.SENTRY_DSN }}
 
     build-linux:
-        needs: [release-approval, version-update, run-tests]
+        needs: [release-approval, version-update]
         runs-on: ubuntu-latest
         outputs:
             artifact_name: ${{ steps.build.outputs.artifact_name }}
@@ -287,14 +294,14 @@ jobs:
                   sentry_dsn: ${{ secrets.SENTRY_DSN }}
     
     create-release:
-        needs: [release-approval, version-update, build-windows, build-linux]
+        needs: [release-approval, version-update, run-tests, build-windows, build-linux]
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Code for Release Notes
               uses: actions/checkout@v4
               with:
-                  fetch-depth: 0
-                  submodules: recursive
+                  fetch-depth: 1
+                  submodules: false
                   ref: ${{ needs.version-update.outputs.source_branch }}
 
             - name: Get Latest Release from GitHub

@@ -32,7 +32,7 @@ runs:
         - name: Checkout Code
           uses: actions/checkout@v4
           with:
-              fetch-depth: 0
+              fetch-depth: 1
               submodules: recursive
               ref: ${{ inputs.source_branch }}
 
@@ -43,6 +43,17 @@ runs:
               key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
               restore-keys: |
                   ${{ runner.os }}-nuget-
+
+        - name: Cache build outputs
+          uses: actions/cache@v4
+          with:
+              path: |
+                  **/bin
+                  **/obj
+              key: ${{ runner.os }}-build-${{ inputs.configuration }}-${{ hashFiles('**/*.cs', '**/*.csproj') }}
+              restore-keys: |
+                  ${{ runner.os }}-build-${{ inputs.configuration }}-
+                  ${{ runner.os }}-build-
 
         - name: Set Up .NET (v9)
           uses: actions/setup-dotnet@v4
@@ -55,7 +66,7 @@ runs:
 
         - name: Build Solution
           shell: pwsh
-          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore
 
         - name: Run Tests
           if: ${{ inputs.run_tests == 'true' }}
@@ -68,44 +79,56 @@ runs:
           run: |
               # Create main publish directory
               New-Item -ItemType Directory -Path "./publish/Atomos-win-x64" -Force
-              
+
               $projects = @(
                 "Atomos.ConsoleTooling",
-                "Atomos.UI", 
+                "Atomos.UI",
                 "Atomos.BackgroundWorker",
                 "Atomos.Watchdog"
               )
-              
+
+              $jobs = @()
               foreach ($project in $projects) {
                 $tempDir = "./publish/temp-$($project.ToLower())-win-x64"
-              
-                Write-Host "Publishing $project..."
-                dotnet publish $project `
-                  -c ${{ inputs.configuration }} `
-                  -p:PublishSingleFile=true `
-                  -p:PublishReadyToRun=true `
-                  --self-contained=true `
-                  -p:DebugType=None -p:DebugSymbols=false `
-                  -r win-x64 `
-                  -o $tempDir `
-                  -f net9.0
-              
-                # Create appsettings.Production.json with Sentry DSN (if available)
-                if ("${{ inputs.sentry_dsn }}" -ne "") {
-                  $productionConfig = @{
-                      "SENTRY_DSN" = "${{ inputs.sentry_dsn }}"
-                  } | ConvertTo-Json -Depth 3
-              
-                  $productionConfig | Out-File -FilePath "$tempDir/appsettings.Production.json" -Encoding UTF8
-                  Write-Host "Created appsettings.Production.json for $project"
-                } else {
-                  Write-Host "No SENTRY_DSN provided, skipping Sentry configuration for $project"
-                }
-              
-                # Move files to main directory
+
+                $jobs += Start-Job -ScriptBlock {
+                  param($project, $tempDir, $configuration, $sentryDsn)
+
+                  Write-Host "Publishing $project..."
+                  dotnet publish $project `
+                    -c $configuration `
+                    -p:PublishSingleFile=true `
+                    -p:PublishReadyToRun=true `
+                    --self-contained=true `
+                    -p:DebugType=None -p:DebugSymbols=false `
+                    -r win-x64 `
+                    -o $tempDir `
+                    -f net9.0 `
+                    --no-restore
+
+                  # Create appsettings.Production.json with Sentry DSN (if available)
+                  if ($sentryDsn -ne "") {
+                    $productionConfig = @{
+                        "SENTRY_DSN" = $sentryDsn
+                    } | ConvertTo-Json -Depth 3
+
+                    $productionConfig | Out-File -FilePath "$tempDir/appsettings.Production.json" -Encoding UTF8
+                    Write-Host "Created appsettings.Production.json for $project"
+                  }
+
+                  return $tempDir
+                } -ArgumentList $project, $tempDir, "${{ inputs.configuration }}", "${{ inputs.sentry_dsn }}"
+              }
+
+              # Wait for all jobs to complete
+              Write-Host "Waiting for all publish jobs to complete..."
+              $jobs | Wait-Job | Receive-Job
+              $jobs | Remove-Job
+
+              foreach ($project in $projects) {
+                $tempDir = "./publish/temp-$($project.ToLower())-win-x64"
+                Write-Host "Moving files from $tempDir..."
                 Copy-Item -Path "$tempDir/*" -Destination "./publish/Atomos-win-x64/" -Recurse -Force
-              
-                # Clean up temp directory
                 Remove-Item -Path $tempDir -Recurse -Force
               }
 
@@ -151,3 +174,4 @@ runs:
               name: ${{ steps.set-outputs.outputs.artifact_name }}
               path: ./publish/${{ steps.set-outputs.outputs.zip_filename }}
               retention-days: 6
+              compression-level: 0
