@@ -407,6 +407,14 @@ public class WebSocketServer : IWebSocketServer, IDisposable
         {
             connections.TryRemove(socket, out _);
             await CloseWebSocketAsync(socket);
+            
+            if (SocketLockMap.TryRemove(socket, out var semaphore))
+            {
+                semaphore.Dispose();
+                _logger.Debug("Disposed semaphore for WebSocket on endpoint {Endpoint}", endpoint);
+            }
+            
+            socket.Dispose();
         }
     }
 
@@ -416,15 +424,34 @@ public class WebSocketServer : IWebSocketServer, IDisposable
         {
             _isStarted = false;
             _cancellationTokenSource.Cancel();
-
-            var closeTasks = _endpoints
-                .SelectMany(ep => ep.Value.Select(async connection => await CloseWebSocketAsync(connection.Key)))
+            
+            var allSockets = _endpoints
+                .SelectMany(ep => ep.Value.Select(connection => (Socket: connection.Key, Endpoint: ep.Key)))
                 .ToList();
 
-            Task.WhenAll(closeTasks).Wait(TimeSpan.FromSeconds(5));
+            foreach (var (socket, endpoint) in allSockets)
+            {
+                try
+                {
+                    CloseWebSocketAsync(socket).Wait(TimeSpan.FromSeconds(2));
+
+                    // Clean up semaphore
+                    if (SocketLockMap.TryRemove(socket, out var semaphore))
+                    {
+                        semaphore.Dispose();
+                    }
+                    
+                    socket.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug(ex, "Error disposing WebSocket on endpoint {Endpoint}", endpoint);
+                }
+            }
 
             _webHost?.StopAsync(TimeSpan.FromSeconds(5)).Wait();
             _webHost?.Dispose();
+            _cancellationTokenSource.Dispose();
         }
         catch (Exception ex)
         {

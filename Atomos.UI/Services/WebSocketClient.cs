@@ -586,7 +586,22 @@ public class WebSocketClient : IWebSocketClient, IDisposable
 
         foreach (var webSocket in _webSockets.Values)
         {
-            DisconnectWebSocketAsync(webSocket).Wait();
+            try
+            {
+                DisconnectWebSocketAsync(webSocket).Wait(TimeSpan.FromSeconds(2));
+                
+                if (SocketLockMap.TryRemove(webSocket, out var semaphore))
+                {
+                    semaphore.Dispose();
+                    _logger.Debug("Disposed semaphore for WebSocket client");
+                }
+                
+                webSocket.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug(ex, "Error disposing WebSocket client");
+            }
         }
 
         _cts.Dispose();
