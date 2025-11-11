@@ -253,7 +253,17 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var messageJson = messageBuilder.ToString();
-                    var message = JsonConvert.DeserializeObject<WebSocketMessage>(messageJson);
+
+                    WebSocketMessage? message = null;
+                    try
+                    {
+                        message = JsonConvert.DeserializeObject<WebSocketMessage>(messageJson);
+                    }
+                    catch (JsonException ex)
+                    {
+                        _logger.Error(ex, "Failed to deserialize WebSocketMessage from {Endpoint}. JSON: {Json}", endpoint, messageJson);
+                        continue;
+                    }
 
                     if (message?.ClientId == _clientId)
                     {
@@ -586,7 +596,22 @@ public class WebSocketClient : IWebSocketClient, IDisposable
 
         foreach (var webSocket in _webSockets.Values)
         {
-            DisconnectWebSocketAsync(webSocket).Wait();
+            try
+            {
+                DisconnectWebSocketAsync(webSocket).Wait(TimeSpan.FromSeconds(2));
+                
+                if (SocketLockMap.TryRemove(webSocket, out var semaphore))
+                {
+                    semaphore.Dispose();
+                    _logger.Debug("Disposed semaphore for WebSocket client");
+                }
+                
+                webSocket.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.Debug(ex, "Error disposing WebSocket client");
+            }
         }
 
         _cts.Dispose();

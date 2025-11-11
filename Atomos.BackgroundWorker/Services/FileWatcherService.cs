@@ -250,7 +250,7 @@ public class FileWatcherService : IFileWatcherService, IDisposable
     private void OnFileMoved(object? sender, FileMovedEvent e)
     {
         _logger.Info("File moved: {DestinationPath}", e.DestinationPath);
-        
+
         var normalizedPath = Path.GetFullPath(e.DestinationPath);
         if (_recentlyExtractedFiles.ContainsKey(normalizedPath))
         {
@@ -258,38 +258,59 @@ public class FileWatcherService : IFileWatcherService, IDisposable
             return;
         }
         
-        _modHandlerService.HandleFileAsync(e.DestinationPath).GetAwaiter().GetResult();
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _modHandlerService.HandleFileAsync(e.DestinationPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error handling moved file: {Path}", e.DestinationPath);
+            }
+        });
     }
 
     private void OnFilesExtracted(object? sender, FilesExtractedEventArgs e)
     {
         _logger.Info("Files extracted from archive: {ArchiveFileName}", e.ArchiveFileName);
-        
+
         var taskId = Guid.NewGuid().ToString();
-        
-        var message = WebSocketMessage.CreateStatus(
-            taskId,
-            WebSocketMessageStatus.InProgress,
-            $"Installing extracted files from {e.ArchiveFileName}"
-        );
-        _webSocketServer.BroadcastToEndpointAsync("/status", message).GetAwaiter().GetResult();
 
-        foreach (var extractedFilePath in e.ExtractedFilePaths)
+        // Use Task.Run to avoid blocking and potential deadlocks
+        _ = Task.Run(async () =>
         {
-            var normalizedPath = Path.GetFullPath(extractedFilePath);
-            _recentlyExtractedFiles[normalizedPath] = DateTime.UtcNow;
-            
-            _modHandlerService.HandleFileAsync(extractedFilePath).GetAwaiter().GetResult();
-        }
-        
-        CleanupOldExtractedFileEntries();
+            try
+            {
+                var message = WebSocketMessage.CreateStatus(
+                    taskId,
+                    WebSocketMessageStatus.InProgress,
+                    $"Installing extracted files from {e.ArchiveFileName}"
+                );
+                await _webSocketServer.BroadcastToEndpointAsync("/status", message);
 
-        var completionMessage = WebSocketMessage.CreateStatus(
-            taskId,
-            WebSocketMessageStatus.Completed,
-            $"All extracted files from {e.ArchiveFileName} have been installed."
-        );
-        _webSocketServer.BroadcastToEndpointAsync("/status", completionMessage).GetAwaiter().GetResult();
+                foreach (var extractedFilePath in e.ExtractedFilePaths)
+                {
+                    var normalizedPath = Path.GetFullPath(extractedFilePath);
+                    _recentlyExtractedFiles[normalizedPath] = DateTime.UtcNow;
+
+                    await _modHandlerService.HandleFileAsync(extractedFilePath);
+                }
+
+                CleanupOldExtractedFileEntries();
+
+                var completionMessage = WebSocketMessage.CreateStatus(
+                    taskId,
+                    WebSocketMessageStatus.Completed,
+                    $"All extracted files from {e.ArchiveFileName} have been installed."
+                );
+                await _webSocketServer.BroadcastToEndpointAsync("/status", completionMessage);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error processing extracted files from {ArchiveFileName}", e.ArchiveFileName);
+            }
+        });
     }
 
     private void CleanupOldExtractedFileEntries()

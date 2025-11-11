@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ using ReactiveUI;
 
 namespace Atomos.UI.ViewModels;
 
-public class SettingsViewModel : ViewModelBase
+public class SettingsViewModel : ViewModelBase, IDisposable
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
@@ -30,6 +31,7 @@ public class SettingsViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialogService;
     private readonly IWebSocketClient _webSocketClient;
     private readonly INotificationService _notificationService;
+    private readonly CompositeDisposable _disposables = new();
     
     // Dictionary to map property names to tutorial-friendly names
     private readonly Dictionary<string, string> _tutorialNameMap = new()
@@ -321,7 +323,8 @@ public class SettingsViewModel : ViewModelBase
                     .Skip(1)
                     .Throttle(TimeSpan.FromMilliseconds(200))
                     .ObserveOn(RxApp.MainThreadScheduler)
-                    .Subscribe(_ => SaveSettings(descriptor));
+                    .Subscribe(_ => SaveSettings(descriptor))
+                    .DisposeWith(_disposables);
             }
         }
     }
@@ -467,5 +470,11 @@ public class SettingsViewModel : ViewModelBase
                       descriptor.Description.Contains(term, StringComparison.OrdinalIgnoreCase);
 
         return inName || inDesc;
+    }
+
+    public void Dispose()
+    {
+        _disposables?.Dispose();
+        _logger.Debug("SettingsViewModel disposed, {Count} subscriptions cleaned up", _disposables?.Count ?? 0);
     }
 }

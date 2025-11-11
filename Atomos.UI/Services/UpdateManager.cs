@@ -431,8 +431,19 @@ public class UpdateManager : IUpdateManager, IDisposable
 
     public void Dispose()
     {
-        _updateCheckTimer?.Stop();
-        _updateCheckTimer?.Dispose();
-        _logger.Debug("UpdateManager disposed - update check timer stopped");
+        try
+        {
+            if (_updateCheckTimer != null)
+            {
+                _updateCheckTimer.Stop();
+                _updateCheckTimer.Dispose();
+                _updateCheckTimer = null;
+            }
+            _logger.Debug("UpdateManager disposed - update check timer stopped");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "Error disposing UpdateManager");
+        }
     }
 }

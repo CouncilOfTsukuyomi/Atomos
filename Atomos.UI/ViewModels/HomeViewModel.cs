@@ -145,14 +145,20 @@ public class HomeViewModel : ViewModelBase, IDisposable
 
         try
         {
+            var totalModsTask = _statisticService.GetStatCountAsync(Stat.ModsInstalled);
+            var uniqueModsTask = _statisticService.GetUniqueModsInstalledCountAsync();
+            var modsInstalledTodayTask = _statisticService.GetModsInstalledTodayAsync();
+            var lastModInstallationTask = _statisticService.GetMostRecentModInstallationAsync();
+
+            await Task.WhenAll(totalModsTask, uniqueModsTask, modsInstalledTodayTask, lastModInstallationTask);
+
             var newItems = new ObservableCollection<InfoItem>
             {
-                new("Total Mods Installed", (await _statisticService.GetStatCountAsync(Stat.ModsInstalled)).ToString()),
-                new("Unique Mods Installed", (await _statisticService.GetUniqueModsInstalledCountAsync()).ToString())
+                new("Total Mods Installed", totalModsTask.Result.ToString()),
+                new("Unique Mods Installed", uniqueModsTask.Result.ToString())
             };
 
-            var modsInstalledToday = await _statisticService.GetModsInstalledTodayAsync();
-            newItems.Add(new InfoItem("Mods Installed Today", modsInstalledToday.ToString()));
+            newItems.Add(new InfoItem("Mods Installed Today", modsInstalledTodayTask.Result.ToString()));
 
             var modsFolderSizeLabel = _fileSizeService.GetFolderSizeLabel(ConfigurationConsts.ModsPath);
             newItems.Add(new InfoItem("Mods Folder Size", modsFolderSizeLabel, OpenModsFolderCommand));
@@ -160,7 +166,7 @@ public class HomeViewModel : ViewModelBase, IDisposable
             // Separate the regular stats from the last mod installed
             RegularStats = newItems;
 
-            var lastModInstallation = await _statisticService.GetMostRecentModInstallationAsync();
+            var lastModInstallation = lastModInstallationTask.Result;
             LastModInstalled = lastModInstallation != null
                 ? new InfoItem("Last Mod Installed", lastModInstallation.ModName)
                 : new InfoItem("Last Mod Installed", "None");

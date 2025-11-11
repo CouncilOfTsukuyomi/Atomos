@@ -43,29 +43,43 @@
             </Border>
 
             <!-- Mods Grid Layout -->
-            <ItemsControl ItemsSource="{Binding FilteredMods}">
-                <ItemsControl.ItemsPanel>
+            <ListBox ItemsSource="{Binding FilteredMods}"
+                     SelectionMode="Single"
+                     Background="Transparent"
+                     BorderThickness="0">
+                <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel Classes="modsContainer"/>
+                        <VirtualizingStackPanel Classes="modsContainer"/>
                     </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                
-                <ItemsControl.ItemTemplate>
+                </ListBox.ItemsPanel>
+
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                </ListBox.Styles>
+
+                <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Classes="modsCard modCard">
                             <Grid ColumnDefinitions="Auto,*,Auto">
-                                
+
                                 <!-- Mod Icon -->
                                 <Border Grid.Column="0" Classes="modIcon">
                                     <TextBlock Text="🔧" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                
+
                                 <!-- Mod Info -->
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                                     <TextBlock Text="{Binding ModName}" Classes="modName"/>
                                     <TextBlock Text="{Binding InstallationTime, StringFormat='Installed: {0:MMM dd, yyyy HH:mm}'}" Classes="modInstallTime"/>
                                 </StackPanel>
-                                
+
                                 <!-- Status Indicator -->
                                 <Border Grid.Column="2" Classes="modStatusIndicator">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
@@ -76,8 +90,8 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
             <!-- Empty State -->
             <Border Classes="modsCard emptyStateCard" IsVisible="{Binding !FilteredMods.Count}" Margin="0,40,0,0">

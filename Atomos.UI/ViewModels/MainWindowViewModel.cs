@@ -35,7 +35,10 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IApplicationInitializationManager _initializationManager;
     private readonly IUpdateManager _updateManager;
     private readonly ISentryManager _sentryManager;
-        
+    
+    private Action<bool>? _isCheckingForUpdatesHandler;
+    private Action<bool>? _hasUpdateAvailableHandler;
+
     private string _currentVersion = string.Empty;
 
     private ViewModelBase _currentPage = null!;
@@ -216,8 +219,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             () => ActivatorUtilities.CreateInstance<SettingsViewModel>(_serviceProvider));
 
         _tutorialManager.NavigationRequested += OnTutorialTabNavigationRequested;
-        
-        _updateManager.IsCheckingForUpdatesChanged += isChecking =>
+
+        // Store event handlers for proper disposal
+        _isCheckingForUpdatesHandler = isChecking =>
         {
             if (Dispatcher.UIThread.CheckAccess())
             {
@@ -228,8 +232,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
                 Dispatcher.UIThread.Post(() => this.RaisePropertyChanged(nameof(IsCheckingForUpdates)));
             }
         };
-        
-        _updateManager.HasUpdateAvailableChanged += hasUpdate =>
+        _updateManager.IsCheckingForUpdatesChanged += _isCheckingForUpdatesHandler;
+
+        _hasUpdateAvailableHandler = hasUpdate =>
         {
             if (Dispatcher.UIThread.CheckAccess())
             {
@@ -238,16 +243,17 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             }
             else
             {
-                Dispatcher.UIThread.Post(() => 
+                Dispatcher.UIThread.Post(() =>
                 {
                     this.RaisePropertyChanged(nameof(HasUpdateAvailable));
                     this.RaisePropertyChanged(nameof(UpdateAvailableText));
                 });
             }
         };
-        
+        _updateManager.HasUpdateAvailableChanged += _hasUpdateAvailableHandler;
+
         _updateManager.ShowUpdatePromptRequested += OnShowUpdatePromptRequested;
-        
+
         _sentryManager.SentryChoiceMade += OnSentryChoiceMade;
     }
 
@@ -388,9 +394,31 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         
     public void Dispose()
     {
+        // Unsubscribe from all event handlers to prevent memory leaks
+        _tutorialManager.NavigationRequested -= OnTutorialTabNavigationRequested;
+
+        if (_isCheckingForUpdatesHandler != null)
+        {
+            _updateManager.IsCheckingForUpdatesChanged -= _isCheckingForUpdatesHandler;
+        }
+
+        if (_hasUpdateAvailableHandler != null)
+        {
+            _updateManager.HasUpdateAvailableChanged -= _hasUpdateAvailableHandler;
+        }
+
+        _updateManager.ShowUpdatePromptRequested -= OnShowUpdatePromptRequested;
+        _sentryManager.SentryChoiceMade -= OnSentryChoiceMade;
+
+        // Dispose bitmap resource
+        _appLogoSource?.Dispose();
+
+        // Dispose managers
         _tutorialManager?.Dispose();
         _initializationManager?.Dispose();
         _updateManager?.Dispose();
         _sentryManager?.Dispose();
+
+        _logger.Debug("MainWindowViewModel disposed successfully");
     }
 }

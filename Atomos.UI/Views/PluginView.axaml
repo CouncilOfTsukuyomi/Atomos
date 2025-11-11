@@ -52,8 +52,28 @@
 
     <!-- Plugin List -->
     <ScrollViewer Grid.Row="1" Margin="20,0,20,10" x:Name="PluginListContainer">
-      <ItemsControl ItemsSource="{Binding FilteredPlugins}">
-        <ItemsControl.ItemTemplate>
+      <ListBox ItemsSource="{Binding FilteredPlugins}"
+               SelectionMode="Single"
+               Background="Transparent"
+               BorderThickness="0">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <VirtualizingStackPanel/>
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+          </Style>
+          <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+          </Style>
+        </ListBox.Styles>
+
+        <ListBox.ItemTemplate>
           <DataTemplate DataType="models:PluginInfo">
             
             <!-- Plugin Card -->
@@ -175,8 +195,8 @@
               </Grid>
             </Border>
           </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+        </ListBox.ItemTemplate>
+      </ListBox>
     </ScrollViewer>
 
     <!-- Empty State -->
