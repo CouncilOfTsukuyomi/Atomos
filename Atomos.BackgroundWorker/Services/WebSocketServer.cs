@@ -202,7 +202,17 @@ public class WebSocketServer : IWebSocketServer, IDisposable
                 var messageJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
                 _logger.Info("Received message from {Endpoint}: {MessageJson}", endpoint, messageJson);
 
-                var message = JsonConvert.DeserializeObject<WebSocketMessage>(messageJson);
+                WebSocketMessage? message = null;
+                try
+                {
+                    message = JsonConvert.DeserializeObject<WebSocketMessage>(messageJson);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.Error(ex, "Failed to deserialize WebSocketMessage from {Endpoint}. JSON: {Json}", endpoint, messageJson);
+                    continue;
+                }
+
                 if (message == null)
                 {
                     _logger.Warn("Unable to deserialize WebSocketMessage from {Endpoint}", endpoint);
@@ -474,16 +484,21 @@ public class WebSocketServer : IWebSocketServer, IDisposable
             }
             
             _lastMessageTime[debounceKey] = now;
-            
-            var cutoff = now.Subtract(TimeSpan.FromMinutes(1));
+
+            // Periodic cleanup: remove entries older than 5 minutes to prevent unbounded growth
+            var cutoff = now.Subtract(TimeSpan.FromMinutes(5));
             var keysToRemove = _lastMessageTime
                 .Where(kvp => kvp.Value < cutoff)
                 .Select(kvp => kvp.Key)
                 .ToList();
-            
-            foreach (var key in keysToRemove)
+
+            if (keysToRemove.Count > 0)
             {
-                _lastMessageTime.TryRemove(key, out _);
+                _logger.Debug("Cleaning up {Count} old debounce entries", keysToRemove.Count);
+                foreach (var key in keysToRemove)
+                {
+                    _lastMessageTime.TryRemove(key, out _);
+                }
             }
 
             _logger.Debug(

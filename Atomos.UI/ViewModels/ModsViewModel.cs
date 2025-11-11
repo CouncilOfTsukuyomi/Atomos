@@ -92,15 +92,10 @@ public class ModsViewModel : ViewModelBase, IDisposable
 
             if (AreSame(InstalledMods, fetchedMods))
                 return;
+            InstalledMods = new ObservableCollection<ModInstallationRecord>(fetchedMods);
 
-            InstalledMods.Clear();
-            foreach (var mod in fetchedMods)
-            {
-                _logger.Debug("Found data for mod {ModName}", mod.ModName);
-                InstalledMods.Add(mod);
-            }
-
-            // Filter again after loading
+            _logger.Debug("Loaded {Count} installed mods", InstalledMods.Count);
+            
             FilterMods();
         }
         catch (Exception ex)
