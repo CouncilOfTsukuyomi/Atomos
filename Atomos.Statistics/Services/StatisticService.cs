@@ -471,6 +471,18 @@ public class StatisticService : IStatisticService, IDisposable
 
     public async Task<int> GetModsInstalledTodayAsync()
     {
+        var today = DateTime.UtcNow.Date;
+        var cacheKey = $"ModsInstalledToday_{today:yyyyMMdd}";
+        
+        if (_statCache.TryGetValue(cacheKey, out var cached))
+        {
+            if (DateTime.UtcNow - cached.lastUpdated < _cacheExpiry)
+            {
+                _logger.Debug("Retrieved mods installed today from cache: {Count}", cached.value);
+                return cached.value;
+            }
+        }
+
         try
         {
             await _databaseInitialized.Task;
@@ -484,11 +496,14 @@ public class StatisticService : IStatisticService, IDisposable
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
-            var startOfToday = DateTime.UtcNow.Date;
-            
+            var startOfToday = today;
+
             var count = modInstallations.Count(x => x.InstallationTime >= startOfToday);
-            _logger.Debug("Retrieved mods installed today: {Count}", count);
             
+            _statCache[cacheKey] = (count, DateTime.UtcNow);
+
+            _logger.Debug("Retrieved mods installed today from database: {Count}", count);
+
             return Task.FromResult(count);
         }, "Failed to retrieve mods installed today", 0);
     }
@@ -537,20 +552,33 @@ public class StatisticService : IStatisticService, IDisposable
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
+            
             var result = modInstallations
-                .FindAll()
+                .Query()
                 .OrderByDescending(x => x.InstallationTime)
+                .Limit(1)
                 .FirstOrDefault();
-            
-            _logger.Debug("Retrieved most recent mod installation: {ModName} at {Time}", 
+
+            _logger.Debug("Retrieved most recent mod installation: {ModName} at {Time}",
                 result?.ModName ?? "None", result?.InstallationTime);
-            
+
             return Task.FromResult(result);
         }, "Failed to retrieve the most recent mod installation");
     }
 
     public async Task<int> GetUniqueModsInstalledCountAsync()
     {
+        const string cacheKey = "UniqueModsCount";
+        
+        if (_statCache.TryGetValue(cacheKey, out var cached))
+        {
+            if (DateTime.UtcNow - cached.lastUpdated < _cacheExpiry)
+            {
+                _logger.Debug("Retrieved unique mods count from cache: {Count}", cached.value);
+                return cached.value;
+            }
+        }
+
         try
         {
             await _databaseInitialized.Task;
@@ -564,14 +592,18 @@ public class StatisticService : IStatisticService, IDisposable
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
+            
             var uniqueCount = modInstallations
-                .FindAll()
+                .Query()
                 .Select(x => x.ModName)
+                .ToList()
                 .Distinct()
                 .Count();
             
-            _logger.Debug("Retrieved unique mods installed count: {Count}", uniqueCount);
-            
+            _statCache[cacheKey] = (uniqueCount, DateTime.UtcNow);
+
+            _logger.Debug("Retrieved unique mods installed count from database: {Count}", uniqueCount);
+
             return Task.FromResult(uniqueCount);
         }, "Failed to retrieve count of unique mods installed", 0);
     }
@@ -591,13 +623,14 @@ public class StatisticService : IStatisticService, IDisposable
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
+            
             var mods = modInstallations
-                .FindAll()
+                .Query()
                 .OrderByDescending(x => x.InstallationTime)
                 .ToList();
-            
+
             _logger.Debug("Retrieved all installed mods: {Count} total", mods.Count);
-            
+
             return Task.FromResult(mods);
         }, "Failed to retrieve all installed mods", new List<ModInstallationRecord>());
     }
