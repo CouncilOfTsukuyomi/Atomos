@@ -592,14 +592,13 @@ public class StatisticService : IStatisticService, IDisposable
         return await ExecuteDatabaseActionAsync(db =>
         {
             var modInstallations = db.GetCollection<ModInstallationRecord>("mod_installations");
-            
-            var uniqueCount = modInstallations
-                .Query()
+
+            var allMods = modInstallations.FindAll();
+            var uniqueCount = allMods
                 .Select(x => x.ModName)
-                .ToList()
                 .Distinct()
                 .Count();
-            
+
             _statCache[cacheKey] = (uniqueCount, DateTime.UtcNow);
 
             _logger.Debug("Retrieved unique mods installed count from database: {Count}", uniqueCount);
