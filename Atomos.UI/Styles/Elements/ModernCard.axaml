@@ -1,0 +1,88 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Base Modern Card -->
+    <Style Selector="Border.modernCard">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusLG}"/>
+        <Setter Property="Padding" Value="{StaticResource ThicknessLG}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource Elevation2}"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="{StaticResource DurationNormal}"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="{StaticResource DurationNormal}"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Hoverable Card (interactive) -->
+    <Style Selector="Border.modernCard.hoverable:pointerover">
+        <Setter Property="BoxShadow" Value="{StaticResource Elevation3}"/>
+        <Setter Property="RenderTransform" Value="translateY(-2px)"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <!-- Elevated Card (already lifted) -->
+    <Style Selector="Border.modernCard.elevated">
+        <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource Elevation3}"/>
+    </Style>
+
+    <!-- Compact Card (less padding) -->
+    <Style Selector="Border.modernCard.compact">
+        <Setter Property="Padding" Value="{StaticResource ThicknessMD}"/>
+    </Style>
+
+    <!-- Hero Card (larger, prominent) -->
+    <Style Selector="Border.modernCard.hero">
+        <Setter Property="Padding" Value="{StaticResource ThicknessXL}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusXL}"/>
+        <Setter Property="BoxShadow" Value="{StaticResource Elevation3}"/>
+    </Style>
+    
+
+    <Style Selector="StackPanel.cardHeader">
+        <Setter Property="Spacing" Value="{StaticResource SpacingSM}"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+
+    <Style Selector="TextBlock.cardTitle">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeH2}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.cardSubtitle">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightRegular}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+    </Style>
+    
+
+    <Style Selector="StackPanel.cardContent">
+        <Setter Property="Spacing" Value="{StaticResource SpacingSM}"/>
+    </Style>
+
+    <Style Selector="TextBlock.cardText">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.cardLabel">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightMedium}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+    </Style>
+    
+
+    <Style Selector="StackPanel.cardActions">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Spacing" Value="{StaticResource SpacingSM}"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Margin" Value="0,12,0,0"/>
+    </Style>
+
+</Styles>

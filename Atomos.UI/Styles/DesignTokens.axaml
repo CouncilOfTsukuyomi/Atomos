@@ -1,0 +1,77 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <system:Double x:Key="SpacingXS">4</system:Double>      <!-- Tight spacing -->
+    <system:Double x:Key="SpacingSM">8</system:Double>      <!-- Compact spacing -->
+    <system:Double x:Key="SpacingMD">12</system:Double>     <!-- Default spacing -->
+    <system:Double x:Key="SpacingLG">16</system:Double>     <!-- Comfortable spacing -->
+    <system:Double x:Key="SpacingXL">24</system:Double>     <!-- Section spacing -->
+    <system:Double x:Key="Spacing2XL">32</system:Double>    <!-- Page margins -->
+    <system:Double x:Key="Spacing3XL">48</system:Double>    <!-- Large gaps -->
+    <system:Double x:Key="Spacing4XL">64</system:Double>    <!-- Hero spacing -->
+
+    <!-- Thickness variants for convenience -->
+    <Thickness x:Key="ThicknessXS">4</Thickness>
+    <Thickness x:Key="ThicknessSM">8</Thickness>
+    <Thickness x:Key="ThicknessMD">12</Thickness>
+    <Thickness x:Key="ThicknessLG">16</Thickness>
+    <Thickness x:Key="ThicknessXL">24</Thickness>
+    <Thickness x:Key="Thickness2XL">32</Thickness>
+    <Thickness x:Key="Thickness3XL">48</Thickness>
+    <Thickness x:Key="Thickness4XL">64</Thickness>
+
+    <!-- ============================================ -->
+    <!-- TYPOGRAPHY SCALE                            -->
+    <!-- Font sizes and weights for hierarchy        -->
+    <!-- ============================================ -->
+
+    <!-- Font Sizes -->
+    <system:Double x:Key="FontSizeDisplay">32</system:Double>   <!-- Page titles -->
+    <system:Double x:Key="FontSizeH1">24</system:Double>        <!-- Section headers -->
+    <system:Double x:Key="FontSizeH2">20</system:Double>        <!-- Card titles -->
+    <system:Double x:Key="FontSizeH3">16</system:Double>        <!-- Subsections -->
+    <system:Double x:Key="FontSizeBody">14</system:Double>      <!-- Default text -->
+    <system:Double x:Key="FontSizeSmall">12</system:Double>     <!-- Helper text -->
+    <system:Double x:Key="FontSizeTiny">11</system:Double>      <!-- Badges, labels -->
+
+    <!-- Font Weights -->
+    <FontWeight x:Key="FontWeightBold">Bold</FontWeight>
+    <FontWeight x:Key="FontWeightSemiBold">SemiBold</FontWeight>
+    <FontWeight x:Key="FontWeightMedium">Medium</FontWeight>
+    <FontWeight x:Key="FontWeightRegular">Regular</FontWeight>
+    
+
+    <CornerRadius x:Key="RadiusSM">6</CornerRadius>    <!-- Tags, badges -->
+    <CornerRadius x:Key="RadiusMD">8</CornerRadius>    <!-- Buttons, inputs -->
+    <CornerRadius x:Key="RadiusLG">12</CornerRadius>   <!-- Cards -->
+    <CornerRadius x:Key="RadiusXL">16</CornerRadius>   <!-- Modals, overlays -->
+    <CornerRadius x:Key="Radius2XL">24</CornerRadius>  <!-- Hero sections -->
+
+    <!-- Single value variants -->
+    <system:Double x:Key="RadiusSMValue">6</system:Double>
+    <system:Double x:Key="RadiusMDValue">8</system:Double>
+    <system:Double x:Key="RadiusLGValue">12</system:Double>
+    <system:Double x:Key="RadiusXLValue">16</system:Double>
+    <system:Double x:Key="Radius2XLValue">24</system:Double>
+    
+
+    <system:TimeSpan x:Key="DurationFast">0:0:0.15</system:TimeSpan>     <!-- Micro-interactions -->
+    <system:TimeSpan x:Key="DurationNormal">0:0:0.2</system:TimeSpan>    <!-- Buttons, cards -->
+    <system:TimeSpan x:Key="DurationSlow">0:0:0.3</system:TimeSpan>      <!-- Modals, pages -->
+    
+
+    <system:Double x:Key="IconSizeSmall">16</system:Double>
+    <system:Double x:Key="IconSizeNormal">20</system:Double>
+    <system:Double x:Key="IconSizeLarge">24</system:Double>
+    <system:Double x:Key="IconSizeXLarge">32</system:Double>
+    
+
+    <system:Double x:Key="ContentMaxWidth">1200</system:Double>     <!-- Page content max width -->
+    <system:Double x:Key="CardMinWidth">220</system:Double>         <!-- Minimum card width -->
+    <system:Double x:Key="CardMaxWidth">280</system:Double>         <!-- Maximum card width -->
+    <system:Double x:Key="ButtonMinHeight">40</system:Double>       <!-- Standard button height -->
+    <system:Double x:Key="InputHeight">40</system:Double>           <!-- Standard input height -->
+    <system:Double x:Key="TitleBarHeight">48</system:Double>        <!-- Custom title bar -->
+
+</ResourceDictionary>
