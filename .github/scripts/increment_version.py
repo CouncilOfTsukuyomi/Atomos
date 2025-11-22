@@ -111,10 +111,18 @@ def main():
         new_version += "-b"
 
     # 9) Print outputs for subsequent steps
-    print(f"::set-output name=fullsemver::{new_version}")
-    print(f"::set-output name=major::{final_major}")
-    print(f"::set-output name=minor::{final_minor}")
-    print(f"::set-output name=patch::{final_patch}")
+    github_output = os.environ.get("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a") as f:
+            f.write(f"fullsemver={new_version}\n")
+            f.write(f"major={final_major}\n")
+            f.write(f"minor={final_minor}\n")
+            f.write(f"patch={final_patch}\n")
+    else:
+        print(f"fullsemver={new_version}")
+        print(f"major={final_major}")
+        print(f"minor={final_minor}")
+        print(f"patch={final_patch}")
 
     # 10) For tag comparison, get the previous tag
     try:
@@ -124,7 +132,12 @@ def main():
         ).decode().strip()
     except subprocess.CalledProcessError:
         previous_tag = ""
-    print(f"::set-output name=previous_tag::{previous_tag}")
+
+    if github_output:
+        with open(github_output, "a") as f:
+            f.write(f"previous_tag={previous_tag}\n")
+    else:
+        print(f"previous_tag={previous_tag}")
 
 if __name__ == "__main__":
     main()
