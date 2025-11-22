@@ -66,7 +66,7 @@ runs:
 
         - name: Build Solution
           shell: bash
-          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore -r linux-x64
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore
 
         - name: Run Tests
           if: ${{ inputs.run_tests == 'true' }}
@@ -98,8 +98,7 @@ runs:
                   -p:DebugType=None -p:DebugSymbols=false \
                   -r linux-x64 \
                   -o "$temp_dir" \
-                  -f net9.0 \
-                  --no-restore
+                  -f net9.0
 
                 # Create appsettings.Production.json with Sentry DSN (if available)
                 if [ -n "$sentry_dsn" ]; then

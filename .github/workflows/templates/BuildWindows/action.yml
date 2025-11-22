@@ -66,7 +66,7 @@ runs:
 
         - name: Build Solution
           shell: pwsh
-          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore -r win-x64
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore
 
         - name: Run Tests
           if: ${{ inputs.run_tests == 'true' }}
@@ -103,8 +103,7 @@ runs:
                     -p:DebugType=None -p:DebugSymbols=false `
                     -r win-x64 `
                     -o $tempDir `
-                    -f net9.0 `
-                    --no-restore
+                    -f net9.0
 
                   # Create appsettings.Production.json with Sentry DSN (if available)
                   if ($sentryDsn -ne "") {
