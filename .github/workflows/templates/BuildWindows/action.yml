@@ -62,11 +62,11 @@ runs:
 
         - name: Restore Dependencies
           shell: pwsh
-          run: dotnet restore
+          run: dotnet restore -r win-x64
 
         - name: Build Solution
           shell: pwsh
-          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore
+          run: dotnet build --configuration ${{ inputs.configuration }} --verbosity minimal --no-restore -r win-x64
 
         - name: Run Tests
           if: ${{ inputs.run_tests == 'true' }}
