@@ -31,6 +31,7 @@ If you encounter any issues, please report them in the **Atomos Mod Forwarder** 
 ## Known Issues
 
 - **TexTools Conversion**: Occasional TexTools conversion failures may occur (program continues to function)
+- **Linux Version**: This is not working - is being looked into when time allows
 
 ## Error Reporting (Sentry)
 
