@@ -52,7 +52,7 @@
             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BuildDate}" Classes="infoValue"/>
             
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Runtime" Classes="infoLabel"/>
-            <TextBlock Grid.Row="2" Grid.Column="1" Text=".NET 9.0" Classes="infoValue"/>
+            <TextBlock Grid.Row="2" Grid.Column="1" Text=".NET 10.0" Classes="infoValue"/>
             
             <TextBlock Grid.Row="3" Grid.Column="0" Text="License" Classes="infoLabel"/>
             <TextBlock Grid.Row="3" Grid.Column="1" Text="MIT" Classes="infoValue"/>
