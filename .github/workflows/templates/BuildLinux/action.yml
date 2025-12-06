@@ -55,10 +55,10 @@ runs:
                   ${{ runner.os }}-build-${{ inputs.configuration }}-
                   ${{ runner.os }}-build-
 
-        - name: Set Up .NET (v9)
+        - name: Set Up .NET (v10)
           uses: actions/setup-dotnet@v4
           with:
-              dotnet-version: 9.x
+              dotnet-version: 10.x
 
         - name: Restore Dependencies
           shell: bash
@@ -98,7 +98,7 @@ runs:
                   -p:DebugType=None -p:DebugSymbols=false \
                   -r linux-x64 \
                   -o "$temp_dir" \
-                  -f net9.0
+                  -f net10.0
 
                 # Create appsettings.Production.json with Sentry DSN (if available)
                 if [ -n "$sentry_dsn" ]; then

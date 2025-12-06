@@ -4,7 +4,7 @@
 # Default parameters
 CONFIGURATION="${1:-Release}"
 RUNTIME="${2:-linux-x64}"
-FRAMEWORK="net9.0"
+FRAMEWORK="net10.0"
 OUTPUT_DIR="./publish/linux"
 
 # Colors for output

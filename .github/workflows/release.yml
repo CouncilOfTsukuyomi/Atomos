@@ -241,10 +241,10 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-nuget-
 
-            - name: Set Up .NET (v9)
+            - name: Set Up .NET (v10)
               uses: actions/setup-dotnet@v4
               with:
-                  dotnet-version: 9.x
+                  dotnet-version: 10.x
 
             - name: Restore Dependencies
               run: dotnet restore

@@ -3,7 +3,7 @@
 param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
-    [string]$Framework = "net9.0",
+    [string]$Framework = "net10.0",
     [string]$OutputDir = "./publish/windows"
 )
 

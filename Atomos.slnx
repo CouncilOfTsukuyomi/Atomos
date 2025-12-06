@@ -1,0 +1,18 @@
+<Solution>
+  <Configurations>
+    <Configuration Name="Debug|Any CPU" />
+    <Configuration Name="Release|Any CPU" />
+  </Configurations>
+  <Project Path="Atomos.BackgroundWorker\Atomos.BackgroundWorker.csproj" />
+  <Project Path="Atomos.Watchdog\Atomos.Watchdog.csproj" />
+  <Project Path="Atomos.BackgroundWorker.Tests\Atomos.BackgroundWorker.Tests.csproj" />
+  <Project Path="Atomos.UI\Atomos.UI.csproj" />
+  <Project Path="Atomos.FileMonitor\Atomos.FileMonitor.csproj" />
+  <Project Path="Atomos.Statistics\Atomos.Statistics.csproj" />
+  <Project Path="Atomos.Statistics.Tests\Atomos.Statistics.Tests.csproj" />
+  <Project Path="Atomos.ConsoleTooling\Atomos.ConsoleTooling.csproj" />
+  <Project Path="SharedResources\SharedResources.csproj" />
+  <Project Path="CommonLib\CommonLib\CommonLib.csproj" />
+  <Project Path="PluginManager\PluginManager.Core\PluginManager.Core.csproj" />
+  <Project Path="CommonLib\SevenZipExtractor\SevenZipExtractor\SevenZipExtractor.csproj" />
+</Solution>
