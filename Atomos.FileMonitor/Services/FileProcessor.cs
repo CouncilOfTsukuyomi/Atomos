@@ -74,8 +74,14 @@ public sealed class FileProcessor : IFileProcessor
                 var archiveContents = await InspectArchiveAsync(finalFilePath, cancellationToken);
                 
                 var modFileCount = archiveContents.Count(f => f.IsModFile);
-                
-                if (modFileCount == 1)
+                var poseFiles = archiveContents.Where(f => f.IsPoseFile).ToList();
+
+                if (modFileCount == 0 && poseFiles.Any())
+                {
+                    var selected = poseFiles.Select(f => f.RelativePath).ToList();
+                    await ExtractSelectedFilesAsync(finalFilePath, selected, cancellationToken, taskId);
+                }
+                else if (modFileCount == 1 && poseFiles.Count == 0)
                 {
                     _logger.Info(
                         "Single mod file detected in archive {ArchiveFileName}. Auto-installing without prompt.",
@@ -100,6 +106,17 @@ public sealed class FileProcessor : IFileProcessor
                 );
             }
         }
+        else if (FileExtensionsConsts.PoseFileTypes.Contains(extension))
+        {
+            var fileName = Path.GetFileName(filePath);
+            FileMoved?.Invoke(this,
+                new FileMovedEvent(
+                    fileName,
+                    filePath,
+                    Path.GetFileNameWithoutExtension(filePath)
+                )
+            );
+        }
         else
         {
             _logger.Warn("Unhandled file type: {FullPath}", filePath);
@@ -121,8 +138,9 @@ public sealed class FileProcessor : IFileProcessor
 
                 var extension = Path.GetExtension(entry.FileName)?.ToLowerInvariant() ?? string.Empty;
                 var isModFile = FileExtensionsConsts.ModFileTypes.Contains(extension);
-                
-                if (!isModFile)
+                var isPoseFile = FileExtensionsConsts.PoseFileTypes.Contains(extension);
+
+                if (!isModFile && !isPoseFile)
                     continue;
                 
                 var isPreDt = PreDtRegex.IsMatch(entry.FileName) || 
@@ -141,6 +159,7 @@ public sealed class FileProcessor : IFileProcessor
                     Size = entry.Size,
                     Extension = extension,
                     IsModFile = isModFile,
+                    IsPoseFile = isPoseFile,
                     IsPreDt = isPreDt,
                     LastModified = entry.LastWriteTime
                 };
@@ -434,7 +453,8 @@ public sealed class FileProcessor : IFileProcessor
             .Where(entry =>
             {
                 var entryExtension = Path.GetExtension(entry.FileName)?.ToLowerInvariant();
-                if (!FileExtensionsConsts.ModFileTypes.Contains(entryExtension))
+                if (!FileExtensionsConsts.ModFileTypes.Contains(entryExtension) &&
+                    !FileExtensionsConsts.PoseFileTypes.Contains(entryExtension))
                     return false;
 
                 if (skipPreviousUpdates)
